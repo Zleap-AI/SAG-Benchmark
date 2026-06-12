@@ -1,0 +1,15 @@
+# Rerank 提示词模板（Qwen3-Reranker 系列）
+# 仅适用于 Qwen3 系列的 Rerank 模型（如 Qwen3-Reranker-8B、Qwen3-Reranker-0.6B）
+# LOCAL 模式下使用本地部署的 Qwen3-Reranker 时需要注入此模板
+
+qwen3_rerank:
+  description: "Qwen3-Reranker 提示词模板，用于将 query 和 documents 组装为模型期望的输入格式"
+  variables:
+    - instruction
+    - query
+    - doc
+  prefix: "<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be \"yes\" or \"no\".<|im_end|>\n<|im_start|>user\n"
+  suffix: "<|im_end|>\n<|im_start|>assistant\n spezielle\n\n"
+  query_template: "{prefix}<Instruct>: {instruction}\n<Query>: {query}\n"
+  doc_template: "<Document>: {doc}{suffix}"
+  default_instruction: "Given a web search query, retrieve relevant passages that answer the query"
