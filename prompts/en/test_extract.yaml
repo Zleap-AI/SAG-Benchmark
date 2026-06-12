@@ -191,8 +191,8 @@ test_extract:
         "data": {
           "items": [
             {"id": 1, "content": "Albert Einstein was born in Ulm, Germany in 1879."},
-            {"id": 2, "content": "He developed the theory of relativity, which revolutionized physics.""},
-            {"id": 3, "content": "Einstein worked at the Institute for Advanced Study in Princeton.""}
+            {"id": 2, "content": "He developed the theory of relativity, which revolutionized physics."},
+            {"id": 3, "content": "Einstein worked at the Institute for Advanced Study in Princeton."}
           ],
           "meta": {
             "source_type": "article",
@@ -201,7 +201,7 @@ test_extract:
               {"type": "person", "description": "人物"},
               {"type": "location", "description": "地点"},
               {"type": "organization", "description": "组织"},
-              {"type": "topic", "description": "概念或理论"}
+              {"type": "subject", "description": "概念或理论"}
             ]
           }
         }
@@ -213,6 +213,7 @@ test_extract:
           "items": [
             {
               "title": "Albert Einstein – was born in – Ulm, Germany",
+              "relation": "was born in",
               "summary": "Albert Einstein was born in Ulm, Germany in 1879.",
               "content": "Albert Einstein was born in Ulm, Germany in 1879.",
               "category": "Person",
@@ -236,6 +237,7 @@ test_extract:
             },
             {
               "title": "Albert Einstein – developed – the theory of relativity",
+              "relation": "developed",
               "summary": "Einstein developed the theory of relativity, which later completely revolutionized physics.",
               "content": "He developed the theory of relativity, which revolutionized physics.",
               "category": "Science",
@@ -250,7 +252,7 @@ test_extract:
                   "description": "The person who developed the theory of relativity."
                 },
                 {
-                  "type": "topic",
+                  "type": "subject",
                   "name": "the theory of relativity",
                   "description": "The physical theory proposed by Einstein."
                 }
@@ -259,6 +261,7 @@ test_extract:
             },
             {
               "title": "the theory of relativity – revolutionized – physics",
+              "relation": "revolutionized",
               "summary": "The theory of relativity fundamentally changed the field of physics.",
               "content": "The theory of relativity revolutionized physics.",
               "category": "Science",
@@ -268,12 +271,12 @@ test_extract:
               "references": [2],
               "entities": [
                 {
-                  "type": "topic",
+                  "type": "subject",
                   "name": "the theory of relativity",
                   "description": "The theory that caused a revolution in physics."
                 },
                 {
-                  "type": "topic",
+                  "type": "subject",
                   "name": "physics",
                   "description": "The field profoundly transformed by relativity."
                 }
@@ -282,6 +285,7 @@ test_extract:
             },
             {
               "title": "Albert Einstein – worked at – the Institute for Advanced Study",
+              "relation": "worked at",
               "summary": "Einstein worked at the Institute for Advanced Study in Princeton.",
               "content": "Einstein worked at the Institute for Advanced Study in Princeton.",
               "category": "Career",
@@ -305,6 +309,7 @@ test_extract:
             },
             {
               "title": "the Institute for Advanced Study – is located in – Princeton",
+              "relation": "is located in",
               "summary": "The Institute for Advanced Study is located in Princeton.",
               "content": "The Institute for Advanced Study is located in Princeton.",
               "category": "Geography",

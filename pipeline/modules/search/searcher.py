@@ -124,7 +124,13 @@ class SAGSearcher:
             self.logger.info(f"  query: '{config.query}'")
             self.logger.info(f"  strategy: {config.rerank.strategy}")
             self.logger.info(f"  source_config_ids: {config.source_config_ids[:5] if config.source_config_ids else []}")
-            self.logger.info(f"  return_type: {config.return_type}")
+            # return_type 仅 VECTOR 策略生效（且实际生效值在 strategy_config.return_type）；
+            # ATOMIC/MULTI/MULTI_ES 固定返回段落，忽略该字段，故不打印以免误导
+            if config.rerank.strategy == RerankStrategy.VECTOR:
+                effective_return_type = getattr(
+                    config.strategy_config, "return_type", config.return_type
+                )
+                self.logger.info(f"  return_type: {effective_return_type} (VECTOR 生效)")
             self.logger.info("=" * 100)
 
             self.logger.info(

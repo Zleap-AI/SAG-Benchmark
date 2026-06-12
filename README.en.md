@@ -51,7 +51,7 @@ With NV-Embed-v2, SAG reaches **81.71%** Recall@5 on MuSiQue, compared with 74.5
 SAG organizes text into lightweight `chunk -> event`, `chunk -> entities`, and `event <-> entities` indexes. It does not maintain a heavy global knowledge graph; it uses the event/entity index for SQL, vector search, full-text search, and multi-hop expansion.
 
 <p align="center">
-  <img src="assets/paper-sag-architecture.jpeg" alt="SAG architecture" width="760" />
+  <img src="assets/paper-sag-architecture.png" alt="SAG architecture" width="760" />
 </p>
 
 ## Quick Start
@@ -118,6 +118,13 @@ For a quick smoke test, use the smaller datasets first:
 uv run python scripts/run_upload.py --dataset test_hotpotqa
 uv run python scripts/run_upload.py --dataset sample
 ```
+
+To reproduce the **triplet (atomic event)** mode — where each event contains exactly 2 entities (subject-relation-object) — add `--atomic` when uploading:
+
+```bash
+uv run python scripts/run_upload.py --dataset sample --atomic
+```
+
 
 ### 5. Run Paper Reproduction Benchmarks
 

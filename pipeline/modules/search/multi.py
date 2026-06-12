@@ -371,7 +371,7 @@ class MultiSearcher:
         Step3: 双通道召回 + 去重合并
 
         通道1 (entity→event): entity_ids → EventEntity（不限数量）
-        通道2 (query→event): query embedding → content_vector kNN（上限 multi_top_k）
+        通道2 (query→event): query embedding → title_vector kNN（上限 multi_top_k）
 
         Args:
             query: 查询文本
@@ -1113,4 +1113,4 @@ class MultiSearcher:
         }
 
 
-__all__ = ["UnifiedMultiSearcher"]
+__all__ = ["MultiSearcher"]

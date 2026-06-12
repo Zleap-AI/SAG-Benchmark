@@ -1,11 +1,11 @@
 """
 Step5 扩展策略
 
-提供三种多跳扩展策略，通过策略模式与 UnifiedMultiSearcher 解耦：
+提供三种多跳扩展策略，通过策略模式与 MultiSearcher 解耦：
 
-- MultiStep5Strategy:   单阶段固定跳数扩展（对应原 multi.py）
-- Multi1Step5Strategy:  双阶段扩展，阶段B以 hop1 全量事项实体为种子（对应原 multi1.py）
-- HopLLMStep5Strategy:  双阶段扩展，阶段B以粗排后事项实体为种子（对应原 hopllm.py）
+- MultiStep5Strategy:   单阶段固定跳数扩展
+- Multi1Step5Strategy:  双阶段扩展，阶段B以 hop1 全量事项实体为种子
+- HopLLMStep5Strategy:  双阶段扩展，阶段B以粗排后事项实体为种子
 
 核心差异（阶段B种子选择）：
 - Multi1: seed = hop1 所有事项实体（广度优先，覆盖面广）
@@ -244,7 +244,7 @@ class Multi1Step5Strategy(Step5Strategy):
 
     async def _expand_phase_a(
         self,
-        searcher: "UnifiedMultiSearcher",
+        searcher: "MultiSearcher",
         event_entities: Dict[str, List[str]],
         source_config_ids: Optional[List[str]],
     ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[str]]]:
@@ -294,7 +294,7 @@ class Multi1Step5Strategy(Step5Strategy):
 
     async def _expand_phase_b(
         self,
-        searcher: "UnifiedMultiSearcher",
+        searcher: "MultiSearcher",
         seed_event_entities: Dict[str, List[str]],
         source_config_ids: Optional[List[str]],
         max_events_b: int,

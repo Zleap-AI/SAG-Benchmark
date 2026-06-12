@@ -51,7 +51,7 @@
 SAG 将文本组织为轻量的 `chunk -> event`、`chunk -> entities`、`event <-> entities` 结构。它不维护重型全局知识图谱，而是把 event/entity 索引用于 SQL、向量、全文检索和多跳扩展。
 
 <p align="center">
-  <img src="assets/paper-sag-architecture.jpeg" alt="SAG architecture" width="760" />
+  <img src="assets/paper-sag-architecture.png" alt="SAG architecture" width="760" />
 </p>
 
 ## 快速开始
@@ -118,6 +118,13 @@ uv run python scripts/run_upload.py --dataset musique
 uv run python scripts/run_upload.py --dataset test_hotpotqa
 uv run python scripts/run_upload.py --dataset sample
 ```
+
+如果要复现**三元组（原子事项）**模式——即每个事项恰好包含 2 个实体（主体-关系-客体）——在上传时加上 `--atomic`：
+
+```bash
+uv run python scripts/run_upload.py --dataset sample --atomic
+```
+
 
 ### 5. 运行论文复现 benchmark
 

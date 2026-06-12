@@ -89,6 +89,18 @@ async def upload_dataset(args):
     logger.info(f"信息源名称: {source_name}")
     logger.info(f"描述: {source_description}\n")
 
+    # 提取模式提示：--atomic 打开原子事项（test_extract.yaml，每事项2实体），否则融合大事项
+    atomic_mode = getattr(args, "atomic", False)
+    try:
+        from pipeline.core.config.settings import get_settings
+        _lang = get_settings().llm_language
+    except Exception:
+        _lang = "unknown"
+    logger.info(
+        f"提取模式: {'原子事项 (test_extract)' if atomic_mode else '融合大事项 (extract)'} "
+        f"| test_mode={atomic_mode} | llm_language={_lang}"
+    )
+
     # 2. 创建 pipelineEngine
     from pipeline import pipelineEngine
     from pipeline.engine.config import TaskConfig
@@ -201,7 +213,8 @@ async def upload_dataset(args):
                         parallel=True,
                         max_concurrency=50,
                         enable_entity_vector_sync=True,
-                        enable_event_entity_vector_sync=True
+                        enable_event_entity_vector_sync=True,
+                        test_mode=getattr(args, "atomic", False)
                     )
                 )
                 extract_time = time.perf_counter() - extract_start
@@ -393,6 +406,13 @@ async def main():
         action="store_false",
         dest="enable_extraction",
         help="禁用事项提取"
+    )
+
+    parser.add_argument(
+        "--atomic",
+        action="store_true",
+        default=False,
+        help="打开原子事项模式（读取 test_extract.yaml，每个事项恰好2个实体）。不加则默认融合大事项"
     )
 
     args = parser.parse_args()

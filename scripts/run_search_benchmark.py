@@ -31,17 +31,20 @@ from pipeline.core.config import get_settings
 logger = get_logger("scripts.run_search_benchmark")
 
 # 压制 pipeline 内部的详细日志，只保留 WARNING 以上
+# 注意：项目内 get_logger(name) 会自动加 "pipeline." 前缀（见 pipeline/utils/logger.py），
+# 因此实际 logger 名是 "pipeline.search.*" / "pipeline.ai.*"。
 logging.getLogger("pipeline").setLevel(logging.WARNING)
-# 单独放开 hopllm / multi / multi1 的检索流程日志（实际 logger 前缀是 pipeline.）
+# 放开搜索配置块（pipeline.search.sag / pipeline.search.searcher）与各策略检索流程日志
+# （hopllm/multi/multi1 均走 pipeline.search.multi，无独立 hopllm logger）
+logging.getLogger("pipeline.search.sag").setLevel(logging.INFO)
+logging.getLogger("pipeline.search.searcher").setLevel(logging.INFO)
 logging.getLogger("pipeline.search.multi").setLevel(logging.INFO)
 logging.getLogger("pipeline.search.multi_es").setLevel(logging.INFO)
 logging.getLogger("pipeline.search.vector").setLevel(logging.INFO)
-logging.getLogger("pipeline.search.hopllm").setLevel(logging.INFO)
+logging.getLogger("pipeline.search.atomic").setLevel(logging.INFO)
 # 放开 LLM 重试日志，方便观察重试次数和等待时间
 logging.getLogger("pipeline.ai.llm").setLevel(logging.INFO)
-# ─────────────────────────────────────────────────────────────────────────────
-# 工具函数：与 benchmark.py 保持完全一致
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 def load_latest_source_info(dataset_name: str, model_name: str) -> Dict[str, Any]:
     """
@@ -416,9 +419,7 @@ async def run_batch_search(
     return search_results
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 最终结果打印：与 benchmark.py 主函数的汇总输出完全一致
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 def print_final_summary(
     dataset_name: str,

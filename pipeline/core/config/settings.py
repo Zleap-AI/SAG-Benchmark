@@ -125,7 +125,7 @@ class Settings(BaseSettings):
     )
 
     llm_language: str = Field(
-        default="zh", description="LLM输出语言(zh/en)，决定加载哪个语言版本的提示词"
+        default="en", description="LLM输出语言(zh/en)，决定加载哪个语言版本的提示词"
     )
 
     # ======================
