@@ -4,7 +4,7 @@
 
 # SAG Benchmark
 
-> Companion benchmark reproduction repository for the SAG paper. This repository is for reproducing the paper benchmark scores with the quick-start commands, not for a general end-user product walkthrough.
+> Companion benchmark reproduction repository for the SAG paper. This repository is for reproducing the paper benchmark scores with the quick-start commands. General users, please see the [SAG project](https://github.com/Zleap-AI/SAG).
 
 English | [中文](README.md)
 
