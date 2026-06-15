@@ -4,7 +4,7 @@
 
 # SAG Benchmark
 
-> SAG 论文配套 Benchmark 复现代码库。该仓库用于按快速开始命令复现论文中的 Benchmark 分数，不是面向普通终端用户的产品说明。
+> SAG 论文配套 Benchmark 复现代码库。该仓库用于按快速开始命令复现论文中的 Benchmark 分数，普通用户请看[SAG项目](https://github.com/Zleap-AI/SAG)
 
 [English](README.en.md) | 中文
 
