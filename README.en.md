@@ -8,7 +8,7 @@
 
 English | [中文](README.md)
 
-**Paper:** To be added
+**Paper:** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
 
 <p align="center">
   <img src="assets/sag-benchmark-simple.png" alt="SAG benchmark results" width="760" />
