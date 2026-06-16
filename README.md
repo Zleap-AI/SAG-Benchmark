@@ -8,7 +8,7 @@
 
 [English](README.en.md) | 中文
 
-**论文链接：** 待补充
+**论文链接：** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
 
 <p align="center">
   <img src="assets/sag-benchmark-simple.png" alt="SAG benchmark results" width="760" />
