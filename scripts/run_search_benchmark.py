@@ -22,6 +22,7 @@ script_dir = Path(__file__).parent
 project_root = script_dir.parent
 sys.path.insert(0, str(project_root))
 
+from _search_common import load_latest_source_info, normalize_section
 from pipeline.evaluation.metrics import RetrievalRecall
 from pipeline.evaluation.utils import DatasetLoader, MLflowTracker, MLflowConfig, get_local_ip
 from pipeline.evaluation.utils import LLMTokenTracker, enable_llm_tracking
@@ -44,74 +45,6 @@ logging.getLogger("pipeline.search.vector").setLevel(logging.INFO)
 logging.getLogger("pipeline.search.atomic").setLevel(logging.INFO)
 # 放开 LLM 重试日志，方便观察重试次数和等待时间
 logging.getLogger("pipeline.ai.llm").setLevel(logging.INFO)
-
-
-def load_latest_source_info(dataset_name: str, model_name: str) -> Dict[str, Any]:
-    """
-    从 pipeline/evaluation/source/SAG/{model_name}/{dataset_name}/{timestamp}/
-    加载指定模型下最新时间戳文件夹的 source_info.json。
-
-    Args:
-        dataset_name: 数据集名称
-        model_name: 模型名称（从 .env 的 LLM_MODEL 读取）
-
-    Returns:
-        包含 source_config_id, model_name, timestamp 等信息的字典
-
-    Raises:
-        FileNotFoundError: 模型目录、数据集目录或 source_info.json 不存在
-    """
-    current_file = Path(__file__)
-    sag_base_dir = current_file.parent.parent / "pipeline" / "evaluation" / "source" / "SAG"
-
-    if not sag_base_dir.exists():
-        raise FileNotFoundError(f"SAG directory not found: {sag_base_dir}")
-
-    # 直接定位到指定模型的目录
-    model_dir = sag_base_dir / model_name
-    if not model_dir.exists():
-        available_models = [d.name for d in sag_base_dir.iterdir() if d.is_dir()]
-        raise FileNotFoundError(
-            f"模型目录不存在: {model_dir}\n"
-            f"可用模型: {available_models}\n"
-            f"提示: 请检查 .env 文件中的 LLM_MODEL 配置是否正确"
-        )
-
-    dataset_dir = model_dir / dataset_name
-    if not dataset_dir.exists():
-        available_datasets = [d.name for d in model_dir.iterdir() if d.is_dir()]
-        raise FileNotFoundError(
-            f"数据集目录不存在: {dataset_dir}\n"
-            f"模型 {model_name} 下可用的数据集: {available_datasets}"
-        )
-
-    # 收集该模型该数据集下所有时间戳的 source_info.json
-    all_source_info_files = []
-    for ts_dir in dataset_dir.iterdir():
-        if ts_dir.is_dir():
-            source_info_path = ts_dir / "source_info.json"
-            if source_info_path.exists():
-                all_source_info_files.append(source_info_path)
-
-    if not all_source_info_files:
-        raise FileNotFoundError(
-            f"在 {dataset_dir} 下未找到任何 source_info.json 文件"
-        )
-
-    # 按时间戳排序（目录名格式：YYYYMMDD_HHMMSS），选择最新的
-    latest_source_info_path = max(all_source_info_files, key=lambda p: p.parent.name)
-    logger.info(f"Loading source info from: {latest_source_info_path}")
-
-    with open(latest_source_info_path, "r", encoding="utf-8") as f:
-        info = json.load(f)
-
-    return {
-        "source_config_id": info.get("source_config_id"),
-        "dataset_name": info.get("dataset_name"),
-        "timestamp": info.get("timestamp"),
-        "source_name": info.get("source_name"),
-        "file_path": str(latest_source_info_path),
-    }
 
 
 def calculate_precision_f1_at_k(
@@ -317,17 +250,6 @@ async def run_batch_search(
     # 信号量控制并发；实际并发不会超过当前 batch 的大小
     semaphore = asyncio.Semaphore(effective_concurrency)
 
-    def _normalize_section(s) -> str:
-        if isinstance(s, str):
-            return s
-        heading = s.get("heading", "") or s.get("title", "") or ""
-        content = s.get("content", "") or ""
-        # 去掉 content 开头的 markdown 标题行（"# ..." 格式）
-        lines = content.split("\n")
-        if lines and lines[0].strip().lstrip("#").strip() == heading.strip():
-            content = "\n".join(lines[1:]).lstrip("\n")
-        return f"{heading}\n{content}"
-
     async def search_one(idx: int, question: str) -> Dict:
         async with semaphore:
             try:
@@ -338,7 +260,7 @@ async def run_batch_search(
                         config=strategy_config,
                     )
                     raw_sections = raw.get("sections", [])
-                    sections = [_normalize_section(s) for s in raw_sections]
+                    sections = [normalize_section(s) for s in raw_sections]
                     sections = sections[:top_k]
                     return {
                         "question_index": idx + 1,
@@ -369,7 +291,7 @@ async def run_batch_search(
                     else []
                 )
 
-                sections = [_normalize_section(s) for s in raw_sections]
+                sections = [normalize_section(s) for s in raw_sections]
                 sections = sections[:top_k]
                 return {
                     "question_index": idx + 1,

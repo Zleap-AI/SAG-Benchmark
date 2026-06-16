@@ -86,9 +86,6 @@ api = [
     "uvicorn[standard]>=0.25.0",
 ]
 
-[project.scripts]
-pipeline = "pipeline.cli:main"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

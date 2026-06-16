@@ -21,6 +21,8 @@
 """
 
 import time
+from contextvars import ContextVar
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import select
@@ -38,6 +40,24 @@ from pipeline.utils import get_logger
 from pipeline.utils.token_counter import TokenCounter
 
 logger = get_logger("search.atomic")
+
+
+@dataclass
+class _SearchState:
+    """Per-search mutable state used by entity/relation expansion.
+
+    存放每次 search() 的去重集合，通过 ContextVar 隔离，避免共享的
+    AtomicSearcher 单例在并发查询下互相污染状态。
+    """
+
+    entity_ids: set = field(default_factory=set)
+    relation_ids: set = field(default_factory=set)
+
+
+_atomic_search_state_var: ContextVar[Optional[_SearchState]] = ContextVar(
+    "atomic_search_state",
+    default=None,
+)
 
 # NER 提示词（参考 HippoRAG 风格）
 _NER_SYSTEM_PROMPT = "You're a very effective entity extraction system."
@@ -78,8 +98,7 @@ Relationship descriptions:
 
 _RERANK_EXAMPLE_1_OUTPUT = """{"thought_process": "2-hop question: First find Lothair II's mother (relation [42]: Ermengarde of Tours), \
 then find death date. [41] gives father for family context.", \
-"useful_relations": ["[42] lothair ii son of ermengarde of tours", "[41] lothair ii son of emperor lothair i", \
-"[43] lothair ii married to teutberga", "[60] lothair ii husband of waldrada", "[67] waldrada was mistress of lothair ii"]}"""
+"useful_relations": ["[42]", "[41]", "[43]", "[60]", "[67]"]}"""
 
 _RERANK_EXAMPLE_2_INPUT = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
@@ -100,8 +119,7 @@ Relationship descriptions:
 
 _RERANK_EXAMPLE_2_OUTPUT = """{"thought_process": "2-hop question: First find composer of Terra Eterna ([12]: Paulo Flores), \
 then find his country ([15] born in Angola or [30] nationality Angolan).", \
-"useful_relations": ["[12] terra eterna composed by paulo flores", "[15] paulo flores born in angola", \
-"[30] paulo flores nationality angolan", "[22] angola located in africa", "[25] semba originated in angola"]}"""
+"useful_relations": ["[12]", "[15]", "[30]", "[22]", "[25]"]}"""
 
 _RERANK_EXAMPLE_3_INPUT = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
@@ -122,8 +140,7 @@ Relationship descriptions:
 
 _RERANK_EXAMPLE_3_OUTPUT = """{"thought_process": "3-hop question: (1) Find award won by The Hurt Locker ([5]: Academy Award Best Picture), \
 (2) Find another film with same award ([12]: Moonlight), (3) Find director ([15]: Barry Jenkins).", \
-"useful_relations": ["[5] the hurt locker won academy award best picture", "[12] moonlight won academy award best picture", \
-"[15] moonlight directed by barry jenkins", "[8] the hurt locker directed by kathryn bigelow", "[25] barry jenkins born in miami"]}"""
+"useful_relations": ["[5]", "[12]", "[15]", "[8]", "[25]"]}"""
 
 _RERANK_TEMPLATE = """Question:
 {question}
@@ -144,9 +161,30 @@ class AtomicSearcher:
         self._llm_client = None
         self._processor = None
         self._entity_repo = None
-        self._entity_ids: set = set()
-        self._relation_ids: set = set()
         self.token_counter = token_counter or TokenCounter()
+
+    def _get_search_state(self) -> _SearchState:
+        state = _atomic_search_state_var.get()
+        if state is None:
+            state = _SearchState()
+            _atomic_search_state_var.set(state)
+        return state
+
+    @property
+    def _entity_ids(self) -> set:
+        return self._get_search_state().entity_ids
+
+    @_entity_ids.setter
+    def _entity_ids(self, value: set) -> None:
+        self._get_search_state().entity_ids = value
+
+    @property
+    def _relation_ids(self) -> set:
+        return self._get_search_state().relation_ids
+
+    @_relation_ids.setter
+    def _relation_ids(self, value: set) -> None:
+        self._get_search_state().relation_ids = value
 
     async def _get_llm_client(self):
         if self._llm_client is None:
@@ -674,7 +712,7 @@ class AtomicSearcher:
         for i, item in enumerate(items):
             idx = str(i)
             idx_to_event_id[idx] = item["event_id"]
-            text = item.get("title", "").strip()
+            text = item.get("content", "").strip()
             relation_lines.append(f"[{i}] {text}")
             relation_texts.append(text)
 
@@ -844,8 +882,8 @@ class AtomicSearcher:
             }
         """
         config = config or AtomicConfig()
-        self._entity_ids = set()
-        self._relation_ids = set()
+        # 为本次检索创建隔离的状态对象（ContextVar），避免并发查询互相污染
+        _atomic_search_state_var.set(_SearchState())
         start_time = time.perf_counter()
 
         logger.info(f"[原子事项检索] query='{query}', atomic_top_k={config.atomic_top_k}")

@@ -4,16 +4,16 @@
 
 用法:
     # 自动查找最新结果（推荐）
-    python scripts/cross_validation.py \
+    python scripts/run_benchmark.py \
         --dataset musique \
         --k-list 1 2 5 10
 
     # 手动指定结果文件（如果需要评估特定版本的结果）
-    python scripts/cross_validation.py \
+    python scripts/run_benchmark.py \
         --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \
         --dataset musique \
         --k-list 1 2 5 10
-python scripts/cross_validation.py \
+python scripts/run_benchmark.py \
         --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \
         --dataset musique \
         --k-list 1 2 5 10
@@ -290,12 +290,12 @@ def main():
         epilog="""
 示例:
   # 自动查找最新结果（推荐）
-  python scripts/cross_validation.py \\
+  python scripts/run_benchmark.py \\
       --dataset musique \\
       --k-list 1 2 5 10
 
   # 手动指定结果文件（如果需要评估特定版本的结果）
-  python scripts/cross_validation.py \\
+  python scripts/run_benchmark.py \\
       --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \\
       --dataset musique \\
       --k-list 1 2 5 10
