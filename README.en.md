@@ -2,17 +2,13 @@
   <img src="assets/logo.svg" alt="Zleap AI" width="220" />
 </p>
 
-<p align="left">
-  <a href="https://arxiv.org/abs/2606.15971"><img src="https://img.shields.io/badge/arXiv-2606.15971 SAG-b31b1b" alt="arXiv" /></a>
-</p>
-
 # SAG Benchmark
 
-> Companion benchmark reproduction repository for the SAG paper. This repository is for reproducing the paper benchmark scores with the quick-start commands, not for a general end-user product walkthrough.
+> Companion benchmark reproduction repository for the SAG paper. This repository is for reproducing the paper benchmark scores with the quick-start commands. General users, please see the [SAG project](https://github.com/Zleap-AI/SAG).
 
 English | [中文](README.md)
 
-**Paper:** [SAG: SQL-Retrieval Augmented Generation with Query-Time Dynamic Hyperedges](https://arxiv.org/abs/2606.15971)
+**Paper:** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
 
 <p align="center">
   <img src="assets/sag-benchmark-simple.png" alt="SAG benchmark results" width="760" />
@@ -302,20 +298,3 @@ SAG-Benchmark/
 - When `--source-config-id` is omitted, `run_search_benchmark.py` looks up the latest uploaded source based on `LLM_MODEL` in `.env`.
 - Full dataset upload and benchmark runs call external model services. Check quota, concurrency, and timeout settings before running.
 - Stop local services with `docker compose down`. To delete local database volumes, use `docker compose down -v`; this removes uploaded data.
-
-## Citation
-
-If you find this work useful, please consider citing our paper:
-
-### SAG
-```
-@misc{wu2026sagsqlretrievalaugmentedgeneration,
-      title={SAG: SQL-Retrieval Augmented Generation with Query-Time Dynamic Hyperedges}, 
-      author={Yuchao Wu and Junqin Li and XingCheng Liang and Yongjie Chen and Yinghao Liang and Linyuan Mo and Guanxian Li},
-      year={2026},
-      eprint={2606.15971},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2606.15971}, 
-}
-```
