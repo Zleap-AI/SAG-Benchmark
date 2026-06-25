@@ -27,7 +27,8 @@ class EmbeddingClient:
         self, 
         model: Optional[str] = None, 
         base_url: Optional[str] = None,
-        api_key: Optional[str] = None
+        api_key: Optional[str] = None,
+        dimensions: Optional[int] = None,
     ):
         """
         初始化Embedding客户端
@@ -36,6 +37,7 @@ class EmbeddingClient:
             model: 模型名称（默认从配置读取）
             base_url: API地址（默认从配置读取）
             api_key: API密钥（默认从配置读取）
+            dimensions: 输出向量维度（默认从配置读取）
         """
         from openai import AsyncOpenAI
         
@@ -45,6 +47,7 @@ class EmbeddingClient:
         self.base_url = base_url or settings.embedding_base_url or settings.llm_base_url
         # ✅ 优先使用传入的 api_key，然后才是环境变量
         self.api_key = api_key or settings.embedding_api_key or settings.llm_api_key
+        self.dimensions = dimensions if dimensions is not None else settings.embedding_dimensions
         
         # 初始化OpenAI客户端
         client_kwargs = {"api_key": self.api_key}
@@ -58,6 +61,7 @@ class EmbeddingClient:
             extra={
                 "model": self.model,
                 "base_url": self.base_url or "default",
+                "dimensions": self.dimensions or "default",
             },
         )
     
@@ -75,10 +79,14 @@ class EmbeddingClient:
             AIError: 生成失败
         """
         try:
-            response = await self.client.embeddings.create(
-                input=text,
-                model=self.model,
-            )
+            request_kwargs = {
+                "input": text,
+                "model": self.model,
+            }
+            if self.dimensions is not None:
+                request_kwargs["dimensions"] = self.dimensions
+
+            response = await self.client.embeddings.create(**request_kwargs)
             
             embedding = response.data[0].embedding
             
@@ -110,10 +118,14 @@ class EmbeddingClient:
             AIError: 生成失败
         """
         try:
-            response = await self.client.embeddings.create(
-                input=texts,
-                model=self.model,
-            )
+            request_kwargs = {
+                "input": texts,
+                "model": self.model,
+            }
+            if self.dimensions is not None:
+                request_kwargs["dimensions"] = self.dimensions
+
+            response = await self.client.embeddings.create(**request_kwargs)
             
             embeddings = [item.embedding for item in response.data]
             
@@ -190,4 +202,3 @@ async def batch_generate_embedding(texts: List[str]) -> List[List[float]]:
     """
     client = get_embedding_client()
     return await client.batch_generate(texts)
-

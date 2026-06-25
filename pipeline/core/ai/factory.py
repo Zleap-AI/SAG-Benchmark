@@ -318,11 +318,11 @@ async def create_embedding_client(
 
     # ✅ 提取参数创建客户端（包含 api_key，确保数据库配置生效）
     client = EmbeddingClient(
-        model=config["model"], base_url=config.get("base_url"), api_key=config.get("api_key")
+        model=config["model"],
+        base_url=config.get("base_url"),
+        api_key=config.get("api_key"),
+        dimensions=config.get("dimensions"),
     )
-
-    # 如果有 dimensions 参数，需要在生成时传递
-    # TODO: 更新 EmbeddingClient.generate() 支持 dimensions 参数
 
     logger.info(
         "✅ 创建Embedding客户端",
@@ -394,7 +394,10 @@ async def get_embedding_client(scenario: str = "general") -> "EmbeddingClient":
         from pipeline.core.ai.embedding import EmbeddingClient
 
         _embedding_client = EmbeddingClient(
-            model=config["model"], base_url=config.get("base_url"), api_key=config.get("api_key")
+            model=config["model"],
+            base_url=config.get("base_url"),
+            api_key=config.get("api_key"),
+            dimensions=config.get("dimensions"),
         )
         _embedding_config_fingerprint = current_fingerprint
 
@@ -432,4 +435,3 @@ async def close_all_clients() -> None:
         finally:
             _embedding_client = None
             _embedding_config_fingerprint = None
-
