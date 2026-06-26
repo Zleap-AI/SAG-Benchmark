@@ -78,12 +78,18 @@ class RerankClient:
 
         # Rerank 专用配置（优先），回退到 embedding 配置
         self.model = model or getattr(settings, 'rerank_model_name', None) or "Qwen/Qwen3-Reranker-8B"
-        # 基础 URL，拼接 /rerank 端点
+        # 基础 URL，拼接 rerank 端点
         base = (base_url or
                 getattr(settings, 'rerank_base_url', None) or
                 settings.embedding_base_url or
                 "https://api.302.ai/v1")
         self.base_url = base.rstrip('/')
+        # Rerank 请求端点路径（可配置，默认 /rerank；兼容 /reranks 等其他路由）
+        endpoint = getattr(settings, 'rerank_endpoint', None) or "/rerank"
+        endpoint = endpoint.strip()
+        if not endpoint.startswith("/"):
+            endpoint = "/" + endpoint
+        self.endpoint = endpoint
         self.api_key = (api_key or
                        getattr(settings, 'rerank_api_key', None) or
                        settings.embedding_api_key or
@@ -153,8 +159,15 @@ class RerankClient:
             else:
                 logger.info(f"模型 '{self.model}' 无专用模板 (server_type={settings.server_type})，使用原始文本")
 
-        # 如果 base_url 已包含 /rerank，直接使用；否则拼接
-        url = self.base_url if self.base_url.endswith("/rerank") else f"{self.base_url}/rerank"
+        # 构建 Rerank 请求 URL：
+        # - 若 base_url 已包含 rerank 端点路径（如 /rerank、/reranks），直接使用，避免重复拼接
+        # - 否则拼接配置的 self.endpoint（默认 /rerank，可通过 RERANK_ENDPOINT 自定义）
+        base_lower = self.base_url.lower()
+        if (base_lower.endswith("/rerank") or base_lower.endswith("/reranks")
+                or base_lower.endswith(self.endpoint.lower())):
+            url = self.base_url
+        else:
+            url = f"{self.base_url}{self.endpoint}"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
