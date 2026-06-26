@@ -164,6 +164,13 @@ async def handle_bench_callback(
     for metric, score in pooled_precision_f1.items():
         bench_logger.info(f"  {metric}: {score:.4f} ({score*100:.2f}%)")
 
+    request_times = [
+        r["request_time_seconds"]
+        for r in results_so_far
+        if "request_time_seconds" in r
+    ]
+    avg_request_time = sum(request_times) / len(request_times) if request_times else 0.0
+
     # MLflow 上报
     if mlflow_tracker:
         pooled_results = {**pooled_recall, **pooled_precision_f1}
@@ -171,6 +178,11 @@ async def handle_bench_callback(
             full_count, partial_count, zero_count, current_idx, batch_index
         )
         mlflow_tracker.log_recall_metrics(pooled_results, batch_index)
+        mlflow_tracker.log_metric(
+            "avg_request_time_seconds",
+            avg_request_time,
+            step=batch_index,
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -252,6 +264,7 @@ async def run_batch_search(
 
     async def search_one(idx: int, question: str) -> Dict:
         async with semaphore:
+            request_start = time.perf_counter()
             try:
                 if multi_es_searcher is not None:
                     raw = await multi_es_searcher.search_for_sections(
@@ -266,6 +279,7 @@ async def run_batch_search(
                         "question_index": idx + 1,
                         "question": question,
                         "sections": sections,
+                        "request_time_seconds": time.perf_counter() - request_start,
                     }
 
                 # 通过引擎执行搜索，不直接访问底层 searcher
@@ -297,9 +311,12 @@ async def run_batch_search(
                     "question_index": idx + 1,
                     "question": question,
                     "sections": sections,
+                    "request_time_seconds": time.perf_counter() - request_start,
                 }
             except Exception as e:
                 logger.warning(f"问题 {idx+1} 搜索失败: {e}")
+                # 失败结果不记录 request_time_seconds：聚合处按字段存在性过滤，
+                # 避免把异常/超时耗时（往往是最大值）混入 avg_request_time 指标。
                 return {
                     "question_index": idx + 1,
                     "question": question,
@@ -767,6 +784,12 @@ async def main():
         bench_logger=bench_logger,
     )
     search_time = time.perf_counter() - search_start
+    request_times = [
+        r["request_time_seconds"]
+        for r in search_results
+        if "request_time_seconds" in r
+    ]
+    avg_request_time = sum(request_times) / len(request_times) if request_times else 0.0
 
     # ── 保存搜索原始结果 ──────────────────────────────────────
     search_output = output_dir / "search_results.json"
@@ -774,6 +797,7 @@ async def main():
         {
             "question_index": r["question_index"],
             "question": r["question"],
+            "request_time_seconds": round(r.get("request_time_seconds", 0.0), 3),
             "retrieved_docs": r["sections"],
         }
         for r in search_results
@@ -811,6 +835,7 @@ async def main():
                     "k_values": k_values,
                     "total_questions": len(search_results),
                     "search_time_seconds": round(search_time, 2),
+                    "avg_request_time_seconds": round(avg_request_time, 3),
                     "timestamp": timestamp,
                 },
             },
@@ -838,7 +863,12 @@ async def main():
                 len(search_results),
                 step=final_batch_index,
             )
-            mlflow.log_metric("search_time_seconds", search_time)
+            mlflow_tracker.log_metric("search_time_seconds", search_time, step=final_batch_index)
+            mlflow_tracker.log_metric(
+                "avg_request_time_seconds",
+                avg_request_time,
+                step=final_batch_index,
+            )
             mlflow.log_param("output_dir", str(output_dir))
             logger.info("✓ MLflow metrics/params 记录完成")
         except Exception as e:

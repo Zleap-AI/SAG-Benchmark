@@ -23,6 +23,7 @@
 """
 
 import asyncio
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -49,12 +50,13 @@ PRECISE_ENTITY_EVENT_TOP_K = 40
 _RERANK_SYSTEM_PROMPT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly {top_k} relationships most useful for answering this multi-hop question.
 
-Return JSON with "useful_relations" (list of {top_k} index numbers, most useful first)."""
+Return JSON with only "useful_relations" (list of {top_k} index numbers, most useful first). \
+Do not include reason, thought_process, explanations, or relation text."""
 
 _RERANK_EXAMPLE_1_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with "useful_relations" (list of 5 index numbers, most useful first).
+Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
 
 Question:
 When did Lothair Ii's mother die?
@@ -74,7 +76,7 @@ _RERANK_EXAMPLE_1_OUTPUT_LOCAL = """{"useful_relations": ["42", "41", "43", "60"
 _RERANK_EXAMPLE_2_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with "thought_process" and "useful_relations" (list of 5 relation lines, most useful first).
+Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
 
 Question:
 What country is the composer of "Erta Eterna" from?
@@ -92,7 +94,7 @@ _RERANK_EXAMPLE_2_OUTPUT_LOCAL = """{"useful_relations": ["12", "15", "30", "22"
 _RERANK_EXAMPLE_3_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with "thought_process" and "useful_relations" (list of 5 relation lines, most useful first).
+Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
 
 Question:
 Who is the director of the film that won the award also won by "The Hurt Locker"?
@@ -904,12 +906,20 @@ class MultiSearcherES:
         useful_relations: List[str],
         valid_ids: set,
     ) -> List[str]:
-        """解析 LLM 返回的 useful_relations（纯 index 字符串列表），去重 + 校验"""
+        """解析 LLM 返回的 useful_relations，去重 + 校验。
+
+        接受纯 index 字符串（"12"）或带方括号的整串（"[12]"）；正则用 $ 锚定
+        整串，拒绝任何带尾随文本/杂质的残留格式（如 "[12] relation text"、
+        "12: reason ..."、"12abc"），避免把"以数字开头的关系文本"误判为合法 index。
+        """
         selected: List[str] = []
         for rel_id in useful_relations:
-            rel_id = str(rel_id).strip()
-            if rel_id in valid_ids and rel_id not in selected:
-                selected.append(rel_id)
+            match = re.match(r"^\[?(\d+)\]?$", str(rel_id).strip())
+            if not match:
+                continue
+            cid = match.group(1)
+            if cid in valid_ids and cid not in selected:
+                selected.append(cid)
         return selected
 
     async def step7_llm_filter(
@@ -986,6 +996,7 @@ class MultiSearcherES:
                     },
                 },
                 "required": ["useful_relations"],
+                "additionalProperties": False,
             },
         )
 
