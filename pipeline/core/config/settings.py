@@ -123,6 +123,12 @@ class Settings(BaseSettings):
     rerank_base_url: Optional[str] = Field(
         default=None, description="Rerank API base URL; fallback to embedding_base_url when empty"
     )
+    rerank_endpoint: Optional[str] = Field(
+        default="/rerank",
+        description="Rerank 请求端点路径，拼接到 rerank_base_url 之后（默认 /rerank；"
+                    "若平台路由为 /v1/reranks 等可改为 /reranks；"
+                    "若 rerank_base_url 已含完整端点路径则直接使用、不再拼接）",
+    )
 
     llm_language: str = Field(
         default="en", description="LLM输出语言(zh/en)，决定加载哪个语言版本的提示词"
