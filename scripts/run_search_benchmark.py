@@ -45,6 +45,20 @@ logging.getLogger("pipeline.search.vector").setLevel(logging.INFO)
 logging.getLogger("pipeline.search.atomic").setLevel(logging.INFO)
 # 放开 LLM 重试日志，方便观察重试次数和等待时间
 logging.getLogger("pipeline.ai.llm").setLevel(logging.INFO)
+# 压制 ES 传输层请求日志，避免淹没 multi_es 阶段耗时摘要
+for noisy_logger_name in (
+    "elastic_transport",
+    "elastic_transport.transport",
+):
+    logging.getLogger(noisy_logger_name).setLevel(logging.ERROR)
+# 其他 HTTP 客户端保留 WARNING 以上，便于保留真实异常信号。
+for noisy_logger_name in (
+    "elasticsearch",
+    "httpx",
+    "httpcore",
+    "urllib3",
+):
+    logging.getLogger(noisy_logger_name).setLevel(logging.WARNING)
 
 
 def calculate_precision_f1_at_k(
@@ -89,6 +103,72 @@ def calculate_precision_f1_at_k(
     return pooled_results
 
 
+MULTI_ES_STAGE_KEYS = {
+    "fast": [
+        "step1_entity_recall",
+        "step2_query_embedding",
+        "step3_seed_recall",
+        "step4_expand_and_rank",
+        "step5_chunk_fetch",
+    ],
+    "precise": [
+        "step1_entity_recall",
+        "step2_query_embedding",
+        "step3_dual_recall",
+        "step4_expand_and_coarse_rank",
+        "step5_llm_filter",
+        "step6_chunk_fetch",
+    ],
+}
+
+
+def normalize_stage_timings(stage_timings: Any) -> Dict[str, float]:
+    if not isinstance(stage_timings, dict):
+        return {}
+
+    normalized: Dict[str, float] = {}
+    for key, value in stage_timings.items():
+        try:
+            normalized[str(key)] = float(value)
+        except (TypeError, ValueError):
+            continue
+    return normalized
+
+
+def calculate_multi_es_stage_averages(
+    results: List[Dict],
+    mode: str,
+) -> Dict[str, float]:
+    stage_keys = MULTI_ES_STAGE_KEYS.get(mode, [])
+    if not stage_keys:
+        return {}
+
+    result_stage_timings = [
+        normalize_stage_timings(result.get("stage_timings_seconds"))
+        for result in results
+    ]
+    result_stage_timings = [timings for timings in result_stage_timings if timings]
+
+    stage_averages: Dict[str, float] = {}
+    for stage_key in stage_keys:
+        values = [
+            timings[stage_key]
+            for timings in result_stage_timings
+            if stage_key in timings
+        ]
+        if values:
+            stage_averages[stage_key] = sum(values) / len(values)
+
+    return stage_averages
+
+
+def build_multi_es_stage_metrics(mode: str, stage_averages: Dict[str, float]) -> Dict[str, float]:
+    return {
+        f"multi_es_{mode}_{stage_key}_avg_seconds": value
+        for stage_key, value in stage_averages.items()
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 批次回调：与 benchmark.py 的 _handle_bench_callback 完全一致
 # ─────────────────────────────────────────────────────────────────────────────
@@ -99,6 +179,8 @@ async def handle_bench_callback(
     results_so_far: List[Dict],          # 已完成的 search_result 列表
     gold_docs_for_recall: List[List[str]],
     bench_size: int,
+    strategy: str,
+    mode: str,
     mlflow_tracker: Optional[Any],
     bench_logger,
 ) -> None:
@@ -183,6 +265,11 @@ async def handle_bench_callback(
             avg_request_time,
             step=batch_index,
         )
+        if strategy == "multi_es":
+            stage_averages = calculate_multi_es_stage_averages(results_so_far, mode)
+            stage_metrics = build_multi_es_stage_metrics(mode, stage_averages)
+            if stage_metrics:
+                mlflow_tracker.log_batch_metrics(stage_metrics, step=batch_index)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -275,12 +362,18 @@ async def run_batch_search(
                     raw_sections = raw.get("sections", [])
                     sections = [normalize_section(s) for s in raw_sections]
                     sections = sections[:top_k]
-                    return {
+                    result = {
                         "question_index": idx + 1,
                         "question": question,
                         "sections": sections,
                         "request_time_seconds": time.perf_counter() - request_start,
                     }
+                    stage_timings = normalize_stage_timings(
+                        raw.get("stage_timings_seconds")
+                    )
+                    if stage_timings:
+                        result["stage_timings_seconds"] = stage_timings
+                    return result
 
                 # 通过引擎执行搜索，不直接访问底层 searcher
                 engine = pipelineEngine(
@@ -351,6 +444,8 @@ async def run_batch_search(
             results_so_far=results_so_far,
             gold_docs_for_recall=gold_docs_for_recall,
             bench_size=effective_bench_size,
+            strategy=strategy,
+            mode=mode,
             mlflow_tracker=mlflow_tracker,
             bench_logger=bench_logger,
         )
@@ -793,15 +888,21 @@ async def main():
 
     # ── 保存搜索原始结果 ──────────────────────────────────────
     search_output = output_dir / "search_results.json"
-    serializable = [
-        {
+    serializable = []
+    for r in search_results:
+        item = {
             "question_index": r["question_index"],
             "question": r["question"],
             "request_time_seconds": round(r.get("request_time_seconds", 0.0), 3),
             "retrieved_docs": r["sections"],
         }
-        for r in search_results
-    ]
+        stage_timings = normalize_stage_timings(r.get("stage_timings_seconds"))
+        if stage_timings:
+            item["stage_timings_seconds"] = {
+                key: round(value, 3)
+                for key, value in stage_timings.items()
+            }
+        serializable.append(item)
     with open(search_output, "w", encoding="utf-8") as f:
         json.dump(serializable, f, ensure_ascii=False, indent=2)
     logger.info(f"\n💾 搜索结果已保存: {search_output}")
@@ -869,6 +970,17 @@ async def main():
                 avg_request_time,
                 step=final_batch_index,
             )
+            if args.strategy == "multi_es":
+                stage_averages = calculate_multi_es_stage_averages(
+                    search_results,
+                    args.mode,
+                )
+                stage_metrics = build_multi_es_stage_metrics(args.mode, stage_averages)
+                if stage_metrics:
+                    mlflow_tracker.log_batch_metrics(
+                        stage_metrics,
+                        step=final_batch_index,
+                    )
             mlflow.log_param("output_dir", str(output_dir))
             logger.info("✓ MLflow metrics/params 记录完成")
         except Exception as e:

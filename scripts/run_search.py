@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+import logging
 import sys
 import time
 from datetime import datetime
@@ -22,6 +23,29 @@ from pipeline.core.config import get_settings
 from pipeline.utils import get_logger
 
 logger = get_logger("scripts.run_search_only")
+
+
+def configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    logging.getLogger("pipeline").setLevel(logging.WARNING)
+    logging.getLogger("pipeline.search.multi_es").setLevel(logging.INFO)
+    logging.getLogger("pipeline.ai.llm").setLevel(logging.INFO)
+    for noisy_logger_name in (
+        "elastic_transport",
+        "elastic_transport.transport",
+    ):
+        logging.getLogger(noisy_logger_name).setLevel(logging.ERROR)
+    for noisy_logger_name in (
+        "elasticsearch",
+        "httpx",
+        "httpcore",
+        "urllib3",
+    ):
+        logging.getLogger(noisy_logger_name).setLevel(logging.WARNING)
 
 
 def get_dataset_path_for_name(dataset_name: str) -> str:
@@ -225,5 +249,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    configure_logging()
     exit_code = asyncio.run(main())
     sys.exit(exit_code)

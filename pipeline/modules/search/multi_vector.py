@@ -45,6 +45,36 @@ logger = get_logger("search.multi_es")
 
 PRECISE_ENTITY_EVENT_TOP_K = 40
 
+FAST_STAGE_TIMING_KEYS = [
+    ("step1_entity_recall", "S1 entity", ("step1_entity_bm25",)),
+    ("step2_query_embedding", "S2 embed", ("step2_embedding",)),
+    ("step3_seed_recall", "S3 seed", ("step3_fast_recall",)),
+    (
+        "step4_expand_and_rank",
+        "S4 expand+rank",
+        (
+            "step4_fast_event_entities",
+            "step5_fast_expand",
+            "step6_fast_expand_rank",
+            "step6_fast_final_rank",
+        ),
+    ),
+    ("step5_chunk_fetch", "S5 chunk", ("step8_chunks",)),
+]
+
+PRECISE_STAGE_TIMING_KEYS = [
+    ("step1_entity_recall", "S1 entity", ("step1_entity_bm25",)),
+    ("step2_query_embedding", "S2 embed", ("step2_embedding",)),
+    ("step3_dual_recall", "S3 recall", ("step3_dual_recall",)),
+    (
+        "step4_expand_and_coarse_rank",
+        "S4 expand+rank",
+        ("step4_event_entities", "step5_expand", "step6_coarse_rank"),
+    ),
+    ("step5_llm_filter", "S5 llm", ("step7_llm_filter",)),
+    ("step6_chunk_fetch", "S6 chunk", ("step8_chunks", "native_chunk_total")),
+]
+
 # ── LLM 过滤提示词（本地版本：去掉 thought_process，只要求返回 ID 列表）──
 
 _RERANK_SYSTEM_PROMPT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
@@ -197,6 +227,74 @@ class MultiSearcherES:
             await self._get_llm_client()
         logger.info(f"[multi_vector] mode={mode}, entity_recall=bm25, ranking={ranking_strategy}")
 
+    def _build_stage_timings(
+        self,
+        mode: str,
+        timings: Dict[str, float],
+    ) -> Dict[str, float]:
+        stage_definitions = (
+            FAST_STAGE_TIMING_KEYS if mode == "fast" else PRECISE_STAGE_TIMING_KEYS
+        )
+        stage_timings: Dict[str, float] = {}
+        for key, _, timing_keys in stage_definitions:
+            stage_timings[key] = sum(
+                float(timings.get(timing_key, 0.0) or 0.0)
+                for timing_key in timing_keys
+            )
+        return stage_timings
+
+    def _format_stage_timings(
+        self,
+        mode: str,
+        stage_timings: Dict[str, float],
+    ) -> str:
+        stage_definitions = (
+            FAST_STAGE_TIMING_KEYS if mode == "fast" else PRECISE_STAGE_TIMING_KEYS
+        )
+        return ", ".join(
+            f"{label}={stage_timings.get(key, 0.0):.3f}s"
+            for key, label, _ in stage_definitions
+        )
+
+    def _format_timing_counts(self, stats: Dict[str, Any]) -> str:
+        count_labels = {
+            "entities": "entities",
+            "initial_events": "initial",
+            "expanded": "expanded",
+            "candidates": "candidates",
+            "seed": "seed",
+            "final_events": "events",
+            "selected": "selected",
+            "chunks": "chunks",
+            "final_chunks": "chunks",
+            "native_added": "native",
+        }
+        parts = []
+        for key, label in count_labels.items():
+            value = stats.get(key)
+            if value is not None:
+                parts.append(f"{label}={value}")
+        return " ".join(parts)
+
+    def _log_search_summary(
+        self,
+        *,
+        mode: str,
+        stats: Dict[str, Any],
+        stage_timings: Dict[str, float],
+        total_time: float,
+    ) -> None:
+        timing_text = self._format_stage_timings(mode, stage_timings)
+        counts_text = self._format_timing_counts(stats)
+        sections = stats.get("sections")
+        result_text = f" sections={sections}" if sections is not None else ""
+        counts_line = f"\n  counts: {counts_text}" if counts_text else ""
+        logger.info(
+            f"[multi_es.timing] mode={mode} total={total_time:.3f}s{result_text}"
+            f"{counts_line}\n"
+            f"  steps: {timing_text}"
+        )
+
     # ── Step1: BM25 实体召回 ────────────────────────────────────
 
     async def step1_retrieve_entities_bm25(
@@ -243,11 +341,11 @@ class MultiSearcherES:
                 f"{rank}:{eid} name={name!r} score={score:.4f} kept={kept}"
             )
 
-        logger.info(
+        logger.debug(
             f"[entity.bm25] input=1, candidates={len(hits)}, output={len(entity_ids)}, "
             f"top_k={entity_top_k}"
         )
-        logger.info(
+        logger.debug(
             f"[entity.bm25.entities] details={'; '.join(details_for_log)}"
         )
         return entity_ids
@@ -353,7 +451,7 @@ class MultiSearcherES:
 
         items = [{"event_id": eid, "score": score} for eid, score in merged.items()]
 
-        logger.info(
+        logger.debug(
             f"[event.recall] entity_to_event={db_count}/{entity_event_top_k}, "
             f"query_to_event={es_new_count}/{multi_top_k}, "
             f"merged={len(items)}"
@@ -571,7 +669,7 @@ class MultiSearcherES:
         seed_items = scored[: config.fast_answer_k]
         timings["step3_seed_score"] = time.perf_counter() - t0
 
-        logger.info(
+        logger.debug(
             f"[event.seed] entities={len(seed_entity_ids)}/{len(entity_ids)}, "
             f"entity_candidates={len(candidate_event_ids)}, "
             f"event1={len(event1)}, event2={len(event2)}, "
@@ -638,7 +736,7 @@ class MultiSearcherES:
         if "entity_ids" in includes:
             extra = f", event_entity_relations={event_entity_relations}"
 
-        logger.info(
+        logger.debug(
             f"[event.fetch] label={log_label}, input_event_ids={len(event_ids)}, "
             f"found_events={len(event_map)}{extra}"
         )
@@ -673,7 +771,7 @@ class MultiSearcherES:
                 total += 1
                 if eid not in state.entity_ids:
                     new_ids.append(eid)
-        logger.info(
+        logger.debug(
             f"[entity.dedupe] total={total}, "
             f"already_tracked={total - len(new_ids)}, "
             f"new={len(new_ids)}"
@@ -740,7 +838,7 @@ class MultiSearcherES:
                 )
 
             if not new_entity_ids:
-                logger.info(
+                logger.debug(
                     f"[event.expand] hop={hop+1}/{max_hops} "
                     f"no_new_entities tracked_entities={len(state.entity_ids)}"
                 )
@@ -755,7 +853,7 @@ class MultiSearcherES:
                     + time.perf_counter() - t_step
                 )
 
-            logger.info(
+            logger.debug(
                 f"[event.expand] hop={hop+1}/{max_hops} "
                 f"entities: {pre_entities} -> +{len(new_entity_ids)} new, "
                 f"total={len(state.entity_ids)}"
@@ -779,7 +877,7 @@ class MultiSearcherES:
             new_event_ids = all_new_event_ids
 
             if not new_event_ids:
-                logger.info(
+                logger.debug(
                     f"[event.expand] hop={hop+1}/{max_hops} "
                     f"no_new_events tracked_events={len(state.relation_ids)}"
                 )
@@ -798,7 +896,7 @@ class MultiSearcherES:
                         + time.perf_counter() - t_step
                     )
 
-                logger.info(
+                logger.debug(
                     f"[event.expand] hop={hop+1}/{max_hops} done: "
                     f"events {pre_events} -> {len(state.relation_ids)} (+{len(new_event_ids)}), "
                     f"entities {pre_entities} -> {len(state.entity_ids)}, "
@@ -837,7 +935,7 @@ class MultiSearcherES:
                     + time.perf_counter() - t_step
                 )
 
-            logger.info(
+            logger.debug(
                 f"[event.expand] hop={hop+1}/{max_hops} done: "
                 f"events {pre_events} -> {len(state.relation_ids)} (+{len(new_event_ids)}), "
                 f"entities {pre_entities} -> {len(state.entity_ids)}, "
@@ -891,7 +989,7 @@ class MultiSearcherES:
                 scored.append({"event_id": eid, "score": score})
 
         top_score_str = f"{scored[0]['score']:.4f}" if scored else "0"
-        logger.info(
+        logger.debug(
             f"[event.rank.coarse] input={len(event_ids)}, "
             f"returned={len(scored)}, "
             f"top_score={top_score_str}"
@@ -903,7 +1001,7 @@ class MultiSearcherES:
 
     def _parse_llm_filter_response(
         self,
-        useful_relations: List[str],
+        useful_relations: List[Any],
         valid_ids: set,
     ) -> List[str]:
         """解析 LLM 返回的 useful_relations，去重 + 校验。
@@ -992,7 +1090,12 @@ class MultiSearcherES:
                 "properties": {
                     "useful_relations": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "items": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "integer"},
+                            ],
+                        },
                     },
                 },
                 "required": ["useful_relations"],
@@ -1001,7 +1104,7 @@ class MultiSearcherES:
         )
 
         # 打印完整输出
-        logger.info(f"[event.filter.llm.raw] raw_response={response}")
+        logger.debug(f"[event.filter.llm.raw] raw_response={response}")
 
         # 4. 解析 + 去重校验
         useful_relations = response.get("useful_relations", [])
@@ -1081,7 +1184,7 @@ class MultiSearcherES:
                 if chunk_id in chunk_map:
                     result_map[eid] = chunk_map[chunk_id]
 
-        logger.info(
+        logger.debug(
             f"[chunk.fetch] events={len(event_ids)} -> "
             f"chunk_ids={len(chunk_ids)}, matched={len(result_map)}"
         )
@@ -1125,6 +1228,15 @@ class MultiSearcherES:
                 "items": [],
                 "_timings": timings,
                 "_query_vector": query_vector,
+                "stage_timings_seconds": self._build_stage_timings("fast", timings),
+                "_stats": {
+                    "mode": "fast",
+                    "entities": len(entity_ids),
+                    "seed": 0,
+                    "expanded": 0,
+                    "final_events": 0,
+                    "final_chunks": 0,
+                },
             }
 
         t0 = time.perf_counter()
@@ -1178,7 +1290,7 @@ class MultiSearcherES:
         ]
         min_output_score = min(output_scores) if output_scores else 0.0
         max_output_score = max(output_scores) if output_scores else 0.0
-        logger.info(
+        logger.debug(
             f"[fast.rank] input={rank_input_count}, output={len(final_items)}, "
             f"score_min={min_output_score:.4f}, score_max={max_output_score:.4f}"
         )
@@ -1204,7 +1316,7 @@ class MultiSearcherES:
             deduped.append(item)
 
         timings["total"] = time.perf_counter() - t_total
-        logger.info(
+        logger.debug(
             f"[fast.done] seed={len(seed_items)}, expanded_selected={len(expanded_items)}, "
             f"final_events={len(final_items)}, final_chunks={len(deduped)}"
         )
@@ -1212,6 +1324,15 @@ class MultiSearcherES:
             "items": deduped,
             "_timings": timings,
             "_query_vector": query_vector,
+            "stage_timings_seconds": self._build_stage_timings("fast", timings),
+            "_stats": {
+                "mode": "fast",
+                "entities": len(entity_ids),
+                "seed": len(seed_items),
+                "expanded": len(expanded_items),
+                "final_events": len(final_items),
+                "final_chunks": len(deduped),
+            },
         }
 
     # ── 主搜索接口 ──────────────────────────────────────────────
@@ -1254,7 +1375,7 @@ class MultiSearcherES:
             else None
         )
 
-        logger.info(
+        logger.debug(
             f"[multi_es.start] mode={config.mode}, ranking={ranking_strategy}, "
             f"entity_top_k={config.entity_top_k}, multi_top_k={config.multi_top_k}, "
             f"entity_event_top_k={precise_entity_event_top_k or config.fast_entity_event_candidate_k}"
@@ -1310,6 +1431,16 @@ class MultiSearcherES:
                 "items": [],
                 "_timings": timings,
                 "_query_vector": query_vector,
+                "stage_timings_seconds": self._build_stage_timings("precise", timings),
+                "_stats": {
+                    "mode": "precise",
+                    "entities": len(entity_ids),
+                    "initial_events": 0,
+                    "expanded": 0,
+                    "candidates": 0,
+                    "selected": 0,
+                    "chunks": 0,
+                },
             }
 
         t0 = time.perf_counter()
@@ -1357,7 +1488,7 @@ class MultiSearcherES:
         ]
         min_candidate_score = min(candidate_scores) if candidate_scores else 0.0
         max_candidate_score = max(candidate_scores) if candidate_scores else 0.0
-        logger.info(
+        logger.debug(
             f"[event.candidates] initial={len(event_ids)}, expanded={len(expanded_event_ids)}, "
             f"input={len(all_event_ids)}, output={len(candidate_items)}, "
             f"score_min={min_candidate_score:.4f}, score_max={max_candidate_score:.4f}"
@@ -1415,7 +1546,7 @@ class MultiSearcherES:
             deduped.append(item)
         items = deduped
 
-        logger.info(
+        logger.debug(
             f"[precise.done] events={len(candidate_items)}, selected={len(items)}, "
             f"chunks={sum(1 for item in items if item.get('chunk'))}"
         )
@@ -1425,6 +1556,16 @@ class MultiSearcherES:
             "items": items,
             "_timings": timings,
             "_query_vector": query_vector,
+            "stage_timings_seconds": self._build_stage_timings("precise", timings),
+            "_stats": {
+                "mode": "precise",
+                "entities": len(entity_ids),
+                "initial_events": len(event_ids),
+                "expanded": len(expanded_event_ids),
+                "candidates": len(candidate_items),
+                "selected": len(items),
+                "chunks": sum(1 for item in items if item.get("chunk")),
+            },
         }
 
     # ── 段落返回兼容接口 ───────────────────────────────────────
@@ -1457,6 +1598,7 @@ class MultiSearcherES:
         timings = result.get("_timings", {}).copy()
         if "total" in timings:
             timings.pop("total")
+        stats = dict(result.get("_stats", {}))
 
         seen_chunk_ids: set = set()
         sections = []
@@ -1502,16 +1644,28 @@ class MultiSearcherES:
                 native_added += 1
                 if len(sections) >= target:
                     break
-            logger.info(
+            logger.debug(
                 f"[native.fill] multi={multi_count}, native=+{native_added}, "
                 f"total={len(sections)}"
             )
+            stats["native_added"] = native_added
 
-        timings["total"] = time.perf_counter() - t_total
+        total_time = time.perf_counter() - t_total
+        timings["total"] = total_time
+        mode = self._resolve_search_mode(multi_config)
+        stage_timings = self._build_stage_timings(mode, timings)
+        stats["sections"] = min(len(sections), target)
+        self._log_search_summary(
+            mode=mode,
+            stats=stats,
+            stage_timings=stage_timings,
+            total_time=total_time,
+        )
 
         return {
             "sections": sections[:target],
             "_timings": timings,
+            "stage_timings_seconds": stage_timings,
         }
 
     # 兼容旧 pipelineEngine 接口名；内部不执行模型 rerank。
@@ -1569,7 +1723,7 @@ class MultiSearcherES:
         ]
         total_time = time.perf_counter() - start_time
 
-        logger.info(
+        logger.debug(
             f"[query.chunk] returned={len(sections)}, total_time={total_time:.3f}s"
         )
 
