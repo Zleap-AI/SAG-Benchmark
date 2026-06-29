@@ -660,14 +660,18 @@ class AtomicSearcher:
 
     def _parse_rerank_response(
         self,
-        useful_relations: List[str],
+        useful_relations: List[Any],
         valid_ids: set,
         relation_ids: List[str],
         relation_texts: List[str],
     ) -> List[str]:
-        """解析 LLM 返回的 useful_relations，提取 [id] 并纠错"""
+        """解析 LLM 返回的 useful_relations，提取纯数字或 [id] 并纠错"""
         selected: List[str] = []
         for line in useful_relations:
+            line = str(line).strip()
+            if line in valid_ids and line not in selected:
+                selected.append(line)
+                continue
             if "[" not in line or "]" not in line:
                 continue
             rel_id = line[line.find("[") + 1: line.find("]")].strip()
@@ -749,7 +753,12 @@ class AtomicSearcher:
                     "thought_process": {"type": "string"},
                     "useful_relations": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "items": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "integer"},
+                            ],
+                        },
                     },
                 },
                 "required": ["thought_process", "useful_relations"],
