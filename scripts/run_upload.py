@@ -211,7 +211,7 @@ async def upload_dataset(args):
                 await engine.extract_async(
                     ExtractBaseConfig(
                         parallel=True,
-                        max_concurrency=50,
+                        max_concurrency=args.max_concurrency,
                         enable_entity_vector_sync=True,
                         enable_event_entity_vector_sync=True,
                         test_mode=getattr(args, "atomic", False)
@@ -343,7 +343,10 @@ async def upload_dataset(args):
     # 主动关闭数据库连接和AI客户端，避免 "Event loop is closed" 警告
     try:
         logger.info("关闭数据库连接和AI客户端...")
-        # 关闭数据库连接
+        # 关闭存储后端和数据库连接
+        from pipeline.storage import close_storage_facade
+        await close_storage_facade()
+
         from pipeline.db import close_database
         await close_database()
 
@@ -395,6 +398,13 @@ async def main():
     )
 
     parser.add_argument(
+        "--max-concurrency",
+        type=int,
+        default=50,
+        help="最大提取并发数（默认：50，范围：1-100）"
+    )
+
+    parser.add_argument(
         "--enable-extraction",
         action="store_true",
         default=True,
@@ -416,6 +426,8 @@ async def main():
     )
 
     args = parser.parse_args()
+    if not 1 <= args.max_concurrency <= 100:
+        parser.error("--max-concurrency must be between 1 and 100")
 
     try:
         # 步骤1：生成 markdown 文件
@@ -505,6 +517,7 @@ async def main():
         # 确保关闭所有资源
         from pipeline.db import close_database
         from pipeline.core.ai.factory import close_all_clients
+        from pipeline.storage import close_storage_facade
 
         # 等待所有待处理的任务完成
         await asyncio.sleep(0.1)
@@ -513,6 +526,11 @@ async def main():
             await close_all_clients()
         except Exception as e:
             logger.warning(f"关闭AI客户端时出错: {e}")
+
+        try:
+            await close_storage_facade()
+        except Exception as e:
+            logger.warning(f"关闭存储后端时出错: {e}")
 
         try:
             await close_database()

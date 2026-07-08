@@ -19,12 +19,11 @@ from sqlalchemy import select
 from pipeline.core.ai.base import BaseLLMClient
 from pipeline.core.ai.models import LLMMessage, LLMRole
 from pipeline.core.prompt.manager import PromptManager
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.core.storage.repositories.event_repository import EventVectorRepository
 from pipeline.db import get_session_factory
 from pipeline.db.models import Article, EntityType as DBEntityType, SourceEvent
 from pipeline.exceptions import ExtractError
 from pipeline.modules.extract.config import ExtractConfig
+from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
 logger = get_logger("extract.processor")
@@ -56,8 +55,7 @@ class EventProcessor:
         self.entity_types: List[DBEntityType] = []
 
         # 历史事项召回相关（延迟初始化）
-        self._es_client = None
-        self._event_repo = None
+        self._vector_store = None
         self._embedding_client = None
 
     async def initialize(self, entity_types: List[DBEntityType]):
@@ -437,10 +435,12 @@ class EventProcessor:
             content_vector = await self._embedding_client.generate_embedding(content_text[:max_len])
 
             # 从向量库召回
-            results = await self._event_repo.search_similar_by_content(
+            results = await self._vector_store.search_events_by_vector(
                 query_vector=content_vector,
                 k=self.config.related_events_top_k,
                 source_config_id=self.config.source_config_id,
+                vector_field="content_vector",
+                exact=True,
             )
 
             # 过滤低相似度结果
@@ -488,14 +488,14 @@ class EventProcessor:
             return related_events
 
         except Exception as e:
-            logger.info(f"历史事项召回失败: {e}")
+            backend = getattr(self._vector_store, "backend_name", "unknown")
+            logger.warning(f"历史事项召回失败: backend={backend}, error={e}")
             return []
 
     async def _ensure_recall_deps(self):
         """确保召回依赖可用"""
-        if self._event_repo is None:
+        if self._vector_store is None:
             from pipeline.modules.load.processor import DocumentProcessor
 
-            self._es_client = get_es_client()
-            self._event_repo = EventVectorRepository(self._es_client)
+            self._vector_store = get_storage_facade().vector
             self._embedding_client = DocumentProcessor(llm_client=self.llm_client)

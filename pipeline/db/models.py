@@ -14,6 +14,7 @@ from typing import List, Optional
 
 from sqlalchemy import (
     CHAR,
+    Column,
     JSON,
     BigInteger,
     Boolean,
@@ -32,8 +33,21 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.mysql import LONGTEXT, MEDIUMTEXT, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import UserDefinedType
 
 from pipeline.db.base import Base
+
+
+class OceanBaseVector(UserDefinedType):
+    """OceanBase VECTOR(n) column type, enabled only for OceanBase full mode."""
+
+    cache_ok = True
+
+    def __init__(self, dimensions: int):
+        self.dimensions = dimensions
+
+    def get_col_spec(self, **_: object) -> str:
+        return f"VECTOR({self.dimensions})"
 
 
 class SourceConfig(Base):
@@ -731,11 +745,6 @@ class SourceEvent(Base):
         cascade="all, delete-orphan",
     )
 
-    @property
-    def entities(self) -> List["Entity"]:
-        """通过关联表访问实体列表"""
-        return [assoc.entity for assoc in self.event_associations]
-
     # 索引
     # 注意：MySQL 不支持在有外键动作的列上使用 CHECK 约束，数据完整性由应用层保证
     __table_args__ = (
@@ -827,6 +836,81 @@ class SourceChunk(Base):
 
     def __repr__(self) -> str:
         return f"<SourceChunk(id={self.id}, source_type={self.source_type}, source_id={self.source_id})>"
+
+
+def _should_map_oceanbase_database_columns() -> bool:
+    from pipeline.core.config import get_settings
+
+    settings = get_settings()
+    return settings.effective_database_backend == "oceanbase"
+
+
+def _should_map_oceanbase_vector_columns() -> bool:
+    from pipeline.core.config import get_settings
+
+    settings = get_settings()
+    return _should_map_oceanbase_database_columns() and settings.effective_vector_backend == "oceanbase"
+
+
+def _oceanbase_vector_dimensions() -> int:
+    from pipeline.core.config import get_settings
+
+    settings = get_settings()
+    return settings.embedding_dimensions or 1024
+
+
+def _attach_oceanbase_database_columns() -> None:
+    if not _should_map_oceanbase_database_columns():
+        return
+
+    SourceEvent.entities = Column(  # type: ignore[attr-defined]
+        JSON,
+        nullable=True,
+        comment="event entity id list",
+    )
+
+
+def _attach_oceanbase_vector_columns() -> None:
+    if not _should_map_oceanbase_vector_columns():
+        return
+
+    dims = _oceanbase_vector_dimensions()
+    vector_type = OceanBaseVector(dims)
+
+    SourceChunk.heading_vector = Column(  # type: ignore[attr-defined]
+        OceanBaseVector(dims),
+        nullable=True,
+        comment="heading embedding vector",
+    )
+    SourceChunk.content_vector = Column(  # type: ignore[attr-defined]
+        OceanBaseVector(dims),
+        nullable=True,
+        comment="content embedding vector",
+    )
+    SourceEvent.title_vector = Column(  # type: ignore[attr-defined]
+        OceanBaseVector(dims),
+        nullable=True,
+        comment="event title embedding vector",
+    )
+    SourceEvent.content_vector = Column(  # type: ignore[attr-defined]
+        OceanBaseVector(dims),
+        nullable=True,
+        comment="event content embedding vector",
+    )
+    Entity.vector = Column(  # type: ignore[attr-defined]
+        vector_type,
+        nullable=True,
+        comment="entity name embedding vector",
+    )
+    EventEntity.vector = Column(  # type: ignore[attr-defined]
+        OceanBaseVector(dims),
+        nullable=True,
+        comment="event-entity relation embedding vector",
+    )
+
+
+_attach_oceanbase_database_columns()
+_attach_oceanbase_vector_columns()
 
 
 __all__ = [

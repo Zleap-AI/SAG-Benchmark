@@ -70,7 +70,29 @@ uv sync
 cp .env.example .env
 ```
 
-Edit `.env` and fill in MySQL, Elasticsearch, LLM, embedding, and rerank settings. Do not commit real secrets.
+Activate the virtual environment when you want to run Python commands directly:
+
+```bash
+source .venv/bin/activate
+```
+
+On Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Edit `.env` and fill in the storage backend, LLM, embedding, and rerank settings. Do not commit real secrets.
+
+Storage is selected through `STORAGE_PROFILE`. The application code uses one storage facade, so upload and search callers do not need to know whether vectors are stored in Elasticsearch or OceanBase.
+
+| Profile | SQL database | Vector/search backend | Notes |
+|------|------|------|------|
+| `mysql_es` | MySQL | Elasticsearch | Default paper-compatible local setup |
+| `oceanbase_es` | OceanBase | Elasticsearch | Uses OceanBase for structured tables, keeps ES for vector search |
+| `oceanbase_full` | OceanBase | OceanBase | Stores vectors in OceanBase table columns and searches through OceanBase vector indexes |
+
+`DATABASE_BACKEND` and `VECTOR_BACKEND` are advanced overrides. Leave them empty unless you need to bypass the profile mapping.
 
 ### 2. Start Local Services
 
@@ -80,25 +102,57 @@ All local services are managed by `docker-compose.yml`.
 |------|--------|----------|------|
 | MySQL | `sag2_mysql` | `3306` | Default user `sag2` |
 | Elasticsearch | `new_sag_elasticsearch` | `9200` | Security disabled |
+| OceanBase | `oceanbase-ce` | `2881` | Optional backend for `oceanbase_es` / `oceanbase_full` |
 | MLflow | `sag2_mlflow` | `5000` | Optional experiment tracking |
 
-Ports can be overridden in `.env` with `MYSQL_PORT`, `ES_PORT`, and `MLFLOW_PORT`.
+Ports can be overridden in `.env` with `MYSQL_PORT`, `ES_PORT`, and `MLFLOW_PORT`. OceanBase is exposed on `2881` for SQL client traffic.
+
+Start only the services required by the selected `STORAGE_PROFILE`:
 
 ```bash
-docker compose up -d
+# mysql_es
+docker compose up -d mysql elasticsearch
+
+# oceanbase_es
+docker compose up -d oceanbase elasticsearch
+
+# oceanbase_full
+docker compose up -d oceanbase
+```
+
+Optional MLflow tracking can be started separately:
+
+```bash
+docker compose up -d mlflow
 docker compose ps
 ```
 
 ### 3. Initialize Database and Indexes
 
 ```bash
+# mysql_es
 uv run python scripts/init_database.py --fix-grants
 uv run python scripts/init_elasticsearch.py
+
+# oceanbase_es
+uv run python scripts/init_database.py
+uv run python scripts/init_elasticsearch.py
+
+# oceanbase_full
+uv run python scripts/init_database.py
 ```
+
+`scripts/init_database.py` reads `STORAGE_PROFILE` and initializes the active SQL backend:
+
+- `mysql_es`: creates the normal MySQL structured tables.
+- `oceanbase_es`: creates the normal OceanBase structured tables and adds OceanBase-only compatibility columns such as `source_event.entities`.
+- `oceanbase_full`: does everything from `oceanbase_es`, then idempotently adds OceanBase vector columns and vector indexes for chunks, events, entities, and event-entity relations.
+
+Run `scripts/init_elasticsearch.py` only when the active vector backend is Elasticsearch (`mysql_es` or `oceanbase_es`). It is not required for `oceanbase_full`. The `--fix-grants` option is only for local MySQL permission repair; do not use it for OceanBase profiles.
 
 ### 4. Upload Datasets
 
-`run_upload.py` first converts `pipeline/evaluation/dataset/<dataset>.json` into a Markdown corpus, then writes it to MySQL and Elasticsearch. After upload, it generates:
+`run_upload.py` first converts `pipeline/evaluation/dataset/<dataset>.json` into a Markdown corpus, then writes structured rows and vectors through the configured storage facade. With `mysql_es`, data goes to MySQL plus Elasticsearch. With `oceanbase_full`, structured data and vectors are written into OceanBase. After upload, it generates:
 
 ```text
 pipeline/evaluation/source/SAG/<LLM_MODEL>/<dataset>/<timestamp>/source_info.json
@@ -277,9 +331,11 @@ SAG-Benchmark/
 │   │   ├── extract/                # Event/entity extraction
 │   │   ├── load/                   # Document loading and chunking
 │   │   └── search/                 # Retrieval strategies
+│   ├── storage/                    # Storage facade and backend providers
 │   └── utils/
 ├── scripts/
 │   ├── init_database.py
+│   ├── init_oceanbase_vectors.py
 │   ├── init_elasticsearch.py
 │   ├── run_upload.py
 │   ├── run_search_benchmark.py
@@ -296,6 +352,8 @@ SAG-Benchmark/
 ## Reproduction Notes
 
 - Results depend on the actual LLM, embedding, and rerank services configured in `.env`; changing models, embedding dimensions, or rerank settings can change the metrics.
+- Storage behavior depends on `STORAGE_PROFILE`. Keep the same profile for initialization, upload, and search unless you intentionally migrate data.
+- OceanBase vector search uses `COSINE` distance and returns an ES-compatible `_score` computed from the returned cosine distance. Approximate ANN search uses OceanBase `APPROX LIMIT ... PARAMETERS (ef_search=...)`.
 - When `--source-config-id` is omitted, `run_search_benchmark.py` looks up the latest uploaded source based on `LLM_MODEL` in `.env`.
 - Full dataset upload and benchmark runs call external model services. Check quota, concurrency, and timeout settings before running.
 - Stop local services with `docker compose down`. To delete local database volumes, use `docker compose down -v`; this removes uploaded data.

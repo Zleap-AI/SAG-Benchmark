@@ -72,12 +72,36 @@ services:
     networks:
       - sag2_network
 
+
+  oceanbase:
+    image: oceanbase/oceanbase-ce:4.4.2-lts
+    container_name: oceanbase-ce
+    hostname: oceanbase
+    restart: unless-stopped
+    ports:
+      - "2881:2881"
+      - "2882:2882"
+    environment:
+      MODE: normal
+      OB_CLUSTER_NAME: obcluster
+      OB_TENANT_NAME: sag2
+      # OB_MEMORY_LIMIT: 6G
+      # OB_DATAFILE_SIZE: 5G
+      # FASTBOOT: "true"
+    volumes:
+      - ob_data:/root/ob
+      - ./ob-start.sh:/root/boot/ob-start.sh:ro
+      - ./init.sql:/root/boot/init.sql:ro
+    entrypoint: ["bash", "/root/boot/ob-start.sh"]
+
 volumes:
   es_data:
     driver: local
   sag2_mysql_data:
     driver: local
   mlflow_data:
+    driver: local
+  ob_data:
     driver: local
 
 networks:

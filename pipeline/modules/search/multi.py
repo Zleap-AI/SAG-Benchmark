@@ -44,10 +44,6 @@ from sqlalchemy import select
 
 from pipeline.core.ai.factory import create_llm_client
 from pipeline.core.ai.models import LLMMessage, LLMRole
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.core.storage.repositories.entity_repository import EntityVectorRepository
-from pipeline.core.storage.repositories.event_repository import EventVectorRepository
-from pipeline.core.storage.repositories.source_chunk_repository import SourceChunkRepository
 from pipeline.db import EventEntity, SourceChunk, SourceEvent, get_session_factory
 from pipeline.modules.load.processor import DocumentProcessor
 from pipeline.modules.search.config import MultiConfig
@@ -57,6 +53,7 @@ from pipeline.modules.search.step5_strategies import (
     MultiStep5Strategy,
     Step5Strategy,
 )
+from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
 logger = get_logger("search.multi")
@@ -189,7 +186,9 @@ class MultiSearcher:
     def __init__(self):
         self._llm_client = None
         self._processor = None
-        self._entity_repo = None
+        storage = get_storage_facade()
+        self._search_store = storage.search
+        self._vector_store = storage.vector
 
     def _get_search_state(self) -> _SearchState:
         state = _search_state_var.get()
@@ -222,11 +221,6 @@ class MultiSearcher:
         if self._llm_client is None:
             self._llm_client = await create_llm_client(scenario="search")
         return self._llm_client
-
-    def _get_entity_repo(self) -> EntityVectorRepository:
-        if self._entity_repo is None:
-            self._entity_repo = EntityVectorRepository(get_es_client())
-        return self._entity_repo
 
     async def _get_processor(self) -> DocumentProcessor:
         if self._processor is None:
@@ -321,8 +315,6 @@ class MultiSearcher:
         threshold = key_similarity_threshold if key_similarity_threshold is not None else 0.9
 
         processor = await self._get_processor()
-        repo = self._get_entity_repo()
-
         embeddings = [await processor.generate_embedding(name) for name in query_entities]
 
         entity_ids: List[str] = []
@@ -331,7 +323,7 @@ class MultiSearcher:
         seen: set = set()
 
         for vec in embeddings:
-            results = await repo.search_similar(
+            results = await self._vector_store.search_entities_by_vector(
                 query_vector=vec,
                 k=top_k,
                 source_config_ids=source_config_ids,
@@ -406,11 +398,11 @@ class MultiSearcher:
         # 通道2: query → event
         processor = await self._get_processor()
         query_vector = await processor.generate_embedding(query)
-        event_repo = EventVectorRepository(get_es_client())
-        es_results = await event_repo.search_similar_by_title(
+        es_results = await self._search_store.search_events_by_vector(
             query_vector=query_vector,
             k=multi_top_k * 3,
             source_config_ids=source_config_ids,
+            vector_field="title_vector",
         )
 
         es_new_count = 0
@@ -550,12 +542,12 @@ class MultiSearcher:
         processor = await self._get_processor()
         query_vector = await processor.generate_embedding(query)
 
-        event_repo = EventVectorRepository(get_es_client())
-        results = await event_repo.search_similar_by_content(
+        results = await self._search_store.search_events_by_vector(
             query_vector=query_vector,
             k=max_events,
             source_config_ids=source_config_ids,
             event_ids=event_ids,
+            vector_field="content_vector",
         )
 
         scored = []
@@ -1079,8 +1071,7 @@ class MultiSearcher:
         processor = await self._get_processor()
         query_vector = await processor.generate_embedding(query)
 
-        chunk_repo = SourceChunkRepository(get_es_client())
-        es_results = await chunk_repo.search_similar_by_content(
+        es_results = await self._search_store.search_chunks_by_vector(
             query_vector=query_vector,
             k=config.max_sections * 2,
             source_config_ids=source_config_ids,

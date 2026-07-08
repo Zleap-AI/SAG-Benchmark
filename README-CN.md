@@ -70,7 +70,29 @@ uv sync
 cp .env.example .env
 ```
 
-编辑 `.env`，填写 MySQL、Elasticsearch、LLM、Embedding 和 Rerank 配置。不要提交真实密钥。
+如果需要直接运行 Python 命令，可以先激活虚拟环境：
+
+```bash
+source .venv/bin/activate
+```
+
+Windows PowerShell 使用：
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+编辑 `.env`，填写存储后端、LLM、Embedding 和 Rerank 配置。不要提交真实密钥。
+
+存储后端通过 `STORAGE_PROFILE` 选择。应用层统一调用存储门面，上传和检索逻辑不需要知道向量最终写入 Elasticsearch 还是 OceanBase。
+
+| Profile | SQL 数据库 | 向量/搜索后端 | 说明 |
+|------|------|------|------|
+| `mysql_es` | MySQL | Elasticsearch | 默认论文复现兼容模式 |
+| `oceanbase_es` | OceanBase | Elasticsearch | 结构化表使用 OceanBase，向量搜索仍使用 ES |
+| `oceanbase_full` | OceanBase | OceanBase | 向量直接存入 OceanBase 主表列，并使用 OceanBase 向量索引检索 |
+
+`DATABASE_BACKEND` 和 `VECTOR_BACKEND` 是高级覆盖项。一般保持为空，让系统根据 `STORAGE_PROFILE` 自动推导。
 
 ### 2. 启动基础服务
 
@@ -80,25 +102,57 @@ cp .env.example .env
 |------|--------|----------|------|
 | MySQL | `sag2_mysql` | `3306` | 默认用户 `sag2` |
 | Elasticsearch | `new_sag_elasticsearch` | `9200` | 已关闭安全认证 |
+| OceanBase | `oceanbase-ce` | `2881` | `oceanbase_es` / `oceanbase_full` 可选后端 |
 | MLflow | `sag2_mlflow` | `5000` | 可选实验记录 |
 
-端口可在 `.env` 中通过 `MYSQL_PORT`、`ES_PORT`、`MLFLOW_PORT` 覆盖。
+端口可在 `.env` 中通过 `MYSQL_PORT`、`ES_PORT`、`MLFLOW_PORT` 覆盖。OceanBase SQL 客户端端口为 `2881`。
+
+按当前 `STORAGE_PROFILE` 只启动需要的服务：
 
 ```bash
-docker compose up -d
+# mysql_es
+docker compose up -d mysql elasticsearch
+
+# oceanbase_es
+docker compose up -d oceanbase elasticsearch
+
+# oceanbase_full
+docker compose up -d oceanbase
+```
+
+如果需要 MLflow 实验记录，可以单独启动：
+
+```bash
+docker compose up -d mlflow
 docker compose ps
 ```
 
 ### 3. 初始化数据库和索引
 
 ```bash
+# mysql_es
 uv run python scripts/init_database.py --fix-grants
 uv run python scripts/init_elasticsearch.py
+
+# oceanbase_es
+uv run python scripts/init_database.py
+uv run python scripts/init_elasticsearch.py
+
+# oceanbase_full
+uv run python scripts/init_database.py
 ```
+
+`scripts/init_database.py` 会读取 `STORAGE_PROFILE` 并初始化当前 SQL 后端：
+
+- `mysql_es`：创建普通 MySQL 结构化表。
+- `oceanbase_es`：创建普通 OceanBase 结构化表，并补齐 OceanBase 专用兼容列，例如 `source_event.entities`。
+- `oceanbase_full`：包含 `oceanbase_es` 的所有步骤，并幂等补齐 chunk、event、entity、event-entity 的 OceanBase 向量列和向量索引。
+
+只有向量后端是 Elasticsearch 时才需要执行 `scripts/init_elasticsearch.py`，也就是 `mysql_es` 或 `oceanbase_es`。`oceanbase_full` 不需要 ES 索引初始化。`--fix-grants` 只用于本地 MySQL 权限修复，OceanBase profile 不要使用。
 
 ### 4. 上传数据集
 
-`run_upload.py` 会先把 `pipeline/evaluation/dataset/<dataset>.json` 转为 Markdown corpus，再写入数据库和 Elasticsearch。上传完成后会生成：
+`run_upload.py` 会先把 `pipeline/evaluation/dataset/<dataset>.json` 转为 Markdown corpus，再通过统一存储门面写入结构化数据和向量。`mysql_es` 会写入 MySQL + Elasticsearch，`oceanbase_full` 会把结构化数据和向量都写入 OceanBase。上传完成后会生成：
 
 ```text
 pipeline/evaluation/source/SAG/<LLM_MODEL>/<dataset>/<timestamp>/source_info.json
@@ -277,9 +331,11 @@ SAG-Benchmark/
 │   │   ├── extract/                # event/entity 抽取
 │   │   ├── load/                   # 文档加载与分块
 │   │   └── search/                 # 检索策略
+│   ├── storage/                    # 存储门面与后端 Provider
 │   └── utils/
 ├── scripts/
 │   ├── init_database.py
+│   ├── init_oceanbase_vectors.py
 │   ├── init_elasticsearch.py
 │   ├── run_upload.py
 │   ├── run_search_benchmark.py
@@ -296,6 +352,8 @@ SAG-Benchmark/
 ## 复现注意事项
 
 - 结果依赖 `.env` 中实际配置的 LLM、Embedding、Rerank 服务；模型、维度或 rerank 配置变化会影响指标。
+- 存储行为由 `STORAGE_PROFILE` 决定。初始化、上传、搜索建议保持同一个 profile，除非你明确在做数据迁移。
+- OceanBase 向量检索统一使用 `COSINE` 距离，并基于返回的 cosine distance 转成兼容 ES 习惯的 `_score`。近似 ANN 检索使用 OceanBase `APPROX LIMIT ... PARAMETERS (ef_search=...)`。
 - `run_search_benchmark.py` 未显式传 `--source-config-id` 时，会按 `.env` 的 `LLM_MODEL` 查找最新上传的数据源。
 - 完整数据集上传和 benchmark 会调用外部模型服务，运行前请确认额度、并发和超时配置。
 - 停止本地服务使用 `docker compose down`；如需删除本地数据库卷，使用 `docker compose down -v`，该操作会清空已上传数据。

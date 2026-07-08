@@ -3,8 +3,9 @@
 
 一次性完成所有数据库初始化工作：
   1. 创建/确认 10 个必需的表
-  2. 插入默认实体类型（Upsert）
-  3. 验证表结构与数据完整性
+  2. 按 STORAGE_PROFILE 执行后端专属初始化
+  3. 插入默认实体类型（Upsert）
+  4. 验证表结构与数据完整性
 
 10 个必需的表及关系：
   source_config                                   # 信息源配置（根表）
@@ -66,19 +67,19 @@ def print_header(text_: str) -> None:
 
 
 def print_success(text_: str) -> None:
-    print(f"  ✓ {text_}")
+    print(f"  [OK] {text_}")
 
 
 def print_info(text_: str) -> None:
-    print(f"  • {text_}")
+    print(f"  - {text_}")
 
 
 def print_warning(text_: str) -> None:
-    print(f"  ⚠️  {text_}")
+    print(f"  [WARN] {text_}")
 
 
 def print_error(text_: str) -> None:
-    print(f"  ✗ {text_}")
+    print(f"  [ERR] {text_}")
 
 
 # ─────────────────────────── 命令行参数 ───────────────────────────
@@ -247,7 +248,7 @@ async def create_tables() -> None:
     """
     幂等建表：仅创建不存在的表，不删除任何数据。
     """
-    print_header("Step 1 / 3  创建表结构")
+    print_header("Step 1 / 4  创建表结构")
 
     from pipeline.db import models  # noqa: F401
 
@@ -283,6 +284,84 @@ async def create_tables() -> None:
         print_success(f"{t}")
 
 
+async def _column_exists(table_name: str, column_name: str) -> bool:
+    settings = get_settings()
+    database_name = (
+        settings.oceanbase_database
+        if settings.effective_database_backend == "oceanbase"
+        else settings.mysql_database
+    )
+    engine = get_engine()
+    async with engine.connect() as conn:
+        result = await conn.execute(
+            text(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.columns
+                WHERE table_schema = :database_name
+                  AND table_name = :table_name
+                  AND column_name = :column_name
+                """
+            ),
+            {
+                "database_name": database_name,
+                "table_name": table_name,
+                "column_name": column_name,
+            },
+        )
+        return int(result.scalar_one()) > 0
+
+
+async def ensure_compat_columns() -> None:
+    """Add additive compatibility columns for existing OceanBase deployments."""
+    print_header("Step 2 / 4  Ensure compatibility columns")
+
+    settings = get_settings()
+    if settings.effective_database_backend != "oceanbase":
+        print_info("database_backend is MySQL; skip OceanBase-only source_event.entities")
+        return
+
+    if await _column_exists("source_event", "entities"):
+        print_info("source_event.entities already exists")
+        return
+
+    engine = get_engine()
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "ALTER TABLE source_event "
+                "ADD COLUMN entities JSON NULL COMMENT 'event entity id list'"
+            )
+        )
+    print_success("source_event.entities added")
+
+
+async def initialize_profile_specific_storage() -> None:
+    """Run backend-specific initialization inferred from STORAGE_PROFILE."""
+    settings = get_settings()
+    print_header("Step 3 / 4  按存储方案执行专属初始化")
+    print_info(
+        "storage_profile="
+        f"{settings.storage_profile}, database_backend={settings.effective_database_backend}, "
+        f"vector_backend={settings.effective_vector_backend}"
+    )
+
+    if (
+        settings.effective_database_backend == "oceanbase"
+        and settings.effective_vector_backend == "oceanbase"
+    ):
+        from scripts.init_oceanbase_vectors import initialize_oceanbase_vectors
+
+        await initialize_oceanbase_vectors()
+        return
+
+    if settings.effective_vector_backend == "elasticsearch":
+        print_info("向量/搜索后端为 Elasticsearch，跳过 OceanBase 向量列和向量索引初始化")
+        return
+
+    print_info("当前存储方案没有额外数据库初始化步骤")
+
+
 # ─────────────────────────── Step 2：插入默认实体类型 ───────────────────────────
 
 async def insert_default_entity_types() -> None:
@@ -292,7 +371,7 @@ async def insert_default_entity_types() -> None:
     - 存在：比对字段，有变化则更新（保留原 ID，不破坏外键）
     - 不存在：插入新记录
     """
-    print_header("Step 2 / 3  同步默认实体类型")
+    print_header("Step 4 / 4  同步默认实体类型")
 
     factory = get_session_factory()
     async with factory() as session:
@@ -354,7 +433,7 @@ async def insert_default_entity_types() -> None:
 
 async def verify_database() -> None:
     """验证数据库最终状态：表存在性 + 实体类型数量。"""
-    print_header("Step 3 / 3  验证数据库")
+    print_header("Final check  验证数据库")
 
     engine = get_engine()
     async with engine.connect() as conn:
@@ -414,6 +493,8 @@ async def main() -> None:
             reset_engine()
 
         await create_tables()
+        await ensure_compat_columns()
+        await initialize_profile_specific_storage()
         await insert_default_entity_types()
         await verify_database()
 
@@ -429,6 +510,9 @@ async def main() -> None:
 
     finally:
         from pipeline.db.base import close_database
+        from pipeline.storage import close_storage_facade
+
+        await close_storage_facade()
         await close_database()
 
 
