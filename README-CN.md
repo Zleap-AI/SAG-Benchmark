@@ -84,6 +84,49 @@ Windows PowerShell 使用：
 
 编辑 `.env`，填写存储后端、LLM、Embedding 和 Rerank 配置。不要提交真实密钥。
 
+上传或检索前，至少检查这些 `.env` 配置：
+
+```env
+STORAGE_PROFILE=mysql_es
+
+LLM_API_KEY=sk-...
+LLM_BASE_URL=https://...
+LLM_MODEL=qwen3.6-flash
+LLM_LANGUAGE=en
+
+EMBEDDING_API_KEY=...
+EMBEDDING_BASE_URL=http://...
+EMBEDDING_MODEL_NAME=text-embedding-bge-large-en-v1.5
+EMBEDDING_DIMENSIONS=1024
+
+RERANK_BASE_URL=http://...
+RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B
+RERANK_ENDPOINT=/rerank
+```
+
+然后按当前 profile 填写对应的存储连接：
+
+```env
+# mysql_es
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=sag2
+MYSQL_PASSWORD=sag2_pass
+MYSQL_DATABASE=sag2
+
+# oceanbase_es / oceanbase_full
+OCEANBASE_HOST=localhost
+OCEANBASE_PORT=2881
+OCEANBASE_USER=sag2@sag2
+OCEANBASE_PASSWORD=sag2_pass
+OCEANBASE_DATABASE=sag2
+
+# mysql_es / oceanbase_es
+ES_HOST=localhost
+ES_PORT=9200
+ES_SCHEME=http
+```
+
 存储后端通过 `STORAGE_PROFILE` 选择。应用层统一调用存储门面，上传和检索逻辑不需要知道向量最终写入 Elasticsearch 还是 OceanBase。
 
 | Profile | SQL 数据库 | 向量/搜索后端 | 说明 |
@@ -107,20 +150,40 @@ Windows PowerShell 使用：
 
 端口可在 `.env` 中通过 `MYSQL_PORT`、`ES_PORT`、`MLFLOW_PORT` 覆盖。OceanBase SQL 客户端端口为 `2881`。
 
-按当前 `STORAGE_PROFILE` 只启动需要的服务：
+按当前 `STORAGE_PROFILE` 选择一个启动方式即可，不需要全部执行。
+
+#### 2.1 `mysql_es`
 
 ```bash
-# mysql_es
 docker compose up -d mysql elasticsearch
-
-# oceanbase_es
-docker compose up -d oceanbase elasticsearch
-
-# oceanbase_full
-docker compose up -d oceanbase
+docker compose ps
 ```
 
-使用 OceanBase profile 时，需要等容器日志显示租户 DDL 已就绪并完成 `init.sql` 后，再执行项目初始化：
+#### 2.2 `oceanbase_es`
+
+```bash
+docker compose up -d oceanbase elasticsearch
+docker compose ps
+```
+
+使用 `oceanbase_es` 时，需要等 OceanBase 容器日志显示租户 DDL 已就绪并完成 `init.sql` 后，再执行项目初始化：
+
+```text
+==> sag2 tenant ready.
+==> Waiting for sag2 tenant DDL...
+==> sag2 tenant DDL ready.
+==> init.sql executed.
+==> All done.
+```
+
+#### 2.3 `oceanbase_full`
+
+```bash
+docker compose up -d oceanbase
+docker compose ps
+```
+
+使用 `oceanbase_full` 时，同样需要等 OceanBase 容器日志显示租户 DDL 已就绪并完成 `init.sql`：
 
 ```text
 ==> sag2 tenant ready.
@@ -134,21 +197,29 @@ docker compose up -d oceanbase
 
 ```bash
 docker compose up -d mlflow
-docker compose ps
 ```
 
 ### 3. 初始化数据库和索引
 
+按当前 `STORAGE_PROFILE` 选择一个初始化方式即可，不需要全部执行。
+
+#### 3.1 `mysql_es`
+
 ```bash
-# mysql_es
 uv run python scripts/init_database.py --fix-grants
 uv run python scripts/init_elasticsearch.py
+```
 
-# oceanbase_es
+#### 3.2 `oceanbase_es`
+
+```bash
 uv run python scripts/init_database.py
 uv run python scripts/init_elasticsearch.py
+```
 
-# oceanbase_full
+#### 3.3 `oceanbase_full`
+
+```bash
 uv run python scripts/init_database.py
 ```
 

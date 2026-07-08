@@ -84,6 +84,49 @@ On Windows PowerShell:
 
 Edit `.env` and fill in the storage backend, LLM, embedding, and rerank settings. Do not commit real secrets.
 
+At minimum, check these `.env` values before running upload or search:
+
+```env
+STORAGE_PROFILE=mysql_es
+
+LLM_API_KEY=sk-...
+LLM_BASE_URL=https://...
+LLM_MODEL=qwen3.6-flash
+LLM_LANGUAGE=en
+
+EMBEDDING_API_KEY=...
+EMBEDDING_BASE_URL=http://...
+EMBEDDING_MODEL_NAME=text-embedding-bge-large-en-v1.5
+EMBEDDING_DIMENSIONS=1024
+
+RERANK_BASE_URL=http://...
+RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B
+RERANK_ENDPOINT=/rerank
+```
+
+Then fill the storage connection used by your profile:
+
+```env
+# mysql_es
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=sag2
+MYSQL_PASSWORD=sag2_pass
+MYSQL_DATABASE=sag2
+
+# oceanbase_es / oceanbase_full
+OCEANBASE_HOST=localhost
+OCEANBASE_PORT=2881
+OCEANBASE_USER=sag2@sag2
+OCEANBASE_PASSWORD=sag2_pass
+OCEANBASE_DATABASE=sag2
+
+# mysql_es / oceanbase_es
+ES_HOST=localhost
+ES_PORT=9200
+ES_SCHEME=http
+```
+
 Storage is selected through `STORAGE_PROFILE`. The application code uses one storage facade, so upload and search callers do not need to know whether vectors are stored in Elasticsearch or OceanBase.
 
 | Profile | SQL database | Vector/search backend | Notes |
@@ -107,20 +150,40 @@ All local services are managed by `docker-compose.yml`.
 
 Ports can be overridden in `.env` with `MYSQL_PORT`, `ES_PORT`, and `MLFLOW_PORT`. OceanBase is exposed on `2881` for SQL client traffic.
 
-Start only the services required by the selected `STORAGE_PROFILE`:
+Choose one startup path for the selected `STORAGE_PROFILE`. Do not run all of them.
+
+#### 2.1 `mysql_es`
 
 ```bash
-# mysql_es
 docker compose up -d mysql elasticsearch
-
-# oceanbase_es
-docker compose up -d oceanbase elasticsearch
-
-# oceanbase_full
-docker compose up -d oceanbase
+docker compose ps
 ```
 
-For OceanBase profiles, wait until the container log shows that tenant DDL is ready and `init.sql` has completed before running project initialization:
+#### 2.2 `oceanbase_es`
+
+```bash
+docker compose up -d oceanbase elasticsearch
+docker compose ps
+```
+
+For `oceanbase_es`, wait until the OceanBase container log shows that tenant DDL is ready and `init.sql` has completed before running project initialization:
+
+```text
+==> sag2 tenant ready.
+==> Waiting for sag2 tenant DDL...
+==> sag2 tenant DDL ready.
+==> init.sql executed.
+==> All done.
+```
+
+#### 2.3 `oceanbase_full`
+
+```bash
+docker compose up -d oceanbase
+docker compose ps
+```
+
+For `oceanbase_full`, also wait until the OceanBase container log shows that tenant DDL is ready and `init.sql` has completed:
 
 ```text
 ==> sag2 tenant ready.
@@ -134,21 +197,29 @@ Optional MLflow tracking can be started separately:
 
 ```bash
 docker compose up -d mlflow
-docker compose ps
 ```
 
 ### 3. Initialize Database and Indexes
 
+Choose one initialization path for the selected `STORAGE_PROFILE`. Do not run all of them.
+
+#### 3.1 `mysql_es`
+
 ```bash
-# mysql_es
 uv run python scripts/init_database.py --fix-grants
 uv run python scripts/init_elasticsearch.py
+```
 
-# oceanbase_es
+#### 3.2 `oceanbase_es`
+
+```bash
 uv run python scripts/init_database.py
 uv run python scripts/init_elasticsearch.py
+```
 
-# oceanbase_full
+#### 3.3 `oceanbase_full`
+
+```bash
 uv run python scripts/init_database.py
 ```
 
