@@ -120,6 +120,16 @@ docker compose up -d oceanbase elasticsearch
 docker compose up -d oceanbase
 ```
 
+使用 OceanBase profile 时，需要等容器日志显示租户 DDL 已就绪并完成 `init.sql` 后，再执行项目初始化：
+
+```text
+==> sag2 tenant ready.
+==> Waiting for sag2 tenant DDL...
+==> sag2 tenant DDL ready.
+==> init.sql executed.
+==> All done.
+```
+
 如果需要 MLflow 实验记录，可以单独启动：
 
 ```bash

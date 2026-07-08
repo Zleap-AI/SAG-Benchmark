@@ -120,6 +120,16 @@ docker compose up -d oceanbase elasticsearch
 docker compose up -d oceanbase
 ```
 
+For OceanBase profiles, wait until the container log shows that tenant DDL is ready and `init.sql` has completed before running project initialization:
+
+```text
+==> sag2 tenant ready.
+==> Waiting for sag2 tenant DDL...
+==> sag2 tenant DDL ready.
+==> init.sql executed.
+==> All done.
+```
+
 Optional MLflow tracking can be started separately:
 
 ```bash
