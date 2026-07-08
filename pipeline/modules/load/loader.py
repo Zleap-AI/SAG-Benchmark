@@ -102,18 +102,16 @@ class BaseLoader(ABC):
         self, source_id: str, source_type: str
     ) -> None:
         """
-        索引 SourceChunk 到 Elasticsearch（通用方法）
+        索引 SourceChunk 到当前配置的向量/检索后端（通用方法）
 
         Args:
             source_id: 源ID (UUID)
             source_type: 源类型 ("ARTICLE" 或 "CHAT")
         """
         try:
-            from pipeline.core.storage import SourceChunkRepository, ElasticsearchClient
+            from pipeline.storage import get_storage_facade
 
-            # 创建 ES 客户端
-            es_client_wrapper = ElasticsearchClient()
-            repo = SourceChunkRepository(es_client_wrapper.client)
+            storage = get_storage_facade()
 
             async with self.session_factory() as session:
                 # 获取所有 SourceChunk
@@ -140,8 +138,7 @@ class BaseLoader(ABC):
 
                 stats = await self._batch_index_chunks(
                     chunks=chunks,
-                    repo=repo,
-                    es_client=es_client_wrapper,
+                    vector_store=storage.vector,
                     embedding_batch_size=embedding_batch_size,
                     es_bulk_size=es_bulk_size,
                     source_config_id=chunks[0].source_config_id
@@ -153,18 +150,11 @@ class BaseLoader(ABC):
 
         except Exception as e:
             logger.error(f"索引失败: {source_id}: {e}", exc_info=True)
-        finally:
-            # 确保 ES 客户端被关闭
-            try:
-                await es_client_wrapper.client.close()
-            except Exception as close_err:
-                logger.warning(f"关闭ES客户端失败: {close_err}")
 
     async def _batch_index_chunks(
         self,
         chunks: List,
-        repo,
-        es_client,
+        vector_store,
         embedding_batch_size: int,
         es_bulk_size: int,
         source_config_id: str
@@ -174,10 +164,9 @@ class BaseLoader(ABC):
 
         Args:
             chunks: SourceChunk 列表
-            repo: SourceChunkRepository 实例
-            es_client: ElasticsearchClient 包装实例
+            vector_store: 当前配置的向量/检索后端
             embedding_batch_size: 向量生成批量大小
-            es_bulk_size: ES索引批量大小
+            es_bulk_size: 批量写入大小
             source_config_id: 信息源配置ID（用于路由）
 
         Returns:
@@ -272,61 +261,56 @@ class BaseLoader(ABC):
                         else:
                             logger.error(f"向量生成失败（不可重试）: {chunk.id}")
 
-        # === 阶段2: 批量索引到ES ===
+        # === 阶段2: 批量写入向量/检索后端 ===
         indexed = 0
-        es_failed = 0
+        vector_failed = 0
 
         for i in range(0, len(documents), es_bulk_size):
             batch = documents[i:i+es_bulk_size]
 
             try:
-                # 批量索引
-                result = await es_client.bulk_index(
-                    index=repo.INDEX_NAME,
+                result = await vector_store.upsert_chunk_vectors(
                     documents=batch,
-                    return_details=True,
-                    routing=source_config_id
+                    routing=source_config_id,
+                    batch_size=es_bulk_size,
                 )
 
-                indexed += result["success_count"]
-
-                # 处理失败项：逐个重试
-                if result["error_count"] > 0:
-                    failed_ids = {err["id"] for err in result["errors"]}
-                    for doc in batch:
-                        if doc["id"] in failed_ids:
-                            try:
-                                await es_client.index_document(
-                                    index=repo.INDEX_NAME,
-                                    document=doc,
-                                    doc_id=doc["id"],
-                                    routing=source_config_id
-                                )
-                                indexed += 1
-                            except Exception as retry_e:
-                                logger.error(f"重试索引失败: {doc['id']}: {retry_e}")
-                                es_failed += 1
+                if result.get("failed", 0) > 0:
+                    logger.warning(
+                        "批量写入向量后端部分失败，逐条重试: "
+                        f"indexed={result.get('indexed', 0)}, failed={result.get('failed', 0)}"
+                    )
+                    retry_indexed, retry_failed = await self._retry_chunk_vector_upserts(
+                        vector_store=vector_store,
+                        documents=batch,
+                        source_config_id=source_config_id,
+                    )
+                    indexed += retry_indexed
+                    vector_failed += retry_failed
+                else:
+                    indexed += result["indexed"]
+                    vector_failed += result["failed"]
 
             except Exception as e:
-                logger.error(f"批量索引失败，降级重试: {e}")
+                logger.error(f"批量写入向量后端失败，降级重试: {e}")
                 # 降级：整批逐个重试
                 for doc in batch:
                     try:
-                        await es_client.index_document(
-                            index=repo.INDEX_NAME,
-                            document=doc,
-                            doc_id=doc["id"],
-                            routing=source_config_id
+                        result = await vector_store.upsert_chunk_vectors(
+                            documents=[doc],
+                            routing=source_config_id,
+                            batch_size=1,
                         )
-                        indexed += 1
+                        indexed += result["indexed"]
+                        vector_failed += result["failed"]
                     except Exception as retry_e:
-                        logger.error(f"降级索引失败: {doc['id']}: {retry_e}")
-                        es_failed += 1
+                        logger.error(f"降级写入向量后端失败: {doc['id']}: {retry_e}")
+                        vector_failed += 1
                         # 记录是否可重试
                         if is_retryable_error(retry_e):
-                            logger.warning(f"ES索引失败（可重试）: {doc['id']}")
+                            logger.warning(f"向量后端写入失败（可重试）: {doc['id']}")
                         else:
-                            logger.error(f"ES索引失败（不可重试）: {doc['id']}")
+                            logger.error(f"向量后端写入失败（不可重试）: {doc['id']}")
 
         total_time = time.perf_counter() - start_time
 
@@ -334,12 +318,42 @@ class BaseLoader(ABC):
             "total_chunks": len(chunks),
             "indexed_count": indexed,
             "embedding_failed": embedding_failed,
-            "es_failed": es_failed,
+            "vector_failed": vector_failed,
             "embedding_batches": (len(chunks) + embedding_batch_size - 1) // embedding_batch_size,
-            "es_batches": (len(documents) + es_bulk_size - 1) // es_bulk_size,
+            "vector_batches": (len(documents) + es_bulk_size - 1) // es_bulk_size,
             "total_time": f"{total_time:.2f}s",
             "avg_time": f"{total_time/len(chunks):.3f}s/chunk"
         }
+
+    async def _retry_chunk_vector_upserts(
+        self,
+        vector_store,
+        documents: List[Dict[str, Any]],
+        source_config_id: str,
+    ) -> tuple[int, int]:
+        """Retry chunk vector writes one by one after a bulk failure/partial failure."""
+        indexed = 0
+        failed = 0
+        for doc in documents:
+            doc_id = doc.get("id") or doc.get("chunk_id")
+            try:
+                result = await vector_store.upsert_chunk_vectors(
+                    documents=[doc],
+                    routing=source_config_id,
+                    batch_size=1,
+                )
+                indexed += int(result.get("indexed", 0))
+                failed += int(result.get("failed", 0))
+                if result.get("failed", 0):
+                    logger.error(f"逐条写入向量后端失败: {doc_id}")
+            except Exception as retry_e:
+                logger.error(f"逐条写入向量后端异常: {doc_id}: {retry_e}")
+                failed += 1
+                if is_retryable_error(retry_e):
+                    logger.warning(f"向量后端写入失败（可重试）: {doc_id}")
+                else:
+                    logger.error(f"向量后端写入失败（不可重试）: {doc_id}")
+        return indexed, failed
 
 
 class DocumentLoader(BaseLoader):
@@ -743,7 +757,7 @@ class DocumentLoader(BaseLoader):
 
     async def _index_to_elasticsearch(self, article_id: str) -> None:
         """
-        索引文章 SourceChunk 到 Elasticsearch
+        索引文章 SourceChunk 到当前配置的向量/检索后端
 
         Args:
             article_id: 文章ID (UUID)

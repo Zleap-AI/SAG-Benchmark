@@ -2,7 +2,7 @@
 向量检索器
 
 独立于三阶段的向量检索器，直接使用 Query 向量检索 Event/Chunk，
-支持 title/heading 和 content 向量的混合搜索。
+支持当前配置后端的 content 向量搜索。
 
 使用示例：
     from pipeline.modules.search import VectorSearcher, VectorConfig
@@ -26,13 +26,10 @@
 import time
 from typing import Any, Dict, List, Optional, Union
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
-
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.db import SourceEvent, SourceChunk, get_session_factory
+from pipeline.db import get_session_factory
 from pipeline.modules.load.processor import DocumentProcessor
 from pipeline.modules.search.config import VectorConfig
+from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
 logger = get_logger("search.vector")
@@ -42,8 +39,8 @@ class VectorSearcher:
     """
     向量检索器
 
-    支持段落(SourceChunk)和事项(SourceEvent)的混合向量搜索。
-    使用 ES script_score 查询实现 title/heading + content 的混合相似度计算。
+    支持段落(SourceChunk)向量搜索。
+    通过 StorageFacade 隐藏 Elasticsearch / OceanBase 查询差异。
     """
 
     INDEX_EVENTS = "event_vectors"
@@ -51,7 +48,7 @@ class VectorSearcher:
 
     def __init__(self):
         """初始化向量检索器"""
-        self.es_client = get_es_client()
+        self.vector_store = get_storage_facade().vector
         self.session_factory = get_session_factory()
         self.processor = DocumentProcessor()
 
@@ -66,7 +63,7 @@ class VectorSearcher:
         执行向量搜索，返回段落格式
 
         保留旧 SAGSearcher 需要的接口名；内部只做向量召回。
-        使用 ES kNN 向量搜索（避免 script_score 的编译限制）。
+        使用当前配置的向量后端检索。
 
         Args:
             query: 查询文本
@@ -107,37 +104,36 @@ class VectorSearcher:
         else:
             logger.info(f"✓ 使用预计算向量，维度={len(query_vector)}")
 
-        # Step 2: 使用 SourceChunkRepository 的 kNN 搜索（避免 script_score 编译限制）
-        from pipeline.core.storage.repositories.source_chunk_repository import SourceChunkRepository
-        from pipeline.core.storage.elasticsearch import get_es_client
-
-        es_client = get_es_client()
-        chunk_repo = SourceChunkRepository(es_client)
-
-        es_start = time.perf_counter()
-        es_results = await chunk_repo.search_similar_by_content(
+        # Step 2: 使用当前配置的向量/检索后端
+        vector_start = time.perf_counter()
+        vector_results = await self.vector_store.search_chunks_by_vector(
             query_vector=query_vector,
             k=top_k,
             source_config_ids=source_config_ids,
         )
-        es_time = time.perf_counter() - es_start
-        logger.info(f"✓ ES kNN 搜索完成，命中 {len(es_results)} 个段落，耗时={es_time:.3f}s")
+        vector_search_time = time.perf_counter() - vector_start
+        logger.info(
+            "✓ 向量搜索完成，backend=%s，命中 %s 个段落，耗时=%.3fs",
+            self.vector_store.backend_name,
+            len(vector_results),
+            vector_search_time,
+        )
 
-        if not es_results:
+        if not vector_results:
             logger.info("【向量检索】未找到匹配段落")
             total_time = time.perf_counter() - start_time
             return {
                 "sections": [],
                 "_timings": {
                     "vector_gen": vector_time,
-                    "es_search": es_time,
+                    "vector_search": vector_search_time,
                     "total": total_time,
                 }
             }
 
-        # Step 3: 格式化结果（ES kNN 直接返回完整文档）
+        # Step 3: 格式化结果（后端返回统一字段）
         sections = []
-        for result in es_results:
+        for result in vector_results:
             score = result.get("_score", 0.0)
             if score < min_score:
                 continue
@@ -172,7 +168,7 @@ class VectorSearcher:
             "sections": sections,
             "_timings": {
                 "vector_gen": vector_time,
-                "es_search": es_time,
+                "vector_search": vector_search_time,
                 "total": total_time,
             }
         }

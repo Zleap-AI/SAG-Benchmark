@@ -8,7 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +38,23 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
+        populate_by_name=True,
+    )
+
+    # ======================
+    # 存储后端配置
+    # ======================
+    storage_profile: str = Field(
+        default="mysql_es",
+        description="存储方案预设：mysql_es / oceanbase_es / oceanbase_full",
+    )
+    database_backend: Optional[str] = Field(
+        default=None,
+        description="结构化数据库后端：mysql / oceanbase；留空时由 storage_profile 推导",
+    )
+    vector_backend: Optional[str] = Field(
+        default=None,
+        description="向量/检索后端：elasticsearch / oceanbase；留空时由 storage_profile 推导",
     )
 
     # ======================
@@ -50,10 +67,34 @@ class Settings(BaseSettings):
     mysql_database: str = Field(default="sag2", description="MySQL数据库名")
 
     # ======================
+    # OceanBase配置（MySQL兼容模式）
+    # ======================
+    oceanbase_host: str = Field(default="localhost", description="OceanBase主机")
+    oceanbase_port: int = Field(default=2881, description="OceanBase SQL端口")
+    oceanbase_user: str = Field(default="", description="OceanBase用户")
+    oceanbase_password: str = Field(default="", description="OceanBase密码")
+    oceanbase_database: str = Field(default="sag2", description="OceanBase数据库名")
+    oceanbase_compat_mode: str = Field(default="mysql", description="OceanBase租户兼容模式")
+    oceanbase_vector_index_type: str = Field(default="HNSW", description="OceanBase向量索引类型")
+    oceanbase_vector_index_lib: str = Field(default="VSAG", description="OceanBase向量索引库")
+    oceanbase_vector_index_m: int = Field(default=16, description="OceanBase HNSW M参数")
+    oceanbase_vector_index_ef_construction: int = Field(default=200, description="OceanBase HNSW构建参数")
+    oceanbase_vector_search_ef_search: int = Field(
+        default=64,
+        ge=1,
+        le=10000,
+        description="OceanBase HNSW查询阶段ef_search参数",
+        validation_alias=AliasChoices(
+            "OCEANBASE_VECTOR_SEARCH_EF_SEARCH",
+            "OCEANBASE_VECTOR_INDEX_EF_SEARCH",
+        ),
+    )
+
+    # ======================
     # Elasticsearch配置
     # ======================
     es_host: str = Field(default="localhost", description="ES主机")
-    es_port: int = Field(default=9201, description="ES端口")
+    es_port: int = Field(default=9200, description="ES端口")
     es_scheme: str = Field(default="http", description="ES协议(http/https)")
     es_username: Optional[str] = Field(default="elastic", description="ES用户名")
     es_password: Optional[str] = Field(
@@ -187,6 +228,49 @@ class Settings(BaseSettings):
         )
 
     @property
+    def oceanbase_url(self) -> str:
+        """OceanBase连接URL（MySQL兼容模式）"""
+        from urllib.parse import quote_plus
+
+        encoded_user = quote_plus(self.oceanbase_user)
+        encoded_password = quote_plus(self.oceanbase_password)
+        return (
+            f"mysql+aiomysql://{encoded_user}:{encoded_password}"
+            f"@{self.oceanbase_host}:{self.oceanbase_port}/{self.oceanbase_database}"
+            f"?charset=utf8mb4"
+        )
+
+    @property
+    def effective_database_backend(self) -> str:
+        """实际结构化数据库后端。"""
+        if self.database_backend:
+            return self.database_backend.lower()
+        profile = self.storage_profile.lower()
+        if profile in {"oceanbase_es", "oceanbase_full"}:
+            return "oceanbase"
+        return "mysql"
+
+    @property
+    def effective_vector_backend(self) -> str:
+        """实际向量/检索后端。"""
+        if self.vector_backend:
+            return self.vector_backend.lower()
+        profile = self.storage_profile.lower()
+        if profile == "oceanbase_full":
+            return "oceanbase"
+        return "elasticsearch"
+
+    @property
+    def database_url(self) -> str:
+        """当前结构化数据库连接URL。"""
+        backend = self.effective_database_backend
+        if backend == "mysql":
+            return self.mysql_url
+        if backend == "oceanbase":
+            return self.oceanbase_url
+        raise ValueError(f"不支持的 DATABASE_BACKEND: {backend}")
+
+    @property
     def elasticsearch_url(self) -> str:
         """Elasticsearch连接URL"""
         return f"{self.es_scheme}://{self.es_host}:{self.es_port}"
@@ -226,6 +310,84 @@ class Settings(BaseSettings):
         if v.upper() not in allowed:
             raise ValueError(f"日志级别必须是: {', '.join(allowed)}")
         return v.upper()
+
+    @field_validator("storage_profile")
+    @classmethod
+    def validate_storage_profile(cls, v: str) -> str:
+        """验证存储方案预设"""
+        normalized = v.lower()
+        allowed = ["mysql_es", "oceanbase_es", "oceanbase_full"]
+        if normalized not in allowed:
+            raise ValueError(f"STORAGE_PROFILE 必须是: {', '.join(allowed)}")
+        return normalized
+
+    @field_validator("database_backend")
+    @classmethod
+    def validate_database_backend(cls, v: Optional[str]) -> Optional[str]:
+        """验证结构化数据库后端"""
+        if v is None or v == "":
+            return None
+        normalized = v.lower()
+        allowed = ["mysql", "oceanbase"]
+        if normalized not in allowed:
+            raise ValueError(f"DATABASE_BACKEND 必须是: {', '.join(allowed)}")
+        return normalized
+
+    @field_validator("vector_backend")
+    @classmethod
+    def validate_vector_backend(cls, v: Optional[str]) -> Optional[str]:
+        """验证向量/检索后端"""
+        if v is None or v == "":
+            return None
+        normalized = v.lower()
+        allowed = ["elasticsearch", "oceanbase"]
+        if normalized not in allowed:
+            raise ValueError(f"VECTOR_BACKEND 必须是: {', '.join(allowed)}")
+        return normalized
+
+    @field_validator("oceanbase_vector_index_type")
+    @classmethod
+    def validate_oceanbase_vector_index_type(cls, v: str) -> str:
+        """验证 OceanBase 向量索引类型"""
+        normalized = v.upper()
+        allowed = ["HNSW", "HNSW_SQ", "HNSW_BQ", "IVF_FLAT", "IVF_SQ8", "IVF_PQ"]
+        if normalized not in allowed:
+            raise ValueError(f"OCEANBASE_VECTOR_INDEX_TYPE 必须是: {', '.join(allowed)}")
+        return normalized
+
+    @field_validator("oceanbase_vector_index_lib")
+    @classmethod
+    def validate_oceanbase_vector_index_lib(cls, v: str) -> str:
+        """验证 OceanBase 向量索引库"""
+        normalized = v.upper()
+        allowed = ["VSAG", "OB"]
+        if normalized not in allowed:
+            raise ValueError(f"OCEANBASE_VECTOR_INDEX_LIB 必须是: {', '.join(allowed)}")
+        return normalized
+
+    @model_validator(mode="after")
+    def validate_storage_backend_combination(self) -> "Settings":
+        """验证存储组合，只开放生产支持的三种方案。"""
+        database_backend = self.effective_database_backend
+        vector_backend = self.effective_vector_backend
+        allowed = {
+            ("mysql", "elasticsearch"),
+            ("oceanbase", "elasticsearch"),
+            ("oceanbase", "oceanbase"),
+        }
+        if (database_backend, vector_backend) not in allowed:
+            raise ValueError(
+                "不支持的存储组合: "
+                f"DATABASE_BACKEND={database_backend}, VECTOR_BACKEND={vector_backend}"
+            )
+        if vector_backend == "oceanbase":
+            index_type = self.oceanbase_vector_index_type
+            index_lib = self.oceanbase_vector_index_lib
+            if index_type.startswith("HNSW") and index_lib != "VSAG":
+                raise ValueError("OceanBase HNSW 向量索引要求 OCEANBASE_VECTOR_INDEX_LIB=VSAG")
+            if index_type.startswith("IVF") and index_lib != "OB":
+                raise ValueError("OceanBase IVF 向量索引要求 OCEANBASE_VECTOR_INDEX_LIB=OB")
+        return self
 
     @field_validator("llm_language")
     @classmethod

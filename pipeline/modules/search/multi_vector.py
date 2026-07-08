@@ -32,18 +32,21 @@ from sqlalchemy import select
 
 from pipeline.core.ai.factory import create_llm_client, get_embedding_client
 from pipeline.core.ai.models import LLMMessage, LLMRole
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.core.storage.repositories.entity_repository import EntityVectorRepository
-from pipeline.core.storage.repositories.event_repository import EventVectorRepository
-from pipeline.core.storage.repositories.event_entity_repository import EventEntityRepository
-from pipeline.core.storage.repositories.source_chunk_repository import SourceChunkRepository
 from pipeline.db import SourceChunk, SourceEvent, get_session_factory
 from pipeline.modules.search.config import MultiConfig
+from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
 logger = get_logger("search.multi_es")
 
 PRECISE_ENTITY_EVENT_TOP_K = 40
+
+
+def _preview_query(query: str, limit: int = 240) -> str:
+    text = " ".join((query or "").split())
+    if len(text) <= limit:
+        return text
+    return f"{text[:limit]}..."
 
 # ── LLM 过滤提示词（本地版本：去掉 thought_process，只要求返回 ID 列表）──
 
@@ -139,11 +142,8 @@ class MultiSearcherES:
     def __init__(self, config: Optional[MultiConfig] = None):
         self._llm_client = None
         self._embedding_client = None
-        es_client = get_es_client()
-        self._entity_repo = EntityVectorRepository(es_client)
-        self._event_repo = EventVectorRepository(es_client)
-        self._event_entity_repo = EventEntityRepository(es_client)
-        self._chunk_repo = SourceChunkRepository(es_client)
+        storage = get_storage_facade()
+        self._search_store = storage.search
 
     # ── 延迟初始化 ──────────────────────────────────────────────
 
@@ -174,14 +174,71 @@ class MultiSearcherES:
             self._llm_client = await create_llm_client(scenario="search")
         return self._llm_client
 
-    def _get_entity_repo(self) -> EntityVectorRepository:
-        return self._entity_repo
+    async def _search_entities_by_text(
+        self,
+        query: str,
+        source_config_ids: List[str],
+        size: int,
+    ) -> List[Dict[str, Any]]:
+        return await self._search_store.search_entities_by_text(
+            query=query,
+            source_config_ids=source_config_ids,
+            size=size,
+        )
 
-    def _get_event_repo(self) -> EventVectorRepository:
-        return self._event_repo
+    async def _get_event_ids_by_entity_ids(
+        self,
+        *,
+        entity_ids: List[str],
+        source_config_ids: Optional[List[str]] = None,
+        exclude_event_ids: Optional[List[str]] = None,
+        size: int,
+    ) -> List[str]:
+        return await self._search_store.get_event_ids_by_entity_ids(
+            entity_ids=entity_ids,
+            source_config_ids=source_config_ids,
+            exclude_event_ids=exclude_event_ids,
+            size=size,
+        )
 
-    def _get_event_entity_repo(self) -> EventEntityRepository:
-        return self._event_entity_repo
+    async def _fetch_events_by_ids(
+        self,
+        event_ids: List[str],
+        source_includes: List[str],
+    ) -> List[Dict[str, Any]]:
+        return await self._search_store.get_events_by_ids(
+            event_ids,
+            source_includes=source_includes,
+        )
+
+    async def _search_events_by_vector(
+        self,
+        *,
+        query_vector: List[float],
+        k: int,
+        source_config_ids: Optional[List[str]] = None,
+        event_ids: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        return await self._search_store.search_events_by_vector(
+            query_vector=query_vector,
+            k=k,
+            source_config_ids=source_config_ids,
+            event_ids=event_ids,
+            vector_field="content_vector",
+        )
+
+    async def _search_chunks_by_vector(
+        self,
+        *,
+        query_vector: List[float],
+        k: int,
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        return await self._search_store.search_chunks_by_vector(
+            query_vector=query_vector,
+            k=k,
+            source_config_ids=source_config_ids,
+        )
 
     async def _get_embedding_client(self):
         if self._embedding_client is None:
@@ -215,7 +272,7 @@ class MultiSearcherES:
         同一次 query 内排序。
         """
         t_es = time.perf_counter()
-        hits = await self._entity_repo.search_by_query_bm25(
+        hits = await self._search_entities_by_text(
             query=query,
             source_config_ids=source_config_ids,
             size=entity_top_k,
@@ -244,8 +301,8 @@ class MultiSearcherES:
             )
 
         logger.info(
-            f"[entity.bm25] input=1, candidates={len(hits)}, output={len(entity_ids)}, "
-            f"top_k={entity_top_k}"
+            f"[entity.bm25] query={_preview_query(query)!r}, input=1, "
+            f"candidates={len(hits)}, output={len(entity_ids)}, top_k={entity_top_k}"
         )
         logger.info(
             f"[entity.bm25.entities] details={'; '.join(details_for_log)}"
@@ -292,16 +349,14 @@ class MultiSearcherES:
         if query_vector is None:
             raise RuntimeError("Step3 需要传入 query_vector，请在 search() 中批量生成后复用")
 
-        event_repo = self._event_repo
         channel_tasks = []
         entity_event_task_index: Optional[int] = None
 
         # ── 通道1: entity → event（ES event_entity_vectors）──
         if entity_ids:
-            ee_repo = self._event_entity_repo
             entity_event_task_index = len(channel_tasks)
             channel_tasks.append(
-                ee_repo.get_event_ids_by_entity_ids(
+                self._get_event_ids_by_entity_ids(
                     entity_ids=entity_ids,
                     source_config_ids=source_config_ids,
                     size=entity_event_top_k,
@@ -311,7 +366,7 @@ class MultiSearcherES:
         # ── 通道2: query → event（ES event_vectors title_vector kNN）──
         query_event_task_index = len(channel_tasks)
         channel_tasks.append(
-            event_repo.search_similar_by_content(
+            self._search_events_by_vector(
                 query_vector=query_vector,
                 k=multi_top_k * 3,
                 source_config_ids=source_config_ids,
@@ -508,7 +563,7 @@ class MultiSearcherES:
         t0 = time.perf_counter()
         candidate_event_ids = []
         if seed_entity_ids:
-            candidate_event_ids = await self._event_entity_repo.get_event_ids_by_entity_ids(
+            candidate_event_ids = await self._get_event_ids_by_entity_ids(
                 entity_ids=seed_entity_ids,
                 source_config_ids=source_config_ids,
                 size=config.fast_entity_event_candidate_k,
@@ -526,7 +581,7 @@ class MultiSearcherES:
         timings["step3_seed_event1_rank"] = time.perf_counter() - t0
 
         t0 = time.perf_counter()
-        event2_hits = await self._event_repo.search_similar_by_content(
+        event2_hits = await self._search_events_by_vector(
             query_vector=query_vector,
             k=config.fast_query_event_k * 3,
             source_config_ids=source_config_ids,
@@ -611,8 +666,7 @@ class MultiSearcherES:
             if field != "event_id" and field not in includes:
                 includes.append(field)
 
-        event_repo = self._event_repo
-        events = await event_repo.get_events_by_ids(
+        events = await self._fetch_events_by_ids(
             event_ids,
             source_includes=includes,
         )
@@ -725,7 +779,6 @@ class MultiSearcherES:
         # 上一跳的 event_entities，用于每轮发现新 entity_ids
         prev_hop_entities = event_entities
 
-        ee_repo = self._event_entity_repo
         for hop in range(max_hops):
             pre_events = len(state.relation_ids)
             pre_entities = len(state.entity_ids)
@@ -764,7 +817,7 @@ class MultiSearcherES:
             # 3. 新 entity_ids → ES event_entity_vectors 查新 event_ids
             #    event_entity_vectors 自带 source_config_id，无需 JOIN
             t_step = time.perf_counter()
-            all_new_event_ids = await ee_repo.get_event_ids_by_entity_ids(
+            all_new_event_ids = await self._get_event_ids_by_entity_ids(
                 entity_ids=new_entity_ids,
                 source_config_ids=source_config_ids,
                 exclude_event_ids=list(state.relation_ids),
@@ -875,8 +928,7 @@ class MultiSearcherES:
         if not event_ids:
             return []
 
-        event_repo = self._event_repo
-        results = await event_repo.search_similar_by_content(
+        results = await self._search_events_by_vector(
             query_vector=query_vector,
             k=max_events,
             source_config_ids=source_config_ids,
@@ -992,7 +1044,12 @@ class MultiSearcherES:
                 "properties": {
                     "useful_relations": {
                         "type": "array",
-                        "items": {"type": "string"},
+                        "items": {
+                            "anyOf": [
+                                {"type": "string"},
+                                {"type": "integer"},
+                            ]
+                        },
                     },
                 },
                 "required": ["useful_relations"],
@@ -1255,7 +1312,10 @@ class MultiSearcherES:
         )
 
         logger.info(
-            f"[multi_es.start] mode={config.mode}, ranking={ranking_strategy}, "
+            f"[multi_vector.start] query={_preview_query(query)!r}, "
+            f"search_backend={self._search_store.backend_name}, "
+            f"source_config_ids={source_config_ids}, "
+            f"mode={config.mode}, ranking={ranking_strategy}, "
             f"entity_top_k={config.entity_top_k}, multi_top_k={config.multi_top_k}, "
             f"entity_event_top_k={precise_entity_event_top_k or config.fast_entity_event_candidate_k}"
         )
@@ -1544,7 +1604,7 @@ class MultiSearcherES:
         if query_vector is None:
             raise RuntimeError("search_chunks 需要传入 query_vector，请复用 search() 中批量生成的 query 向量")
 
-        es_results = await self._chunk_repo.search_similar_by_content(
+        es_results = await self._search_chunks_by_vector(
             query_vector=query_vector,
             k=config.max_sections * 2,
             source_config_ids=source_config_ids,

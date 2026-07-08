@@ -52,7 +52,7 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         settings = get_settings()
         _engine = create_async_engine(
-            settings.mysql_url,
+            settings.database_url,
             echo=settings.log_level == "DEBUG",
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_max_overflow,
@@ -63,7 +63,19 @@ def get_engine() -> AsyncEngine:
         )
         logger.info(
             "数据库引擎创建完成（UTC时区）",
-            extra={"host": settings.mysql_host, "database": settings.mysql_database},
+            extra={
+                "backend": settings.effective_database_backend,
+                "host": (
+                    settings.oceanbase_host
+                    if settings.effective_database_backend == "oceanbase"
+                    else settings.mysql_host
+                ),
+                "database": (
+                    settings.oceanbase_database
+                    if settings.effective_database_backend == "oceanbase"
+                    else settings.mysql_database
+                ),
+            },
         )
     return _engine
 

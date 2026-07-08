@@ -83,8 +83,6 @@ class EmbeddingClient:
                 "input": text,
                 "model": self.model,
             }
-            if self.dimensions is not None:
-                request_kwargs["dimensions"] = self.dimensions
 
             response = await self.client.embeddings.create(**request_kwargs)
             
@@ -122,8 +120,6 @@ class EmbeddingClient:
                 "input": texts,
                 "model": self.model,
             }
-            if self.dimensions is not None:
-                request_kwargs["dimensions"] = self.dimensions
 
             response = await self.client.embeddings.create(**request_kwargs)
             

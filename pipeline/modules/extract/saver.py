@@ -3,7 +3,7 @@
 
 职责：
 - 保存事项到数据库（MySQL）
-- 同步到向量库（Elasticsearch）
+- 同步到当前配置的向量/检索后端
 - 批量处理优化
 """
 
@@ -16,12 +16,10 @@ from sqlalchemy.orm import selectinload
 
 from pipeline.core.ai.factory import get_embedding_client
 from pipeline.core.config import get_settings
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.core.storage.repositories.entity_repository import EntityVectorRepository
-from pipeline.core.storage.repositories.event_repository import EventVectorRepository
 from pipeline.db import Entity, EventEntity, EventEntityEmbedding, SourceEvent, get_session_factory
 from pipeline.modules.extract.config import ExtractConfig
-from pipeline.utils import get_logger, is_retryable_error
+from pipeline.storage import get_storage_facade
+from pipeline.utils import get_logger
 
 logger = get_logger("extract.saver")
 
@@ -52,10 +50,8 @@ class EventSaver:
         self.logger = get_logger("extract.saver")
         self.settings = get_settings()
 
-        # 向量库相关（延迟初始化）
-        self._es_client = None
-        self._event_repo = None
-        self._entity_repo = None
+        # 向量/检索后端（延迟初始化）
+        self._vector_store = None
 
     async def commit(self, events: List[SourceEvent], config: ExtractConfig) -> List[SourceEvent]:
         """
@@ -379,14 +375,12 @@ class EventSaver:
         """
         self.logger.info(f"开始同步 {len(events)} 个事项到向量库")
 
-        # 初始化向量库客户端（延迟初始化）
-        if self._es_client is None:
-            self._es_client = get_es_client()
-            self._event_repo = EventVectorRepository(self._es_client.client)
-            self._entity_repo = EntityVectorRepository(self._es_client.client)
+        # 初始化向量/检索后端（延迟初始化）
+        if self._vector_store is None:
+            self._vector_store = get_storage_facade().vector
 
         # 检查连接
-        if not await self._es_client.ping():
+        if not await self._vector_store.health_check():
             self.logger.error("向量库连接失败，跳过同步")
             return
 
@@ -434,15 +428,8 @@ class EventSaver:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器退出 - 确保资源清理"""
-        if self._es_client is not None:
-            try:
-                await self._es_client.client.close()
-                self._es_client = None
-                self._event_repo = None
-                self._entity_repo = None
-            except Exception as e:
-                self.logger.warning(f"关闭ES客户端失败: {e}")
+        """异步上下文管理器退出。全局存储 facade 由进程生命周期管理。"""
+        self._vector_store = None
         return False
 
     async def _collect_unique_entities(self, events: List[SourceEvent]) -> Dict[str, Entity]:
@@ -494,6 +481,11 @@ class EventSaver:
 
         return await self._batch_sync_entities(entities, config)
 
+    def _get_vector_store(self):
+        if self._vector_store is None:
+            self._vector_store = get_storage_facade().vector
+        return self._vector_store
+
     async def _batch_sync_entities(
         self, entities: List[Entity], config: ExtractConfig
     ) -> Dict[str, Any]:
@@ -507,11 +499,10 @@ class EventSaver:
         Returns:
             统计信息
         """
-        from pipeline.utils.batch import batch_generate_embeddings, batch_index_to_es
+        from pipeline.utils.batch import batch_generate_embeddings
 
         start_time = time.perf_counter()
         embedding_client = await get_embedding_client(scenario="general")
-        es_client = get_es_client()
 
         # 阶段1: 批量生成向量
         def build_document(entity: Entity, vector: List[float]) -> Dict[str, Any]:
@@ -540,17 +531,15 @@ class EventSaver:
         documents = embedding_result["results"]
         embedding_failed = embedding_result["failed"]
 
-        # 阶段2: 批量索引
-        index_result = await batch_index_to_es(
+        # 阶段2: 批量写入当前向量/检索后端
+        index_result = await self._get_vector_store().upsert_entity_vectors(
             documents=documents,
-            es_client=es_client,
-            index_name=self._entity_repo.INDEX_NAME,
             batch_size=config.index_batch_size,
             routing=config.source_config_id,
         )
 
         indexed = index_result["indexed"]
-        es_failed = index_result["failed"]
+        vector_failed = index_result["failed"]
 
         total_time = time.perf_counter() - start_time
 
@@ -558,11 +547,11 @@ class EventSaver:
             "total": len(entities),
             "indexed": indexed,
             "embedding_failed": embedding_failed,
-            "es_failed": es_failed,
+            "vector_failed": vector_failed,
             "time": f"{total_time:.2f}s",
         }
 
-        if es_failed > 0 or embedding_failed > 0:
+        if vector_failed > 0 or embedding_failed > 0:
             self.logger.warning(f"实体同步部分失败: {stats}")
         else:
             self.logger.info(f"实体同步成功: {indexed}/{len(entities)} 条, 耗时{total_time:.2f}s")
@@ -603,7 +592,6 @@ class EventSaver:
         start_time = time.perf_counter()
 
         embedding_client = await get_embedding_client(scenario="general")
-        es_client = get_es_client()
 
         documents = []
         embedding_failed = 0
@@ -644,30 +632,26 @@ class EventSaver:
                         self.logger.error(f"单条生成向量失败 {event.id}: {retry_e}")
                         embedding_failed += 1
 
-        # 阶段2: 批量索引（使用工具）
-        from pipeline.utils.batch import batch_index_to_es
-
-        index_result = await batch_index_to_es(
+        # 阶段2: 批量写入当前向量/检索后端
+        index_result = await self._get_vector_store().upsert_event_vectors(
             documents=documents,
-            es_client=es_client,
-            index_name=self._event_repo.INDEX_NAME,
             batch_size=config.index_batch_size,
             routing=config.source_config_id,
         )
 
         indexed = index_result["indexed"]
-        es_failed = index_result["failed"]
+        vector_failed = index_result["failed"]
         total_time = time.perf_counter() - start_time
 
         stats = {
             "total": len(events),
             "indexed": indexed,
             "embedding_failed": embedding_failed,
-            "es_failed": es_failed,
+            "vector_failed": vector_failed,
             "time": f"{total_time:.2f}s",
         }
 
-        if es_failed > 0 or embedding_failed > 0:
+        if vector_failed > 0 or embedding_failed > 0:
             self.logger.warning(f"事项同步部分失败: {stats}")
         else:
             self.logger.info(f"事项同步成功: {indexed}/{len(events)} 条, 耗时{total_time:.2f}s")
@@ -693,7 +677,6 @@ class EventSaver:
         start_time = time.perf_counter()
 
         embedding_client = await get_embedding_client(scenario="general")
-        es_client = get_es_client()
 
         # 收集所有 EventEntity 关联
         event_entities = self._collect_event_entities(events)
@@ -703,7 +686,7 @@ class EventSaver:
             return {"total": 0, "indexed": 0}
 
         # 阶段1: 批量生成向量（使用工具）
-        from pipeline.utils.batch import batch_generate_embeddings, batch_index_to_es
+        from pipeline.utils.batch import batch_generate_embeddings
 
         def build_document(assoc: EventEntity, vector: List[float]) -> Dict[str, Any]:
             return {
@@ -730,28 +713,26 @@ class EventSaver:
         documents = embedding_result["results"]
         embedding_failed = embedding_result["failed"]
 
-        # 阶段2: 批量索引（使用工具）
-        index_result = await batch_index_to_es(
+        # 阶段2: 批量写入当前向量/检索后端
+        index_result = await self._get_vector_store().upsert_event_entity_vectors(
             documents=documents,
-            es_client=es_client,
-            index_name="event_entity_vectors",
             batch_size=config.index_batch_size,
             routing=config.source_config_id,
         )
 
         indexed = index_result["indexed"]
-        es_failed = index_result["failed"]
+        vector_failed = index_result["failed"]
         total_time = time.perf_counter() - start_time
 
         stats = {
             "total": len(event_entities),
             "indexed": indexed,
             "embedding_failed": embedding_failed,
-            "es_failed": es_failed,
+            "vector_failed": vector_failed,
             "time": f"{total_time:.2f}s",
         }
 
-        if es_failed > 0 or embedding_failed > 0:
+        if vector_failed > 0 or embedding_failed > 0:
             self.logger.warning(f"事件-实体关联同步部分失败: {stats}")
         else:
             self.logger.info(
@@ -790,6 +771,7 @@ class EventSaver:
             "title_vector": title_vec,
             "content_vector": content_vec,
             "entity_ids": entity_ids,
+            "entities": entity_ids,
             "start_time": event.start_time.isoformat() if event.start_time else None,
             "end_time": event.end_time.isoformat() if event.end_time else None,
             "created_time": (event.created_time.isoformat() if event.created_time else None),

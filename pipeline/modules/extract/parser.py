@@ -339,7 +339,10 @@ class ResultParser:
 
                 # 收集描述（去重）
                 if entity.id not in entity_map:
-                    entity_map[entity.id] = {"name": entity.name, "descriptions": []}
+                    entity_map[entity.id] = {
+                        "name": entity.name,
+                        "descriptions": [],
+                    }
 
                 description = entity_data.get("description", "").strip()
                 if description and description not in entity_map[entity.id]["descriptions"]:
@@ -347,6 +350,7 @@ class ResultParser:
 
             # 创建 EventEntity 关联
             event.event_associations = []
+            event.entities = []
             for entity_id, info in entity_map.items():
                 final_description = self._merge_descriptions(info["descriptions"])
                 assoc = EventEntity(
@@ -356,6 +360,7 @@ class ResultParser:
                     description=final_description,
                 )
                 event.event_associations.append(assoc)
+                event.entities.append(entity_id)
 
         return events
 
