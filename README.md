@@ -33,7 +33,7 @@ Main results:
   <img src="assets/main-result.png" alt="SAG main benchmark results" width="760" />
 </p>
 
-- SAG's average Recall@1, Recall@2, Recall@5, and Recall@10 reach **42.81%**, **79.70%**, **90.07%**, and **91.55%**, outperforming HippoRAG 2 by **3.67**, **11.56**, **6.79**, and **3.44** percentage points, respectively.
+- Across the three datasets, SAG's average Recall@1, Recall@2, Recall@5, and Recall@10 reach **42.81%**, **79.70%**, **90.07%**, and **91.55%**, outperforming HippoRAG 2 by **3.67**, **11.56**, **6.79**, and **3.44** percentage points, respectively.
 - On the most challenging MuSiQue dataset, SAG improves Recall@1, Recall@2, Recall@5, and Recall@10 over HippoRAG 2 by **6.17**, **14.10**, **15.23**, and **9.61** percentage points, respectively.
 
 ## Method Figures
