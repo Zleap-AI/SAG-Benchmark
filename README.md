@@ -10,13 +10,9 @@ English | [中文](README-CN.md)
 
 **Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
-<p align="center">
-  <img src="assets/sag-benchmark-simple.png" alt="SAG benchmark results" width="760" />
-</p>
-
 ## Benchmark Score Reproduction
 
-This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The main goal is to let readers run the quick-start commands below, reproduce the benchmark results reported in the paper, and compare retrieval and RAG methods using Recall@1 / Recall@2 / Recall@5 / Recall@10.
+This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The main goal is to let readers run the quick-start commands below, reproduce the benchmark results reported in the paper, and compare retrieval and RAG methods across retrieval, QA performance, and LLM-as-a-Judge evaluations.
 
 Default paper setup:
 
@@ -24,7 +20,7 @@ Default paper setup:
 |------|------|
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
-| Main paper metrics | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
+| Main paper metrics | Recall@5 / F1 |
 | Main scripts | `scripts/run_upload.py`, `scripts/run_search_benchmark.py` |
 
 Main results:
@@ -33,8 +29,10 @@ Main results:
   <img src="assets/main-result.png" alt="SAG main benchmark results" width="760" />
 </p>
 
-- Across the three datasets, SAG averages **42.81%/79.70%/90.07%/91.55%** on Recall@1/2/5/10, outperforming HippoRAG 2 by **3.67/11.56/6.79/3.44** percentage points.
-- On the most challenging MuSiQue dataset, the corresponding gains widen to **6.17/14.10/15.23/9.61** percentage points.
+Experiments on HotpotQA, 2WikiMultiHopQA, and MuSiQue show that SAG achieves the best retrieval and end-to-end QA performance on every benchmark.
+
+- Across the three datasets, SAG averages **90.07%/72.96%** in Recall@5 and F1, outperforming the strongest baseline for each metric by **6.79/4.33** percentage points, respectively.
+- On the most challenging MuSiQue dataset, SAG outperforms the strongest baseline for each metric by **11.52/7.01** percentage points in Recall@5 and F1, respectively.
 
 > **Note:** The current code can reproduce the SAG results but does not yet support running the other comparison methods. Support for these methods will be added once the relevant code is ready.
 

@@ -8,15 +8,11 @@
 
 [English](README.md) | 中文
 
-**论文链接：**[https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
-
-<p align="center">
-  <img src="assets/sag-benchmark-simple-cn.png" alt="SAG benchmark results" width="760" />
-</p>
+**论文链接：** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
 ## Benchmark 分数复现
 
-本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 结果，并使用 Recall@1 / Recall@2 / Recall@5 / Recall@10 与各类检索及 RAG 方法进行比较。
+本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 结果，并从 Retrieval、QA Performance 和 LLM-as-a-Judge 等维度与各类 RAG 方法进行比较。
 
 论文默认实验配置：
 
@@ -24,7 +20,7 @@
 |------|------|
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
-| 论文主要指标 | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
+| 论文主要指标 | Recall@5 / F1 |
 | 主要脚本 | `scripts/run_upload.py`、`scripts/run_search_benchmark.py` |
 
 主要结果：
@@ -33,8 +29,10 @@
   <img src="assets/main-result.png" alt="SAG 主要实验结果" width="760" />
 </p>
 
-- SAG 在三个数据集上的平均 Recall@1/2/5/10 为 **42.81%/79.70%/90.07%/91.55%**，较 HippoRAG 2 提升 **3.67/11.56/6.79/3.44** 个百分点。
-- 在最具挑战的 MuSiQue 上，对应提升扩大至 **6.17/14.10/15.23/9.61** 个百分点。
+在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的实验表明，SAG 在每个基准测试中均取得最佳的检索与端到端 QA 性能。
+
+- SAG 在三个数据集上的平均 Recall@5 和 F1 为 **90.07%/72.96%**，相比最强基准分别提升 **6.79/4.33** 个百分点。
+- 在最具挑战的 MuSiQue 上，Recall@5 和 F1 较各指标的最强基准分别提升 **11.52/7.01** 个百分点。
 
 > **注意：** 当前代码可以复现 SAG 的实验结果，但暂不支持运行其他对比方法；相关代码整理完成后将陆续推送。
 
