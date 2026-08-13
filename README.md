@@ -33,8 +33,10 @@ Main results:
   <img src="assets/main-result.png" alt="SAG main benchmark results" width="760" />
 </p>
 
-- Across the three datasets, SAG's average Recall@1, Recall@2, Recall@5, and Recall@10 reach **42.81%**, **79.70%**, **90.07%**, and **91.55%**, outperforming HippoRAG 2 by **3.67**, **11.56**, **6.79**, and **3.44** percentage points, respectively.
-- On the most challenging MuSiQue dataset, SAG improves Recall@1, Recall@2, Recall@5, and Recall@10 over HippoRAG 2 by **6.17**, **14.10**, **15.23**, and **9.61** percentage points, respectively.
+- Across the three datasets, SAG averages **42.81%/79.70%/90.07%/91.55%** on Recall@1/2/5/10, outperforming HippoRAG 2 by **3.67/11.56/6.79/3.44** percentage points.
+- On the most challenging MuSiQue dataset, the corresponding gains widen to **6.17/14.10/15.23/9.61** percentage points.
+
+> **Note:** The current code can reproduce the SAG results but does not yet support running the other comparison methods. Support for these methods will be added once the relevant code is ready.
 
 ## Method Figures
 
