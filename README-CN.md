@@ -10,6 +10,8 @@
 
 **论文链接：** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
+https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
+
 ## Benchmark 分数复现
 
 本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 结果，并从 Retrieval、QA Performance 和 LLM-as-a-Judge 等维度与各类 RAG 方法进行比较。
