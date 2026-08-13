@@ -8,7 +8,7 @@
 
 [English](README.md) | 中文
 
-**论文链接：** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
+**论文链接：**[https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
 <p align="center">
   <img src="assets/sag-benchmark-simple-cn.png" alt="SAG benchmark results" width="760" />
@@ -16,7 +16,7 @@
 
 ## Benchmark 分数复现
 
-本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与 Recall 评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 分数，尤其是 Recall@1 / Recall@2 / Recall@5 / Recall@10。
+本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 结果，并使用 Recall@1 / Recall@2 / Recall@5 / Recall@10 与各类检索及 RAG 方法进行比较。
 
 论文默认实验配置：
 
@@ -24,23 +24,17 @@
 |------|------|
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
-| 主要评估指标 | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
+| 论文主要指标 | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
 | 主要脚本 | `scripts/run_upload.py`、`scripts/run_search_benchmark.py` |
 
-参考结果：
+主要结果：
 
-| 方法 | 数据集 | Recall@1 | Recall@2 | Recall@5 | Recall@10 |
-|------|--------|----------|----------|----------|-----------|
-| **SAG** | HotpotQA | **47.80%** | **91.55%** | **96.50%** | **97.70%** |
-| HippoRAG 2 | HotpotQA | 44.40% | 78.35% | 94.35% | 97.15% |
-| **SAG** | 2WikiMultiHopQA | **43.53%** | **82.30%** | 88.00% | 88.75% |
-| HippoRAG 2 | 2WikiMultiHopQA | 42.38% | 76.55% | 90.35% | 93.40% |
-| **SAG** | MuSiQue | **36.17%** | **64.05%** | **80.04%** | **83.37%** |
-| HippoRAG 2 | MuSiQue | 30.65% | 49.52% | 65.13% | 73.76% |
-| **SAG** | **平均** | **42.50%** | **79.30%** | **88.18%** | **89.94%** |
-| HippoRAG 2 | **平均** | 39.14% | 68.14% | 83.28% | 88.10% |
+<p align="center">
+  <img src="assets/main-result.png" alt="SAG 主要实验结果" width="760" />
+</p>
 
-使用 NV-Embed-v2 时，MuSiQue 上的 SAG Recall@5 为 **81.71%**，HippoRAG 2 为 74.55%。
+- SAG 的平均 Recall@1、Recall@2、Recall@5 和 Recall@10 分别达到 **42.81%**、**79.70%**、**90.07%** 和 **91.55%**，相比 HippoRAG 2 分别提升 **3.67**、**11.56**、**6.79** 和 **3.44** 个百分点。
+- SAG 在最具挑战的 MuSiQue 数据集上，其 Recall@1、Recall@2、Recall@5 和 Recall@10 相比 HippoRAG 2 分别提升 **6.17**、**14.10**、**15.23** 和 **9.61** 个百分点。
 
 ## 方法图示
 

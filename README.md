@@ -8,7 +8,7 @@
 
 English | [中文](README-CN.md)
 
-**Paper:** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
+**Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
 <p align="center">
   <img src="assets/sag-benchmark-simple.png" alt="SAG benchmark results" width="760" />
@@ -16,7 +16,7 @@ English | [中文](README-CN.md)
 
 ## Benchmark Score Reproduction
 
-This repository contains upload, retrieval, and Recall evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The main goal is to let readers run the quick-start commands below and reproduce the benchmark scores reported in the paper, especially Recall@1 / Recall@2 / Recall@5 / Recall@10.
+This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The main goal is to let readers run the quick-start commands below, reproduce the benchmark results reported in the paper, and compare retrieval and RAG methods using Recall@1 / Recall@2 / Recall@5 / Recall@10.
 
 Default paper setup:
 
@@ -24,23 +24,17 @@ Default paper setup:
 |------|------|
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
-| Main metrics | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
+| Main paper metrics | Recall@1 / Recall@2 / Recall@5 / Recall@10 |
 | Main scripts | `scripts/run_upload.py`, `scripts/run_search_benchmark.py` |
 
-Reference results:
+Main results:
 
-| Method | Dataset | Recall@1 | Recall@2 | Recall@5 | Recall@10 |
-|------|--------|----------|----------|----------|-----------|
-| **SAG** | HotpotQA | **47.80%** | **91.55%** | **96.50%** | **97.70%** |
-| HippoRAG 2 | HotpotQA | 44.40% | 78.35% | 94.35% | 97.15% |
-| **SAG** | 2WikiMultiHopQA | **43.53%** | **82.30%** | 88.00% | 88.75% |
-| HippoRAG 2 | 2WikiMultiHopQA | 42.38% | 76.55% | 90.35% | 93.40% |
-| **SAG** | MuSiQue | **36.17%** | **64.05%** | **80.04%** | **83.37%** |
-| HippoRAG 2 | MuSiQue | 30.65% | 49.52% | 65.13% | 73.76% |
-| **SAG** | **Average** | **42.50%** | **79.30%** | **88.18%** | **89.94%** |
-| HippoRAG 2 | **Average** | 39.14% | 68.14% | 83.28% | 88.10% |
+<p align="center">
+  <img src="assets/main-result.png" alt="SAG main benchmark results" width="760" />
+</p>
 
-With NV-Embed-v2, SAG reaches **81.71%** Recall@5 on MuSiQue, compared with 74.55% for HippoRAG 2.
+- SAG's average Recall@1, Recall@2, Recall@5, and Recall@10 reach **42.81%**, **79.70%**, **90.07%**, and **91.55%**, outperforming HippoRAG 2 by **3.67**, **11.56**, **6.79**, and **3.44** percentage points, respectively.
+- On the most challenging MuSiQue dataset, SAG improves Recall@1, Recall@2, Recall@5, and Recall@10 over HippoRAG 2 by **6.17**, **14.10**, **15.23**, and **9.61** percentage points, respectively.
 
 ## Method Figures
 
