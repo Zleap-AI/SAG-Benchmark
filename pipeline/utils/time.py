@@ -2,8 +2,7 @@
 时间处理工具模块
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Union
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 # 定义常用时区
@@ -18,10 +17,10 @@ def get_utc_now() -> datetime:
     Returns:
         UTC datetime对象
     """
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
-def parse_iso_datetime(dt_str: str) -> Optional[datetime]:
+def parse_iso_datetime(dt_str: str) -> datetime | None:
     """
     解析ISO 8601格式时间字符串
 
@@ -65,7 +64,7 @@ def get_time_ago(dt: datetime) -> str:
 
     # 确保dt有时区信息
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
 
     delta = now - dt
 
@@ -110,13 +109,13 @@ def calculate_time_decay(
 
     # 确保created_time有时区信息
     if created_time.tzinfo is None:
-        created_time = created_time.replace(tzinfo=timezone.utc)
+        created_time = created_time.replace(tzinfo=UTC)
 
     days_ago = (now - created_time).days
     return math.exp(-decay_factor * days_ago)
 
 
-def utc_to_beijing(dt: Optional[datetime], fmt: Optional[str] = None) -> Union[datetime, str, None]:
+def utc_to_beijing(dt: datetime | None, fmt: str | None = None) -> datetime | str | None:
     """
     将 UTC 时间转换为北京时间
 

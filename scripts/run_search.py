@@ -1,24 +1,24 @@
 import argparse
 import asyncio
 import json
+import logging
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 复用 benchmark 共享逻辑，与run_search_benchmark.py 行为一致
-from _search_common import (
+from pipeline.core.config import get_settings
+from pipeline.modules.search import (
     SUPPORTED_STRATEGIES,
-    load_latest_source_info,
     build_strategy_config,
     create_multi_es_searcher,
+    load_latest_source_info,
     search_one_question,
 )
-from pipeline.core.config import get_settings
 from pipeline.utils import get_logger
 
 logger = get_logger("scripts.run_search_only")
@@ -30,6 +30,11 @@ def get_dataset_path_for_name(dataset_name: str) -> str:
 
 
 async def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     parser = argparse.ArgumentParser(description="单独的搜索脚本 - 只执行检索")
 
     parser.add_argument(
@@ -37,7 +42,7 @@ async def main():
         type=str,
         required=True,
         choices=SUPPORTED_STRATEGIES,
-        help="搜索策略：atomic / multi / multi_es / multi1 / hopllm / vector",
+        help="search strategy: atomic / multi_es / sag2 / vector / bm25",
     )
 
     parser.add_argument(
@@ -60,6 +65,12 @@ async def main():
         type=str,
         default=None,
         help="信息源ID，不指定则按 .env 的 LLM_MODEL 自动查找最新上传",
+    )
+
+    parser.add_argument(
+        "--allow-embedding-mismatch",
+        action="store_true",
+        help="允许当前 embedding 维度与建库时不同（不推荐，结果不可比）",
     )
 
     parser.add_argument(
@@ -95,8 +106,8 @@ async def main():
     args = parser.parse_args()
 
     # ── 解析 --limit 参数（与 run_search_benchmark.py 语义一致）────────
-    limit_start: Optional[int] = None
-    limit_end: Optional[int] = None  # 切片用的 stop（exclusive）
+    limit_start: int | None = None
+    limit_end: int | None = None  # 切片用的 stop（exclusive）
     if args.limit:
         if len(args.limit) == 1:
             limit_end = args.limit[0]
@@ -117,42 +128,50 @@ async def main():
     llm_model = settings.llm_model
     if args.source_config_id:
         source_config_id = args.source_config_id
-        print(f"📦 使用数据源（手动指定）: {source_config_id}")
+        logger.info(f"📦 使用数据源（手动指定）: {source_config_id}")
     else:
         try:
             source_info = load_latest_source_info(args.dataset_name, llm_model)
         except FileNotFoundError as e:
-            print(f"✗ 无法获取 source_config_id: {e}")
+            logger.error(f"✗ 无法获取 source_config_id: {e}")
             return 1
         source_config_id = source_info["source_config_id"]
-        print(f"📦 使用数据源: {source_config_id}")
-        print(f"   模型: {llm_model}")
-        print(f"   时间戳: {source_info.get('timestamp', 'unknown')}")
-        print(f"   文件路径: {source_info.get('file_path', 'unknown')}")
+        logger.info(f"📦 使用数据源: {source_config_id}")
+        logger.info(f"   模型: {llm_model}")
+        logger.info(f"   时间戳: {source_info.get('timestamp', 'unknown')}")
+        logger.info(f"   文件路径: {source_info.get('file_path', 'unknown')}")
+
+    # ── 设定 embedding 维度（双层路由：索引用维度，过滤用 source_config_id）──
+    from pipeline.modules.search.benchmark_utils import activate_embedding_dim_for_source
+
+    source_info_for_dim = source_info if not args.source_config_id else None
+    await activate_embedding_dim_for_source(
+        source_info_for_dim, allow_mismatch=args.allow_embedding_mismatch
+    )
 
     # ── 确定数据集路径并加载 ───────────────────────────────────────
     dataset_path = get_dataset_path_for_name(args.dataset_name)
     if not Path(dataset_path).exists():
-        print(f"✗ 数据集文件不存在: {dataset_path}")
+        logger.error(f"✗ 数据集文件不存在: {dataset_path}")
         return 1
 
-    with open(dataset_path, "r", encoding="utf-8") as f:
+    with open(dataset_path, encoding="utf-8") as f:
         dataset = json.load(f)
 
     if args.limit:
         dataset = dataset[limit_start:limit_end]
 
-    print(f"\n{'=' * 70}")
-    print("搜索配置:")
-    print(f"  策略: {args.strategy}")
+    logger.info(f"\n{'=' * 70}")
+    logger.info("搜索配置:")
+    logger.info(f"  策略: {args.strategy}")
     if args.strategy == "multi_es":
-        print(f"  multi_es mode: {args.mode}")
-    print(f"  数据集: {args.dataset_name}")
-    print(f"  信息源: {source_config_id}")
-    print(f"  问题数: {len(dataset)}")
-    print(f"  Top-K: {args.top_k}")
-    print(f"  并发数: {args.max_concurrency}")
-    print(f"{'=' * 70}\n")
+        logger.info(f"  multi_es mode: {args.mode}")
+    logger.info(f"  数据集: {args.dataset_name}")
+    logger.info(f"  信息源: {source_config_id}")
+    logger.info(f"  问题数: {len(dataset)}")
+    logger.info(f"  Top-K: {args.top_k}")
+    logger.info(f"  并发数: {args.max_concurrency}")
+    logger.info(f"{'=' * 70}\n")
 
     # 创建输出目录（按时间戳和数据集名称）
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -171,10 +190,10 @@ async def main():
     semaphore = asyncio.Semaphore(max(1, args.max_concurrency))
     total = len(dataset)
 
-    async def search_one(idx: int, item: Dict) -> Dict:
+    async def search_one(idx: int, item: dict) -> dict:
         async with semaphore:
             question = item.get("question", "")
-            print(f"[{idx + 1}/{total}] 搜索: {question[:60]}...")
+            logger.info(f"[{idx + 1}/{total}] 搜索: {question[:60]}...")
             query_start = time.perf_counter()
             try:
                 retrieved_docs = await search_one_question(
@@ -190,7 +209,7 @@ async def main():
                 logger.warning(f"问题 {idx + 1} 搜索失败: {e}")
                 retrieved_docs = []
             query_time = time.perf_counter() - query_start
-            print(f"  ✓ 检索到 {len(retrieved_docs)} 个结果，耗时: {query_time:.2f}s")
+            logger.info(f"  ✓ 检索到 {len(retrieved_docs)} 个结果，耗时: {query_time:.2f}s")
             return {
                 "question_index": idx + 1,
                 "question": question,
@@ -210,16 +229,16 @@ async def main():
     with open(latest_file, "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 
-    print(f"\n{'=' * 70}")
-    print("✅ 搜索完成!")
-    print(f"  输出目录: {output_subdir}")
-    print(f"  结果文件: {output_file}")
-    print(f"  最新结果: {latest_file}")
-    print(f"{'=' * 70}\n")
+    logger.info(f"\n{'=' * 70}")
+    logger.info("✅ 搜索完成!")
+    logger.info(f"  输出目录: {output_subdir}")
+    logger.info(f"  结果文件: {output_file}")
+    logger.info(f"  最新结果: {latest_file}")
+    logger.info(f"{'=' * 70}\n")
 
     if results:
-        print("示例结果（第一个问题）:")
-        print(json.dumps(results[0], ensure_ascii=False, indent=2)[:1000] + "...")
+        logger.info("示例结果（第一个问题）:")
+        logger.info(json.dumps(results[0], ensure_ascii=False, indent=2)[:1000] + "...")
 
     return 0
 

@@ -4,7 +4,13 @@ from typing import Optional
 
 from pipeline.core.config import get_settings
 from pipeline.storage.capabilities import StorageHealth
-from pipeline.storage.interfaces import DatabaseStore, SearchStore, VectorSearchStore
+from pipeline.storage.interfaces import (
+    ChunkTextSearchStore,
+    DatabaseStore,
+    EventUniverseStore,
+    SearchStore,
+    VectorSearchStore,
+)
 
 
 class StorageFacade:
@@ -15,10 +21,19 @@ class StorageFacade:
         database: DatabaseStore,
         vector: VectorSearchStore,
         search: SearchStore,
+        event_universe: EventUniverseStore | None = None,
+        chunk_text: ChunkTextSearchStore | None = None,
     ) -> None:
         self.database = database
         self.vector = vector
         self.search = search
+        # MySQL/OceanBase database stores are the canonical implementation of
+        # event-universe reads. Keep a separate named port without creating
+        # a second database pool or changing the existing close lifecycle.
+        self.event_universe = event_universe or database
+        # Kept optional for compatibility with callers that manually compose
+        # the pre-existing facade. The canonical factory always supplies it.
+        self.chunk_text = chunk_text
 
     async def health_check(self) -> StorageHealth:
         """Check both configured storage backends."""
@@ -36,6 +51,8 @@ class StorageFacade:
 
     async def close(self) -> None:
         """Close both stores."""
+        if self.chunk_text is not None:
+            await self.chunk_text.close()
         await self.vector.close()
         await self.search.close()
         await self.database.close()
@@ -48,7 +65,7 @@ def get_storage_facade() -> StorageFacade:
     """Return the process-wide storage facade."""
     global _storage_facade
     if _storage_facade is None:
-        from pipeline.storage.provider import create_storage_facade
+        from pipeline.storage.factory import create_storage_facade
 
         _storage_facade = create_storage_facade(get_settings())
     return _storage_facade

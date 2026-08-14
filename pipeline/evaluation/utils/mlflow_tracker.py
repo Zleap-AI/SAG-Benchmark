@@ -4,15 +4,15 @@ MLflow 跟踪器模块
 提供 MLflow 实验跟踪的封装类，支持配置化初始化、指标记录和自动资源管理。
 """
 
-from contextlib import contextmanager
-from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 
 def get_local_ip():
     """获取本机 IP 地址"""
     import socket
+
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
@@ -39,16 +39,17 @@ class MLflowConfig:
         max_results: 最大结果数
         description: 实验描述（包含参数 JSON），可选
     """
-    uri: Optional[str] = None
+
+    uri: str | None = None
     experiment: str = "default"
     dataset_name: str = ""
-    bench_size: Optional[int] = None
+    bench_size: int | None = None
     enable_qa: bool = False
     vector_top_k: int = 50
     max_entities: int = 50
     max_hops: int = 3
     max_results: int = 10
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class MLflowTracker:
@@ -64,7 +65,7 @@ class MLflowTracker:
         ...     tracker.log_recall_metrics({"recall@1": 0.8, "recall@5": 0.9}, step=0)
     """
 
-    def __init__(self, config: MLflowConfig, questions: List[Any]):
+    def __init__(self, config: MLflowConfig, questions: list[Any]):
         """初始化 MLflow 跟踪器
 
         Args:
@@ -102,6 +103,7 @@ class MLflowTracker:
 
         if self._logger is None:
             from .logging_utils import get_logger
+
             self._logger = get_logger(__name__)
 
         # 设置 tracking URI
@@ -114,7 +116,9 @@ class MLflowTracker:
         except Exception as e:
             if "deleted experiment" in str(e):
                 # 如果实验被删除，创建新实验
-                new_exp_name = f"{self.config.experiment}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                new_exp_name = (
+                    f"{self.config.experiment}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                )
                 mlflow.set_experiment(new_exp_name)
                 self._logger.warning(f"原实验已删除，创建新实验: {new_exp_name}")
             else:
@@ -122,10 +126,7 @@ class MLflowTracker:
 
         # 创建运行 - 添加 description 参数
         run_name = f"{get_local_ip()}_retrieval_{self.config.dataset_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self._run = mlflow.start_run(
-            run_name=run_name,
-            description=self.config.description
-        )
+        self._run = mlflow.start_run(run_name=run_name, description=self.config.description)
         self._run_id = self._run.info.run_id
 
         # 记录参数
@@ -137,16 +138,19 @@ class MLflowTracker:
     def _log_params(self):
         """记录初始化参数到 MLflow"""
         import mlflow
-        mlflow.log_params({
-            "dataset": self.config.dataset_name,
-            "bench_size": self.config.bench_size or 0,
-            "total_questions": len(self.questions),
-            "enable_qa": self.config.enable_qa,
-            "vector_top_k": self.config.vector_top_k,
-            "max_entities": self.config.max_entities,
-            "max_hops": self.config.max_hops,
-            "max_results": self.config.max_results
-        })
+
+        mlflow.log_params(
+            {
+                "dataset": self.config.dataset_name,
+                "bench_size": self.config.bench_size or 0,
+                "total_questions": len(self.questions),
+                "enable_qa": self.config.enable_qa,
+                "vector_top_k": self.config.vector_top_k,
+                "max_entities": self.config.max_entities,
+                "max_hops": self.config.max_hops,
+                "max_results": self.config.max_results,
+            }
+        )
 
     def _ensure_active_run(self) -> bool:
         """确保 MLflow run 处于 active 状态。
@@ -156,6 +160,7 @@ class MLflowTracker:
         if not self._run_id:
             return False
         import mlflow
+
         try:
             active = mlflow.active_run()
             if not active or active.info.run_id != self._run_id:
@@ -183,11 +188,12 @@ class MLflowTracker:
             self._run_id = None
             try:
                 import mlflow
+
                 mlflow.end_run()
             except Exception:
                 pass
 
-    def log_batch_metrics(self, metrics: Dict[str, float], step: int):
+    def log_batch_metrics(self, metrics: dict[str, float], step: int):
         """记录批次指标
 
         Args:
@@ -195,6 +201,7 @@ class MLflowTracker:
             step: 当前步骤/批次号
         """
         import mlflow
+
         self._safe_log(mlflow.log_metrics, metrics, step=step)
 
     def log_metric(self, key: str, value: float, step: int):
@@ -206,9 +213,10 @@ class MLflowTracker:
             step: 当前步骤/批次号
         """
         import mlflow
+
         self._safe_log(mlflow.log_metric, key, value, step=step)
 
-    def log_recall_metrics(self, pooled_recall: Dict[str, float], step: int):
+    def log_recall_metrics(self, pooled_recall: dict[str, float], step: int):
         """记录检索指标（Recall/Precision/F1 @K）
 
         自动从指标名中提取 K 值并记录。
@@ -218,6 +226,7 @@ class MLflowTracker:
             step: 当前步骤/批次号
         """
         import mlflow
+
         for metric_name, score in pooled_recall.items():
             if "@" not in metric_name:
                 continue
@@ -231,8 +240,68 @@ class MLflowTracker:
                 continue
             self._safe_log(mlflow.log_metric, f"{prefix_norm}_at_{k}", score, step=step)
 
-    def log_evaluation_metrics(self, full_count: int, partial_count: int,
-                                zero_count: int, current_idx: int, step: int):
+    def _log_prefixed(self, metrics: dict[str, float], prefix: str, step: int):
+        """给每个 metric key 加统一域前缀后上报（跳过非数值）。
+
+        Args:
+            metrics: 指标字典（key 已含维度后缀如 _cum/_batch，不含域前缀）
+            prefix: 域前缀，如 "time_" / "token_"
+            step: 当前步骤/批次号
+        """
+        import mlflow
+
+        for metric_name, value in metrics.items():
+            if not isinstance(value, (int, float)):
+                continue
+            self._safe_log(mlflow.log_metric, f"{prefix}{metric_name}", float(value), step=step)
+
+    def log_timing_metrics(self, timings_avg: dict[str, float], step: int):
+        """记录累计的各 Step 平均耗时，加 ``time_`` 域前缀。
+
+        与 log_recall_metrics 同步每 bench 上报（step=batch_index）。MLflow 时间
+        只保留 ``*_cum`` 口径，不上报 ``*_batch`` 或 ``*_percall``。
+
+        Args:
+            timings_avg: benchmark 侧算好的耗时字典（key 已含 _cum/_batch 维度后缀）
+            step: 当前步骤/批次号
+        """
+        self._log_prefixed(timings_avg, "time_", step)
+
+    def log_token_metrics(self, tokens_avg: dict[str, float], step: int):
+        """记录 Step7 LLM token 平均（输入/输出，每问题 & 每次调用），加 ``token_`` 域前缀。
+
+        与 log_timing_metrics 对称，每 bench 上报。指标名如
+        token_step7_prompt_cum / token_step7_completion_batch / token_step7_prompt_percall_cum。
+
+        Args:
+            tokens_avg: benchmark 侧算好的 token 字典（key 已含 _cum/_batch 维度后缀）
+            step: 当前步骤/批次号
+        """
+        self._log_prefixed(tokens_avg, "token_", step)
+
+    def log_supplementary_metrics(self, metrics: dict[str, float], step: int):
+        """Record an already ordered set of versioned search diagnostics.
+
+        Callers provide complete metric names.  The ``supp_01`` through
+        ``supp_04`` prefixes are the UI ordering contract: cumulative
+        with-retry time, cumulative no-retry time, cumulative token statistics,
+        then batch token statistics.  Core Recall/Precision/F1 metrics must be
+        logged before this method is called.
+        """
+
+        import mlflow
+
+        numeric_metrics = {
+            metric_name: float(value)
+            for metric_name, value in metrics.items()
+            if isinstance(value, (int, float))
+        }
+        if numeric_metrics:
+            self._safe_log(mlflow.log_metrics, numeric_metrics, step=step)
+
+    def log_evaluation_metrics(
+        self, full_count: int, partial_count: int, zero_count: int, current_idx: int, step: int
+    ):
         """记录评估指标
 
         记录完整的召回、部分召回和零召回的统计数量。
@@ -245,15 +314,16 @@ class MLflowTracker:
             step: 当前步骤/批次号
         """
         import mlflow
+
         self._safe_log(
             mlflow.log_metrics,
             {
                 "full_recall_count": full_count,
                 "partial_recall_count": partial_count,
                 "zero_recall_count": zero_count,
-                "questions_processed": current_idx
+                "questions_processed": current_idx,
             },
-            step=step
+            step=step,
         )
 
     def end(self):
@@ -264,6 +334,7 @@ class MLflowTracker:
         if self._run:
             try:
                 import mlflow
+
                 mlflow.end_run()
             except Exception as e:
                 if self._logger:
@@ -284,7 +355,7 @@ class MLflowTracker:
 
 
 __all__ = [
-    'MLflowTracker',
-    'MLflowConfig',
-    'get_local_ip',
+    "MLflowTracker",
+    "MLflowConfig",
+    "get_local_ip",
 ]

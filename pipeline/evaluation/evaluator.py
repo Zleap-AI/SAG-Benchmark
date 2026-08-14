@@ -28,7 +28,7 @@ Benchmark 评估器
 import json
 import math
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from pipeline.utils import get_logger
 
@@ -42,7 +42,7 @@ class Evaluator:
         pass
 
     @staticmethod
-    def _precision_at_k(retrieved: List[str], relevant: Set[str], k: int) -> float:
+    def _precision_at_k(retrieved: list[str], relevant: set[str], k: int) -> float:
         """
         计算 Precision@K
 
@@ -62,7 +62,7 @@ class Evaluator:
         return relevant_count / k
 
     @staticmethod
-    def _recall_at_k(retrieved: List[str], relevant: Set[str], k: int) -> float:
+    def _recall_at_k(retrieved: list[str], relevant: set[str], k: int) -> float:
         """
         计算 Recall@K
 
@@ -82,7 +82,7 @@ class Evaluator:
         return relevant_count / len(relevant)
 
     @staticmethod
-    def _dcg_at_k(retrieved: List[str], relevant: Set[str], k: int) -> float:
+    def _dcg_at_k(retrieved: list[str], relevant: set[str], k: int) -> float:
         """
         计算 DCG@K (Discounted Cumulative Gain)
 
@@ -106,7 +106,7 @@ class Evaluator:
         return dcg
 
     @staticmethod
-    def _idcg_at_k(relevant: Set[str], k: int) -> float:
+    def _idcg_at_k(relevant: set[str], k: int) -> float:
         """
         计算 IDCG@K (Ideal DCG)
 
@@ -125,7 +125,7 @@ class Evaluator:
         idcg = sum(1.0 / math.log2(i + 2) for i in range(ideal_k))
         return idcg
 
-    def _ndcg_at_k(self, retrieved: List[str], relevant: Set[str], k: int) -> float:
+    def _ndcg_at_k(self, retrieved: list[str], relevant: set[str], k: int) -> float:
         """
         计算 NDCG@K (Normalized DCG)
 
@@ -145,7 +145,7 @@ class Evaluator:
         return dcg / idcg
 
     @staticmethod
-    def _mrr(retrieved: List[str], relevant: Set[str]) -> float:
+    def _mrr(retrieved: list[str], relevant: set[str]) -> float:
         """
         计算 MRR (Mean Reciprocal Rank)
 
@@ -166,10 +166,10 @@ class Evaluator:
 
     def evaluate_single_query(
         self,
-        retrieved: List[str],
-        relevant: List[str],
-        k_values: Optional[List[int]] = None,
-    ) -> Dict[str, float]:
+        retrieved: list[str],
+        relevant: list[str],
+        k_values: list[int] | None = None,
+    ) -> dict[str, float]:
         """
         评估单个查询的结果
 
@@ -199,10 +199,10 @@ class Evaluator:
 
     def evaluate(
         self,
-        predictions: List[Dict[str, Any]],
-        ground_truth: Dict[str, List[str]],
-        k_values: Optional[List[int]] = None,
-    ) -> Dict[str, float]:
+        predictions: list[dict[str, Any]],
+        ground_truth: dict[str, list[str]],
+        k_values: list[int] | None = None,
+    ) -> dict[str, float]:
         """
         评估多个查询的结果（宏平均）
 
@@ -226,13 +226,15 @@ class Evaluator:
 
         if not predictions:
             logger.warning("预测结果为空，返回零分")
-            return {f"precision@{k}": 0.0 for k in k_values} | \
-                   {f"recall@{k}": 0.0 for k in k_values} | \
-                   {f"ndcg@{k}": 0.0 for k in k_values} | \
-                   {"mrr": 0.0}
+            return (
+                {f"precision@{k}": 0.0 for k in k_values}
+                | {f"recall@{k}": 0.0 for k in k_values}
+                | {f"ndcg@{k}": 0.0 for k in k_values}
+                | {"mrr": 0.0}
+            )
 
         # 累积各个查询的指标
-        all_metrics: Dict[str, List[float]] = {}
+        all_metrics: dict[str, list[float]] = {}
 
         for pred in predictions:
             query_id = pred.get("query_id", "")
@@ -259,9 +261,9 @@ class Evaluator:
 
     def save_results(
         self,
-        metrics: Dict[str, float],
+        metrics: dict[str, float],
         output_path: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         保存评估结果到文件

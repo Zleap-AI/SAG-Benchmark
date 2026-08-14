@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from pipeline.modules.load.chunking.base import BaseArticleSectionBuilder
 from pipeline.modules.load.chunking.chunker.text import MarkdownTextChunker
 from pipeline.modules.load.chunking.types import InputDocument, SectionDraft, StructuredBlock
@@ -26,10 +24,10 @@ class MarkdownArticleSectionBuilder(BaseArticleSectionBuilder):
     async def build_sections(
         self,
         doc: InputDocument,
-        blocks: List[StructuredBlock],
-    ) -> List[SectionDraft]:
+        blocks: list[StructuredBlock],
+    ) -> list[SectionDraft]:
         _ = doc
-        sections: List[SectionDraft] = []
+        sections: list[SectionDraft] = []
         order_index = 0
 
         for block in blocks:
@@ -49,13 +47,13 @@ class MarkdownArticleSectionBuilder(BaseArticleSectionBuilder):
     @classmethod
     def _merge_whitespace_only_text_sections(
         cls,
-        sections: List[SectionDraft],
-    ) -> List[SectionDraft]:
+        sections: list[SectionDraft],
+    ) -> list[SectionDraft]:
         """把"仅空白的 TEXT section"吸附到相邻 section，避免产生无语义 section。"""
         if len(sections) <= 1:
             return sections
 
-        merged: List[SectionDraft] = []
+        merged: list[SectionDraft] = []
         leading_whitespace = ""
 
         for section in sections:

@@ -1,11 +1,10 @@
 import re
 import string
-from typing import List
 
 
-def extract_sentences(text: str) -> List[str]:
+def extract_sentences(text: str) -> list[str]:
     """将段落文本按句号/感叹号/问号分割成句子列表"""
-    sentences = re.split(r'[.!?]+', text)
+    sentences = re.split(r"[.!?]+", text)
     return [s.strip() for s in sentences if s.strip()]
 
 
@@ -23,6 +22,7 @@ def normalize_answer(answer: str) -> str:
     Returns:
         str: The normalized string.
     """
+
     def remove_articles(text):
         return re.sub(r"\b(a|an|the)\b", " ", text)
 
@@ -35,5 +35,5 @@ def normalize_answer(answer: str) -> str:
 
     def lower(text):
         return text.lower()
-    
+
     return white_space_fix(remove_articles(remove_punc(lower(answer))))

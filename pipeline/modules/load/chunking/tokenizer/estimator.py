@@ -5,15 +5,12 @@ from __future__ import annotations
 import os
 import threading
 from pathlib import Path
-from typing import Dict, Optional
 
 from pipeline.utils import get_logger
 
 logger = get_logger("modules.load.chunking.tokenizer")
 
-DEFAULT_TOKENIZER_JSON_PATH = (
-    Path(__file__).resolve().parent / "assets" / "tokenizer.json"
-)
+DEFAULT_TOKENIZER_JSON_PATH = Path(__file__).resolve().parent / "assets" / "tokenizer.json"
 ENV_KEYS = (
     "DATAFLOW_CHUNKING_TOKENIZER_JSON",
     "DATAFLOW_TOKENIZER_JSON",
@@ -23,13 +20,13 @@ ENV_KEYS = (
 class TokenizerTokenEstimator:
     """Token estimator using HuggingFace `tokenizers` local JSON model."""
 
-    _tokenizer_cache: Dict[str, object] = {}
+    _tokenizer_cache: dict[str, object] = {}
     _lock = threading.Lock()
 
     def __init__(
         self,
         model_type: str = "generic",
-        tokenizer_path: Optional[str | Path] = None,
+        tokenizer_path: str | Path | None = None,
     ) -> None:
         # model_type is kept for signature compatibility with old estimator.
         self.model_type = model_type
@@ -46,7 +43,7 @@ class TokenizerTokenEstimator:
             raise RuntimeError(f"Tokenizer encode 失败: {exc}") from exc
 
     @classmethod
-    def _resolve_tokenizer_path(cls, tokenizer_path: Optional[str | Path]) -> Path:
+    def _resolve_tokenizer_path(cls, tokenizer_path: str | Path | None) -> Path:
         if tokenizer_path is not None:
             return Path(tokenizer_path).expanduser().resolve()
         for key in ENV_KEYS:

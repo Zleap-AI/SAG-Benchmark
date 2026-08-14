@@ -9,7 +9,7 @@ qwen3_rerank:
     - query
     - doc
   prefix: "<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be \"yes\" or \"no\".<|im_end|>\n<|im_start|>user\n"
-  suffix: "<|im_end|>\n<|im_start|>assistant\n spezielle\n\n"
+  suffix: "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
   query_template: "{prefix}<Instruct>: {instruction}\n<Query>: {query}\n"
   doc_template: "<Document>: {doc}{suffix}"
   default_instruction: "Given a web search query, retrieve relevant passages that answer the query"

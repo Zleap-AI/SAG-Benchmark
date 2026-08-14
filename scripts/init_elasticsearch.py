@@ -4,63 +4,77 @@ Elasticsearch 索引初始化脚本
 创建所有 ES 索引并验证
 """
 
+import argparse
 import asyncio
+import logging
 import sys
 from pathlib import Path
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from pipeline.core.storage.documents import REGISTERED_DOCUMENTS
-from pipeline.core.storage.elasticsearch import ElasticsearchClient
+from pipeline.storage.backends.elasticsearch.documents import REGISTERED_DOCUMENTS
+from pipeline.storage.backends.elasticsearch.client import ElasticsearchClient
+from pipeline.storage.backends.elasticsearch.index_naming import (
+    IndexDimMismatchError,
+    assert_index_dims,
+    resolve_index_name,
+    with_dense_vector_dims,
+)
+from pipeline.utils import get_logger
+
+logger = get_logger("scripts.init_elasticsearch")
 
 
 # 输出辅助函数
 def print_header(text: str) -> None:
     """打印标题"""
-    print("\n" + "=" * 70)
-    print(f"  {text}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"  {text}")
+    logger.info("=" * 70)
 
 
 def print_success(text: str) -> None:
     """打印成功信息"""
-    print(f"  ✓ {text}")
+    logger.info(f"  ✓ {text}")
 
 
 def print_info(text: str) -> None:
     """打印普通信息"""
-    print(f"  • {text}")
+    logger.info(f"  • {text}")
 
 
 def print_warning(text: str) -> None:
     """打印警告信息"""
-    print(f"  ⚠️  {text}")
+    logger.warning(f"  ⚠️  {text}")
 
 
 def print_error(text: str) -> None:
     """打印错误信息"""
-    print(f"  ✗ {text}")
+    logger.error(f"  ✗ {text}")
 
 
-async def create_indices(es_client: ElasticsearchClient) -> dict[str, str]:
+async def create_indices(es_client: ElasticsearchClient, dim: int) -> dict[str, str]:
     """
-    创建所有 ES 索引
+    创建所有 ES 索引（按运行时 embedding 维度）。
 
-    如果索引已存在，则跳过创建（幂等性）
+    - 索引名：base + 维度后缀（1024 且开启 legacy 兼容时无后缀）
+    - mapping：deepcopy 后改写所有 dense_vector 的 dims
+    - 已存在：校验 dims 一致；不一致 fail-fast（ES 不允许改 dims）
 
     Returns:
-        dict: 索引名 -> 状态 ("created", "skipped", "failed")
+        dict: 索引名 -> 状态 ("created", "skipped", "failed", "dim_mismatch")
     """
-    print_header("创建索引")
+    print_header(f"创建索引 (embedding_dim={dim})")
 
     results = {}
 
     for document_cls in REGISTERED_DOCUMENTS:
         try:
             # 从 Document 类获取索引配置
-            index_name = document_cls.Index.name
-            mapping = document_cls._doc_type.mapping.to_dict()
+            base_name = getattr(document_cls, "BASE_INDEX_NAME", document_cls.Index.name)
+            index_name = resolve_index_name(base_name, dim)
+            mapping = with_dense_vector_dims(document_cls._doc_type.mapping.to_dict(), dim)
             settings = getattr(document_cls.Index, "settings", {})
         except AttributeError as e:
             print_error(f"Document 类 {document_cls.__name__} 配置获取失败: {e}")
@@ -71,18 +85,20 @@ async def create_indices(es_client: ElasticsearchClient) -> dict[str, str]:
         exists = await es_client.index_exists(index_name)
 
         if exists:
-            print_info(f"{index_name}: 已存在，跳过创建")
+            try:
+                await assert_index_dims(es_client, index_name, dim)
+            except IndexDimMismatchError as e:
+                print_error(str(e))
+                results[index_name] = "dim_mismatch"
+                continue
+            print_info(f"{index_name}: 已存在且维度匹配 (dims={dim})，跳过创建")
             results[index_name] = "skipped"
             continue
 
         # 创建索引
         try:
-            print_info(f"{index_name}: 开始创建...")
-            await es_client.create_index(
-                index=index_name,
-                mappings=mapping,
-                settings=settings
-            )
+            print_info(f"{index_name}: 开始创建 (dims={dim})...")
+            await es_client.create_index(index=index_name, mappings=mapping, settings=settings)
             print_success(f"{index_name}: 创建成功")
             results[index_name] = "created"
         except Exception as e:
@@ -92,7 +108,7 @@ async def create_indices(es_client: ElasticsearchClient) -> dict[str, str]:
     return results
 
 
-async def verify_indices(es_client: ElasticsearchClient) -> bool:
+async def verify_indices(es_client: ElasticsearchClient, dim: int) -> bool:
     """
     验证所有索引是否创建成功
 
@@ -105,7 +121,8 @@ async def verify_indices(es_client: ElasticsearchClient) -> bool:
 
     for document_cls in REGISTERED_DOCUMENTS:
         try:
-            index_name = document_cls.Index.name
+            base_name = getattr(document_cls, "BASE_INDEX_NAME", document_cls.Index.name)
+            index_name = resolve_index_name(base_name, dim)
         except AttributeError as e:
             print_error(f"Document 类 {document_cls.__name__} 索引名称获取失败: {e}")
             all_success = False
@@ -114,7 +131,14 @@ async def verify_indices(es_client: ElasticsearchClient) -> bool:
         exists = await es_client.index_exists(index_name)
 
         if exists:
-            print_success(f"{index_name}: 验证通过")
+            # 额外校验维度一致性
+            try:
+                await assert_index_dims(es_client, index_name, dim)
+                print_success(f"{index_name}: 验证通过 (dims={dim})")
+            except IndexDimMismatchError as e:
+                print_error(str(e))
+                all_success = False
+                continue
         else:
             print_error(f"{index_name}: 验证失败，索引不存在")
             all_success = False
@@ -126,6 +150,16 @@ async def main() -> None:
     """
     主函数
     """
+    parser = argparse.ArgumentParser(description="初始化 Elasticsearch 索引")
+    parser.add_argument("--dim", type=int, default=None, help="强制指定维度（跳过 probe）")
+    parser.add_argument("--refresh-dim", action="store_true", help="忽略缓存，强制重新 probe")
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     es_client = None
 
     try:
@@ -142,11 +176,25 @@ async def main() -> None:
 
         print_success("Elasticsearch 连接成功")
 
+        # 2.5 解析 embedding 维度
+        if args.dim:
+            dim = args.dim
+            print_info(f"使用命令行指定维度: dim={dim}（跳过 probe）")
+        else:
+            from pipeline.core.ai.embedding_dim import resolve_embedding_dim
+
+            dim_info = await resolve_embedding_dim(force_probe=args.refresh_dim)
+            dim = dim_info["dim"]
+            print_success(
+                f"embedding 维度: {dim} (来源={dim_info['dim_source']}, "
+                f"model={dim_info['model']})"
+            )
+
         # 3. 创建索引
-        create_results = await create_indices(es_client)
+        create_results = await create_indices(es_client, dim)
 
         # 4. 验证索引
-        verify_success = await verify_indices(es_client)
+        verify_success = await verify_indices(es_client, dim)
 
         # 5. 总结
         print_header("操作总结")
@@ -154,21 +202,24 @@ async def main() -> None:
         created_count = sum(1 for status in create_results.values() if status == "created")
         skipped_count = sum(1 for status in create_results.values() if status == "skipped")
         failed_count = sum(1 for status in create_results.values() if status == "failed")
+        mismatch_count = sum(1 for status in create_results.values() if status == "dim_mismatch")
 
         if created_count > 0:
             print_success(f"新创建索引: {created_count} 个")
         if skipped_count > 0:
             print_info(f"跳过索引: {skipped_count} 个（已存在）")
+        if mismatch_count > 0:
+            print_error(f"维度不匹配索引: {mismatch_count} 个")
         if failed_count > 0:
             print_error(f"失败索引: {failed_count} 个")
 
-        if verify_success and failed_count == 0:
+        if verify_success and failed_count == 0 and mismatch_count == 0:
             print_success("所有索引初始化成功！")
         else:
             print_error("部分索引初始化失败，请查看详细信息")
             raise Exception("索引初始化未完全成功")
 
-        print("=" * 70 + "\n")
+        logger.info("=" * 70 + "\n")
 
     except Exception as e:
         print_error(f"索引初始化失败: {e}")

@@ -1,0 +1,68 @@
+[
+  {
+    "id": 0,
+    "question": "What is the capital of France?",
+    "answer": "Paris is the capital of France.",
+    "ground_truth": "Paris",
+    "contexts": [
+      "France is a country in Western Europe.",
+      "Paris has been the capital of France since the 10th century.",
+      "The Eiffel Tower is located in Paris."
+    ],
+    "evidences": ["Paris is the capital of France.", "Paris is located in the north of France."],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 1,
+    "question": "Who wrote Romeo and Juliet?",
+    "answer": "William Shakespeare wrote Romeo and Juliet.",
+    "ground_truth": ["William Shakespeare", "Shakespeare"],
+    "contexts": [
+      "Romeo and Juliet is a tragedy written by William Shakespeare.",
+      "The play was first performed in the late 16th century."
+    ],
+    "evidences": ["William Shakespeare wrote Romeo and Juliet."],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 2,
+    "question": "What is the boiling point of water?",
+    "answer": "100 degrees Celsius at sea level.",
+    "ground_truth": "100 degrees Celsius",
+    "contexts": [],
+    "evidences": ["Water boils at 100 degrees Celsius at standard atmospheric pressure."],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 3,
+    "question": "",
+    "answer": "Some answer",
+    "ground_truth": "Ground truth",
+    "contexts": ["Some context without a question."],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 4,
+    "question": "What is machine learning?",
+    "answer": "Machine learning is a subset of artificial intelligence.",
+    "ground_truth": "Machine learning is a field of study that gives computers the ability to learn without being explicitly programmed.",
+    "contexts": [
+      "Machine learning is a subset of artificial intelligence.",
+      "It focuses on building systems that learn from data.",
+      "Deep learning is a more advanced form of machine learning using neural networks.",
+      "Reinforcement learning involves agents learning from rewards and punishments.",
+      "Supervised learning uses labeled data for training."
+    ],
+    "evidences": [
+      "Machine learning gives computers the ability to learn without explicit programming.",
+      "Supervised learning uses labeled training data."
+    ],
+    "source": "test",
+    "question_type": "qa"
+  }
+]

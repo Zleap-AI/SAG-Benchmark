@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# ==================== Build and packaging ====================
 build/
 develop-eggs/
 dist/
@@ -20,51 +22,55 @@ wheels/
 *.egg
 MANIFEST
 
-# ==================== Virtual Environment ====================
+# ==================== Virtual environments ====================
 .venv/
 venv/
 ENV/
 env/
 
-# ==================== IDE ====================
+# ==================== Environment and secrets ====================
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+
+# ==================== IDE and operating-system files ====================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 .DS_Store
+Thumbs.db
 
-# ==================== Testing ====================
+# ==================== Test and tool caches ====================
 .pytest_cache/
 .coverage
+coverage.xml
 htmlcov/
 .tox/
 .mypy_cache/
 .ruff_cache/
-
-# ==================== Environment Variables ====================
-.env
-.env.s*
-!.env.sample
+.cache/
+.ipynb_checkpoints/
 
 # ==================== Logs ====================
 *.log
 logs/
 
-# ==================== Database ====================
+# ==================== Local databases and services ====================
 *.db
 *.sqlite
 *.sqlite3
-
-# ==================== Docker ====================
 *_data/
 
-# ==================== Documentation ====================
+# ==================== Documentation build output ====================
 docs/_build/
 site/
 
-# ==================== Project Specific ====================
-# Output and temporary files
+# ==================== Generated benchmark data and outputs ====================
 output/
 data/
 uploads/
@@ -73,8 +79,6 @@ tmp/
 .history/
 references/
 web_chunk_test/
-
-# Evaluation results
 pipeline/evaluation/markdown_datasets/
 pipeline/evaluation/source/
 pipeline/evaluation/badcases/
@@ -86,16 +90,22 @@ pipeline/evaluation/recall_results/
 pipeline/evaluation/expand_results/
 evaluation/hotpotqa_evaluation/data/
 
-# Test fixtures
+# ==================== Generated test fixtures ====================
 tests/load/md/
 tests/extract/test_result.json
 
-# Web
-web/package-lock.json
-
-# Scripts
-start.sh
-
-# Code
+# ==================== Local development tools ====================
 .codegraph/
 .claude/
+
+# ==================== Optional external projects and local worktrees ====================
+# External benchmark projects are maintained separately from this repository.
+external/
+# Local experimental worktree; not part of the source distribution.
+test/
+
+# ==================== Historical local notes ====================
+# Development-only plans and audits are intentionally not part of the
+# public source distribution.
+docs/archive/
+*.fix-plan.md

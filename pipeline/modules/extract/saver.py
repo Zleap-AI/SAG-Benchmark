@@ -3,13 +3,13 @@
 
 职责：
 - 保存事项到数据库（MySQL）
-- 同步到当前配置的向量/检索后端
+- 同步到向量库（Elasticsearch）
 - 批量处理优化
 """
 
-import time
 import struct
-from typing import Any, Dict, List
+import time
+from typing import Any
 
 from sqlalchemy import select, text, update
 from sqlalchemy.orm import selectinload
@@ -28,7 +28,7 @@ EVENT_ENTITY_EMBEDDING_TABLE_NAME = "event_entity_embedding"
 EVENT_ENTITY_EMBEDDING_TRUNCATE_DIMS = 128
 
 
-def to_event_entity_embedding_vec_bytes(embedding: List[float]) -> bytes:
+def to_event_entity_embedding_vec_bytes(embedding: list[float]) -> bytes:
     """
     将 embedding 截断为 128 维并转换为 float32 bytes（512字节）
     """
@@ -50,10 +50,10 @@ class EventSaver:
         self.logger = get_logger("extract.saver")
         self.settings = get_settings()
 
-        # 向量/检索后端（延迟初始化）
+        # 向量库相关（延迟初始化）
         self._vector_store = None
 
-    async def commit(self, events: List[SourceEvent], config: ExtractConfig) -> List[SourceEvent]:
+    async def commit(self, events: list[SourceEvent], config: ExtractConfig) -> list[SourceEvent]:
         """
         提交事项（保存到DB + 同步向量库）
 
@@ -96,17 +96,17 @@ class EventSaver:
         """仅 SAAS 环境写入事项实体向量表"""
         return self.settings.server_type == "SAAS"
 
-    def _collect_event_entities(self, events: List[SourceEvent]) -> List[EventEntity]:
+    def _collect_event_entities(self, events: list[SourceEvent]) -> list[EventEntity]:
         """收集事项中的所有事件-实体关联"""
-        event_entities: List[EventEntity] = []
+        event_entities: list[EventEntity] = []
         for event in events:
             if hasattr(event, "event_associations") and event.event_associations:
                 event_entities.extend(event.event_associations)
         return event_entities
 
     async def _sync_event_entity_embeddings_to_db(
-        self, events: List[SourceEvent], config: ExtractConfig
-    ) -> Dict[str, Any]:
+        self, events: list[SourceEvent], config: ExtractConfig
+    ) -> dict[str, Any]:
         """
         同步事件-实体关联 embedding 到 MySQL 表 event_entity_embedding（仅 SAAS）
         """
@@ -121,7 +121,7 @@ class EventSaver:
         start_time = time.perf_counter()
         embedding_client = await get_embedding_client(scenario="general")
 
-        rows_to_upsert: List[Dict[str, Any]] = []
+        rows_to_upsert: list[dict[str, Any]] = []
         embedding_failed = 0
         assoc_by_id = {assoc.id: assoc for assoc in event_entities}
 
@@ -152,9 +152,7 @@ class EventSaver:
                             {"id": assoc.id, "vec": to_event_entity_embedding_vec_bytes(vector)}
                         )
                     except Exception as pack_error:
-                        self.logger.error(
-                            f"向量转换失败 {assoc.id}: {pack_error}"
-                        )
+                        self.logger.error(f"向量转换失败 {assoc.id}: {pack_error}")
                         embedding_failed += 1
 
             except Exception as batch_error:
@@ -181,13 +179,11 @@ class EventSaver:
             self.logger.info(f"{EVENT_ENTITY_EMBEDDING_TABLE_NAME} 写入为空: {stats}")
             return stats
 
-        upsert_sql = text(
-            f"""
+        upsert_sql = text(f"""
             INSERT INTO {EVENT_ENTITY_EMBEDDING_TABLE_NAME} (id, vec)
             VALUES (:id, :vec)
             ON DUPLICATE KEY UPDATE vec = VALUES(vec)
-            """
-        )
+            """)
 
         upserted = 0
         db_failed = 0
@@ -199,7 +195,9 @@ class EventSaver:
                     await session.commit()
                 upserted += len(batch)
             except Exception as batch_db_error:
-                self.logger.error(f"批量写入 {EVENT_ENTITY_EMBEDDING_TABLE_NAME} 失败，降级重试: {batch_db_error}")
+                self.logger.error(
+                    f"批量写入 {EVENT_ENTITY_EMBEDDING_TABLE_NAME} 失败，降级重试: {batch_db_error}"
+                )
                 for row in batch:
                     try:
                         async with self.session_factory() as session:
@@ -284,7 +282,7 @@ class EventSaver:
             )
         return stats
 
-    async def _save_to_database(self, events: List[SourceEvent]) -> List[str]:
+    async def _save_to_database(self, events: list[SourceEvent]) -> list[str]:
         """
         保存事项到数据库
 
@@ -326,7 +324,7 @@ class EventSaver:
         self.logger.info(f"已保存 {len(event_ids)} 个事项到数据库")
         return event_ids
 
-    async def _load_events_with_relations(self, event_ids: List[str]) -> List[SourceEvent]:
+    async def _load_events_with_relations(self, event_ids: list[str]) -> list[SourceEvent]:
         """
         从数据库加载事项（预加载关系数据）
 
@@ -365,7 +363,7 @@ class EventSaver:
 
             return events
 
-    async def _sync_to_vector_store(self, events: List[SourceEvent], config: ExtractConfig) -> None:
+    async def _sync_to_vector_store(self, events: list[SourceEvent], config: ExtractConfig) -> None:
         """
         同步事项和实体到向量库
 
@@ -375,7 +373,7 @@ class EventSaver:
         """
         self.logger.info(f"开始同步 {len(events)} 个事项到向量库")
 
-        # 初始化向量/检索后端（延迟初始化）
+        # 初始化向量库客户端（延迟初始化）
         if self._vector_store is None:
             self._vector_store = get_storage_facade().vector
 
@@ -428,11 +426,11 @@ class EventSaver:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器退出。全局存储 facade 由进程生命周期管理。"""
+        """异步上下文管理器退出 - 确保资源清理"""
         self._vector_store = None
         return False
 
-    async def _collect_unique_entities(self, events: List[SourceEvent]) -> Dict[str, Entity]:
+    async def _collect_unique_entities(self, events: list[SourceEvent]) -> dict[str, Entity]:
         """收集所有唯一的实体"""
         unique_entities = {}
 
@@ -453,7 +451,12 @@ class EventSaver:
             result = await session.execute(select(Entity).where(Entity.id == entity_id))
             return result.scalar_one_or_none()
 
-    async def _sync_entities(self, entities: List[Entity], config: ExtractConfig) -> Dict[str, Any]:
+    def _get_vector_store(self):
+        if self._vector_store is None:
+            self._vector_store = get_storage_facade().vector
+        return self._vector_store
+
+    async def _sync_entities(self, entities: list[Entity], config: ExtractConfig) -> dict[str, Any]:
         """
         同步实体到向量库（批量处理）
 
@@ -481,14 +484,9 @@ class EventSaver:
 
         return await self._batch_sync_entities(entities, config)
 
-    def _get_vector_store(self):
-        if self._vector_store is None:
-            self._vector_store = get_storage_facade().vector
-        return self._vector_store
-
     async def _batch_sync_entities(
-        self, entities: List[Entity], config: ExtractConfig
-    ) -> Dict[str, Any]:
+        self, entities: list[Entity], config: ExtractConfig
+    ) -> dict[str, Any]:
         """
         批量同步实体到向量库（使用批量处理工具）
 
@@ -505,7 +503,7 @@ class EventSaver:
         embedding_client = await get_embedding_client(scenario="general")
 
         # 阶段1: 批量生成向量
-        def build_document(entity: Entity, vector: List[float]) -> Dict[str, Any]:
+        def build_document(entity: Entity, vector: list[float]) -> dict[str, Any]:
             return {
                 "id": entity.id,
                 "entity_id": entity.id,
@@ -515,9 +513,7 @@ class EventSaver:
                 "vector": vector,
                 "normalized_name": entity.normalized_name or "",
                 "description": entity.description or "",
-                "created_time": (
-                    entity.created_time.isoformat() if entity.created_time else None
-                ),
+                "created_time": (entity.created_time.isoformat() if entity.created_time else None),
             }
 
         embedding_result = await batch_generate_embeddings(
@@ -531,7 +527,7 @@ class EventSaver:
         documents = embedding_result["results"]
         embedding_failed = embedding_result["failed"]
 
-        # 阶段2: 批量写入当前向量/检索后端
+        # 阶段2: 批量索引
         index_result = await self._get_vector_store().upsert_entity_vectors(
             documents=documents,
             batch_size=config.index_batch_size,
@@ -559,8 +555,8 @@ class EventSaver:
         return stats
 
     async def _sync_events(
-        self, events: List[SourceEvent], config: ExtractConfig
-    ) -> Dict[str, Any]:
+        self, events: list[SourceEvent], config: ExtractConfig
+    ) -> dict[str, Any]:
         """
         同步事项到向量库（批量处理）
 
@@ -577,8 +573,8 @@ class EventSaver:
         return await self._batch_sync_events(events, config)
 
     async def _batch_sync_events(
-        self, events: List[SourceEvent], config: ExtractConfig
-    ) -> Dict[str, Any]:
+        self, events: list[SourceEvent], config: ExtractConfig
+    ) -> dict[str, Any]:
         """
         批量同步事项到向量库（两阶段处理）
 
@@ -592,7 +588,6 @@ class EventSaver:
         start_time = time.perf_counter()
 
         embedding_client = await get_embedding_client(scenario="general")
-
         documents = []
         embedding_failed = 0
 
@@ -659,8 +654,8 @@ class EventSaver:
         return stats
 
     async def _sync_event_entities(
-        self, events: List[SourceEvent], config: ExtractConfig
-    ) -> Dict[str, Any]:
+        self, events: list[SourceEvent], config: ExtractConfig
+    ) -> dict[str, Any]:
         """
         同步事件-实体关联到向量库（批量处理）
 
@@ -677,7 +672,6 @@ class EventSaver:
         start_time = time.perf_counter()
 
         embedding_client = await get_embedding_client(scenario="general")
-
         # 收集所有 EventEntity 关联
         event_entities = self._collect_event_entities(events)
 
@@ -688,7 +682,7 @@ class EventSaver:
         # 阶段1: 批量生成向量（使用工具）
         from pipeline.utils.batch import batch_generate_embeddings
 
-        def build_document(assoc: EventEntity, vector: List[float]) -> Dict[str, Any]:
+        def build_document(assoc: EventEntity, vector: list[float]) -> dict[str, Any]:
             return {
                 "id": assoc.id,
                 "event_id": assoc.event_id,
@@ -696,9 +690,7 @@ class EventSaver:
                 "source_config_id": config.source_config_id,
                 "description": assoc.description or "",
                 "vector": vector,
-                "created_time": (
-                    assoc.created_time.isoformat() if assoc.created_time else None
-                ),
+                "created_time": (assoc.created_time.isoformat() if assoc.created_time else None),
                 "is_delete": False,
             }
 
@@ -742,8 +734,8 @@ class EventSaver:
         return stats
 
     def _build_event_document(
-        self, event: SourceEvent, title_vec: List[float], content_vec: List[float]
-    ) -> Dict[str, Any]:
+        self, event: SourceEvent, title_vec: list[float], content_vec: list[float]
+    ) -> dict[str, Any]:
         """构建事项文档（用于向量库索引）"""
         # 提取关联实体ID
         entity_ids = []

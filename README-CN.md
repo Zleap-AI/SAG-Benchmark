@@ -12,9 +12,11 @@
 
 https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
 
+文档与资源：[变更日志](CHANGELOG.md) | [v2.0.0 发布说明](docs/releases/v2.0.0.md) | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md) | [支持渠道](SUPPORT.md)
+
 ## Benchmark 分数复现
 
-本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。核心目标是让读者按下方快速复现命令跑出论文中的 Benchmark 结果，并从 Retrieval、QA Performance 和 LLM-as-a-Judge 等维度与各类 RAG 方法进行比较。
+本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。当前快速开始流程支持复现 SAG、BM25 以及 bge-large-en-v1.5 向量检索结果，并通过 atomic 上传/检索路径支持 Triple indexing 消融实验。
 
 论文默认实验配置：
 
@@ -23,7 +25,7 @@ https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
 | 论文主要指标 | Recall@5 / F1 |
-| 主要脚本 | `scripts/run_upload.py`、`scripts/run_search_benchmark.py` |
+| 主要脚本 | `scripts/run_upload.py`、`scripts/run_search_benchmark.py`、`scripts/run_qa_benchmark.py` |
 
 主要结果：
 
@@ -36,7 +38,7 @@ https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
 - SAG 在三个数据集上的平均 Recall@5 和 F1 为 **90.07%/72.96%**，相比最强基准分别提升 **6.79/4.33** 个百分点。
 - 在最具挑战的 MuSiQue 上，Recall@5 和 F1 较各指标的最强基准分别提升 **11.52/7.01** 个百分点。
 
-> **注意：** 当前代码可以复现 SAG 的实验结果，但暂不支持运行其他对比方法；相关代码整理完成后将陆续推送。
+> **注意：** 当前 CLI 支持复现 SAG2、BM25 和 bge-large-en-v1.5 向量检索结果；atomic 上传/检索用于 Triple indexing 消融实验。
 
 ## 方法图示
 
@@ -59,7 +61,7 @@ SAG 将文本组织为轻量的 `chunk -> event`、`chunk -> entities`、`event 
 - Python 3.11+
 - `uv`
 - Docker Compose
-- 可用的 LLM、Embedding、Rerank 服务端点
+- 可用的 LLM 和 Embedding 服务端点；只有运行 final selection 的 reranker 消融实验时才需要 Rerank 服务
 
 ```bash
 uv sync
@@ -78,7 +80,7 @@ Windows PowerShell 使用：
 .\.venv\Scripts\Activate.ps1
 ```
 
-编辑 `.env`，填写存储后端、LLM、Embedding 和 Rerank 配置。不要提交真实密钥。
+编辑 `.env`，填写存储后端、LLM 和 Embedding 配置。复现标准 SAG 只需要这三组配置；只有运行下面的 final selection reranker 消融实验时，才需要补充 Rerank 配置。
 
 上传或检索前，至少检查这些 `.env` 配置：
 
@@ -94,7 +96,11 @@ EMBEDDING_API_KEY=...
 EMBEDDING_BASE_URL=http://...
 EMBEDDING_MODEL_NAME=text-embedding-bge-large-en-v1.5
 EMBEDDING_DIMENSIONS=1024
+```
 
+只有运行 final selection reranker 消融实验时才需要补充以下配置：
+
+```env
 RERANK_BASE_URL=http://...
 RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B
 RERANK_ENDPOINT=/rerank
@@ -256,6 +262,16 @@ uv run python scripts/run_upload.py --dataset sample
 uv run python scripts/run_upload.py --dataset sample --atomic
 ```
 
+上传阶段提供三种模式：
+
+| 模式 | 命令 | 行为 |
+|------|------|------|
+| Compact（默认） | `uv run python scripts/run_upload.py --dataset musique` | 使用精简提取提示词，生成融合后的事项；不需要额外参数。 |
+| Atomic | `uv run python scripts/run_upload.py --dataset musique --atomic` | 使用原子事项模板，每个事项约束为主体-关系-客体结构。 |
+| 不提取事项（仅 Vector） | `uv run python scripts/run_upload.py --dataset musique --no-extraction` | 只加载并建立语料索引，不调用事项/实体提取；仅在只运行纯 embedding 的 `vector` 搜索时使用。 |
+
+一次上传选择一种模式。当前 SAG2 或 SAG2 与 vector/BM25 对比实验都应使用默认的 Compact。如果只想运行纯 Vector 搜索、不运行 SAG，才使用 `--no-extraction`；因为 SAG2 依赖提取出的事项，所以计划运行 SAG2 时不要传这个参数。
+
 
 ### 5. 运行论文复现 benchmark
 
@@ -264,7 +280,7 @@ uv run python scripts/run_upload.py --dataset sample --atomic
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name test_hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 5 \
@@ -276,7 +292,7 @@ uv run python scripts/run_search_benchmark.py \
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
@@ -284,7 +300,7 @@ uv run python scripts/run_search_benchmark.py \
 
 uv run python scripts/run_search_benchmark.py \
   --dataset-name 2wikimultihopqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
@@ -292,19 +308,51 @@ uv run python scripts/run_search_benchmark.py \
 
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
   --bench-size 20
 ```
 
+如果要运行 SAG2 的事件候选池搜索变体，打开候选池并通过 `--sag2-event-top-k` 设置候选池大小 `k_pool`：
+
+```bash
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy sag2 \
+  --sag2-scope \
+  --sag2-event-top-k 500 \
+  --top-k 10
+```
+
+候选池变体应作为与 vector、atomic 同级的独立实验配置记录。BM25 同样是一级检索策略：
+
+```bash
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy bm25 \
+  --top-k 10
+```
+
+如果要复现 bge-large-en-v1.5 的纯 Vector 基线，仅在只运行 Vector 时使用 `--no-extraction` 上传：
+
+```bash
+uv run python scripts/run_upload.py --dataset musique --no-extraction
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy vector \
+  --top-k 10
+```
+
+如果实验需要同时比较 Vector 和 SAG2，应使用默认 Compact 上传，使同一个数据源包含 SAG2 所需的事项数据。
+
 如果需要固定数据源，直接传入上传阶段生成的 `source_config_id`：
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --source-config-id musique-20260512_213908 \
   --top-k 10 \
   --k-values "1,2,5,10" \
@@ -316,7 +364,7 @@ uv run python scripts/run_search_benchmark.py \
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --use-mlflow \
   --mlflow-url http://localhost:5000 \
   --mlflow-experiment sag-benchmark
@@ -336,6 +384,96 @@ output/<dataset>/<strategy>/<timestamp>/
 | `benchmark_results.json` | Recall、Precision、F1 等评估结果 |
 | `run.log` | 本次运行日志 |
 
+### 6. 使用检索结果运行 QA
+
+`run_qa_benchmark.py` 读取检索阶段生成的 `search_results.json`，将检索片段放入 QA prompt，由配置的 LLM 生成答案并计算 EM/F1。结果默认写入输入文件旁边的新 `qa_<时间戳>/` 目录。
+
+```bash
+uv run python scripts/run_qa_benchmark.py \
+  --dataset-name musique \
+  --input output/musique/sag2/20260730_172839/search_results.json \
+  --qa-top-k 5
+```
+
+`--qa-top-k` 控制每道题送入 QA prompt 的检索片段数量。主要结果文件是 `qa_results.json`；可用 `--output-dir` 指定输出目录，用 `--max-concurrency` 和 `--limit` 控制并发数与处理范围。
+
+### 7. 复现 SAG 消融实验结果
+
+下面的实验对应论文 Table 6。请在 MuSiQue 上固定数据集、数据源配置、Embedding 模型和 `top-k`，每次只修改对应的实验组件。
+
+#### Default SAG
+
+使用默认 Compact 上传和 `sag2` 搜索策略。默认 final selection 为 `llm_rank`。
+
+```bash
+uv run python scripts/run_upload.py --dataset musique
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy sag2 \
+  --top-k 10 \
+  --k-values "1,2,5,10"
+```
+
+#### Indexing with Triple indexing
+
+上传时使用 atomic 提示词，搜索时选择 `atomic` 策略：
+
+```bash
+uv run python scripts/run_upload.py --dataset musique --atomic
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy atomic \
+  --top-k 10 \
+  --k-values "1,2,5,10"
+```
+
+#### Expansion without expansion（`L=0`）
+
+在 `pipeline/modules/search/config.py` 中，将 SAG2 扩展开关从：
+
+```python
+enabled: bool = Field(default=True, description="是否启用扩展")
+```
+
+临时改为：
+
+```python
+enabled: bool = Field(default=False, description="是否启用扩展")
+```
+
+然后使用默认 Compact 上传，并运行 `--strategy sag2`。消融实验完成后恢复 `default=True`，以保证普通 SAG2 使用一跳扩展。
+
+#### Final selection with Qwen3-Reranker-8B
+
+在 `pipeline/modules/search/config.py` 中，将 `SAG2RerankConfig.strategy` 的默认 LLM 选择：
+
+```python
+strategy: Literal["rerank", "llm_rank", "rrf"] = Field(
+    default="llm_rank", description="排序策略"
+)
+```
+
+临时改为：
+
+```python
+strategy: Literal["rerank", "llm_rank", "rrf"] = Field(
+    default="rerank", description="排序策略"
+)
+```
+
+在 `.env` 中配置 `RERANK_BASE_URL`、`RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B` 和 `RERANK_ENDPOINT`，然后使用默认 Compact 上传并运行 `--strategy sag2`。实验完成后恢复 `default="llm_rank"`。
+
+#### 论文消融结果：MuSiQue
+
+| 阶段 | 配置 | R@1 | R@2 | R@5 | R@10 |
+|------|------|------:|------:|------:|------:|
+| Default SAG（Ours） | 默认配置 | **36.82** | **63.62** | **80.36** | **83.37** |
+| Indexing | Triple indexing | 35.66 | 61.83 | 77.61 | 81.54 |
+| Expansion | w/o Expansion（`L=0`） | 35.70 | 57.75 | 69.41 | 74.76 |
+| Final selection | Qwen3-Reranker-8B | 32.12 | 48.97 | 67.11 | 76.51 |
+
+Default 行使用 hyperedge indexing、一跳扩展（`L=1`）和 Qwen3.6-Flash final selection。比较各行时，其余配置必须保持一致。
+
 ## 数据集
 
 | 名称 | 说明 |
@@ -352,12 +490,11 @@ output/<dataset>/<strategy>/<timestamp>/
 
 | 策略 | 说明 |
 |------|------|
-| `multi` | 多路检索，NER、实体向量召回、多跳扩展后合并排序 |
-| `multi1` | 固定 1 跳并动态扩跳至满足候选规模 |
-| `multi_es` | 支持 `--mode fast/precise` 的多路检索实现 |
-| `hopllm` | 粗排后以种子结果继续扩跳 |
+| `sag2` | SAG2 图召回、扩展和 LLM 重排 |
+| `sag2` + `--sag2-scope` | SAG2 事件候选池变体；`--sag2-event-top-k` 设置 `k_pool` |
 | `atomic` | 原子检索，先拆实体再逐跳扩展 |
 | `vector` | 纯向量检索基线 |
+| `bm25` | Elasticsearch BM25 关键词检索基线 |
 
 完整参数见 [docs/search.md](docs/search.md)。
 
@@ -368,7 +505,7 @@ output/<dataset>/<strategy>/<timestamp>/
 ```bash
 uv run python scripts/run_search.py \
   --dataset-name test_hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --output-dir output/manual-search
 ```
 
@@ -378,18 +515,6 @@ uv run python scripts/run_search.py \
 uv run python scripts/run_benchmark.py \
   --results output/<dataset>/<strategy>/<timestamp>/search_results.json \
   --dataset musique
-```
-
-### 对比两个检索结果
-
-```bash
-uv run python scripts/compare_recall_methods.py \
-  --predictions \
-    output/test_hotpotqa/multi/run_a/search_results.json \
-    output/test_hotpotqa/vector/run_b/search_results.json \
-  --dataset-name test_hotpotqa \
-  --k-values 1,2,5,10 \
-  --verbose
 ```
 
 ## 项目结构
@@ -416,9 +541,9 @@ SAG-Benchmark/
 │   ├── init_elasticsearch.py
 │   ├── run_upload.py
 │   ├── run_search_benchmark.py
+│   ├── run_qa_benchmark.py
 │   ├── run_search.py
-│   ├── run_benchmark.py
-│   └── compare_recall_methods.py
+│   └── run_benchmark.py
 ├── docs/
 ├── docker-compose.yml
 ├── .env.example

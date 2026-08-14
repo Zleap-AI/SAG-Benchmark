@@ -8,7 +8,7 @@ from elasticsearch_dsl import Q
 from sqlalchemy import bindparam, text
 
 from pipeline.core.config import get_settings
-from pipeline.core.storage.elasticsearch import close_es_client, get_es_client
+from pipeline.storage.backends.elasticsearch.client import close_es_client, get_es_client
 from pipeline.db.base import get_engine
 from pipeline.storage.capabilities import StorageCapabilities
 from pipeline.utils import get_logger
@@ -16,13 +16,21 @@ from pipeline.utils import get_logger
 logger = get_logger("storage.vector")
 
 
-def _bulk_result(total: int, indexed: int, failed: int = 0) -> Dict[str, Any]:
-    return {
+def _bulk_result(
+    total: int,
+    indexed: int,
+    failed: int = 0,
+    failed_ids: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    result = {
         "total": total,
         "indexed": indexed,
         "failed": failed,
         "success": failed == 0,
     }
+    if failed_ids is not None:
+        result["failed_ids"] = failed_ids
+    return result
 
 
 def _clean_vector(vector: Optional[List[float]]) -> Optional[List[float]]:
@@ -94,6 +102,7 @@ class ElasticsearchVectorStore:
     ) -> Dict[str, Any]:
         es_client = get_es_client()
         indexed = failed = 0
+        failed_ids: List[str] = []
         for i in range(0, len(documents), batch_size):
             batch = documents[i : i + batch_size]
             result = await es_client.bulk_index(
@@ -104,7 +113,12 @@ class ElasticsearchVectorStore:
             )
             indexed += int(result["success_count"])
             failed += int(result["error_count"])
-        return _bulk_result(len(documents), indexed, failed)
+            failed_ids.extend(
+                str(error.get("id"))
+                for error in result.get("errors", [])
+                if error.get("id") is not None
+            )
+        return _bulk_result(len(documents), indexed, failed, failed_ids)
 
     async def upsert_chunk_vectors(self, documents: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
         return await self._bulk_index(
@@ -207,6 +221,7 @@ class ElasticsearchVectorStore:
         source_config_id: Optional[str] = None,
         source_config_ids: Optional[List[str]] = None,
         entity_type: Optional[str] = None,
+        entity_ids: Optional[List[str]] = None,
         **_: Any,
     ) -> List[Dict[str, Any]]:
         filters = []
@@ -216,6 +231,8 @@ class ElasticsearchVectorStore:
             filters.append(Q("term", source_config_id=source_config_id))
         if entity_type:
             filters.append(Q("term", type=entity_type))
+        if entity_ids:
+            filters.append(Q("terms", entity_id=entity_ids))
 
         filter_query = Q("bool", must=filters).to_dict() if filters else None
         routing = source_config_id if source_config_id else None
@@ -573,7 +590,18 @@ class OceanBaseVectorStore:
             result = await conn.execute(sql, params)
             rows = result.mappings().all()
 
-        return [_with_score(row) for row in rows]
+        results: List[Dict[str, Any]] = []
+        for row in rows:
+            item = _with_score(row)
+            entities = item.get("entities")
+            if isinstance(entities, str):
+                try:
+                    entities = json.loads(entities)
+                except json.JSONDecodeError:
+                    entities = []
+            item["entity_ids"] = entities if isinstance(entities, list) else []
+            results.append(item)
+        return results
 
     async def search_entities_by_vector(
         self,
@@ -582,6 +610,7 @@ class OceanBaseVectorStore:
         source_config_id: Optional[str] = None,
         source_config_ids: Optional[List[str]] = None,
         entity_type: Optional[str] = None,
+        entity_ids: Optional[List[str]] = None,
         exact: bool = False,
         **_: Any,
     ) -> List[Dict[str, Any]]:
@@ -601,6 +630,10 @@ class OceanBaseVectorStore:
         if entity_type:
             where.append("type = :entity_type")
             params["entity_type"] = entity_type
+        if entity_ids:
+            where.append("id IN :entity_ids")
+            params["entity_ids"] = entity_ids
+            bindparams.append(bindparam("entity_ids", expanding=True))
 
         ef_search = _ef_search_literal()
         knn_suffix = (

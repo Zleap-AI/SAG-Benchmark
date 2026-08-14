@@ -9,7 +9,7 @@ from pipeline.engine.config import (
     OutputConfig,
     TaskConfig,
 )
-from pipeline.engine.core import pipelineEngine
+from pipeline.engine.core import PipelineEngine, pipelineEngine
 from pipeline.engine.enums import LogLevel, OutputMode, TaskStage, TaskStatus
 from pipeline.engine.models import StageResult, TaskLog, TaskResult
 from pipeline.modules.extract.config import ExtractBaseConfig
@@ -21,6 +21,7 @@ from pipeline.modules.search.config import SearchBaseConfig
 
 __all__ = [
     # 核心引擎
+    "PipelineEngine",
     "pipelineEngine",
     # 配置类
     "ModelConfig",

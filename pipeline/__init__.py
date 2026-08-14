@@ -8,7 +8,6 @@ __author__ = "Zleap Team"
 __email__ = "contact@zleap.ai"
 
 from pipeline.engine import (
-    pipelineEngine,
     DocumentLoadConfig,
     ExtractBaseConfig,
     LoadBaseConfig,
@@ -22,13 +21,16 @@ from pipeline.engine import (
     TaskResult,
     TaskStage,
     TaskStatus,
+    PipelineEngine,
+    pipelineEngine,
 )
-from pipeline.exceptions import pipelineError, LLMError, StorageError, ValidationError
+from pipeline.exceptions import LLMError, PipelineError, StorageError, ValidationError, pipelineError
 
 __all__ = [
     # Version
     "__version__",
     # Engine
+    "PipelineEngine",
     "pipelineEngine",
     "TaskConfig",
     "TaskResult",
@@ -45,6 +47,7 @@ __all__ = [
     "OutputMode",
     "LogLevel",
     # Exceptions
+    "PipelineError",
     "pipelineError",
     "LLMError",
     "StorageError",

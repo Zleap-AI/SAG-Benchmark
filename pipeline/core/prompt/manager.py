@@ -7,7 +7,7 @@ Prompt模板管理器
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 
@@ -24,8 +24,8 @@ class PromptTemplate:
         self,
         name: str,
         template: str,
-        variables: Optional[List[str]] = None,
-        description: Optional[str] = None,
+        variables: list[str] | None = None,
+        description: str | None = None,
     ) -> None:
         self.name = name
         self.template = template
@@ -60,7 +60,7 @@ class PromptTemplate:
 class PromptManager:
     """提示词管理器（支持多语言）"""
 
-    def __init__(self, prompts_dir: Optional[Path] = None) -> None:
+    def __init__(self, prompts_dir: Path | None = None) -> None:
         """
         初始化提示词管理器
 
@@ -78,8 +78,8 @@ class PromptManager:
             prompts_dir = project_root / "prompts"
 
         self.prompts_dir = Path(prompts_dir)
-        self.templates: Dict[str, PromptTemplate] = {}
-        self.template_data: Dict[str, Dict[str, Any]] = {}
+        self.templates: dict[str, PromptTemplate] = {}
+        self.template_data: dict[str, dict[str, Any]] = {}
 
         self.language = self._get_language()
 
@@ -100,6 +100,7 @@ class PromptManager:
         """获取语言配置（优先级：Settings > 环境变量 > 默认值zh）"""
         try:
             from pipeline.core.config import get_settings
+
             return get_settings().llm_language
         except Exception:
             lang = os.getenv("LLM_LANGUAGE", "zh").lower()
@@ -138,10 +139,10 @@ class PromptManager:
                 logger.error(f"加载提示词文件失败 {yaml_file}: {e}", exc_info=True)
 
     def _load_yaml_file(
-        self, yaml_file: Path, skip_existing: bool = False, template_name: Optional[str] = None
+        self, yaml_file: Path, skip_existing: bool = False, template_name: str | None = None
     ) -> None:
         """从YAML文件加载模板"""
-        with open(yaml_file, "r", encoding="utf-8") as f:
+        with open(yaml_file, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         if not isinstance(data, dict):
@@ -188,11 +189,11 @@ class PromptManager:
         """检查模板是否存在"""
         return name in self.templates
 
-    def list_templates(self) -> List[str]:
+    def list_templates(self) -> list[str]:
         """列出所有模板名称"""
         return list(self.templates.keys())
 
-    def get_template_config(self, name: str, *, test_mode: bool = False) -> Dict[str, Any]:
+    def get_template_config(self, name: str, *, test_mode: bool = False) -> dict[str, Any]:
         """
         获取模板的完整配置数据（从 YAML 文件，支持测试模式）
 
@@ -223,7 +224,7 @@ class PromptManager:
 
 
 # 全局管理器实例（单例）
-_prompt_manager: Optional[PromptManager] = None
+_prompt_manager: PromptManager | None = None
 
 
 def get_prompt_manager() -> PromptManager:

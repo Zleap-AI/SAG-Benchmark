@@ -5,12 +5,12 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class pipelineBaseModel(BaseModel):
+class PipelineBaseModel(BaseModel):
     """pipeline 基础模型"""
 
     model_config = ConfigDict(
@@ -29,7 +29,7 @@ class TimestampMixin(BaseModel):
     """时间戳混入类"""
 
     created_time: datetime = Field(default_factory=datetime.now, description="创建时间")
-    updated_time: Optional[datetime] = Field(default=None, description="更新时间")
+    updated_time: datetime | None = Field(default=None, description="更新时间")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,6 +37,11 @@ class TimestampMixin(BaseModel):
 class MetadataMixin(BaseModel):
     """扩展数据混入类"""
 
-    extra_data: Optional[Dict[str, Any]] = Field(default=None, description="扩展数据(JSON)")
+    extra_data: dict[str, Any] | None = Field(default=None, description="扩展数据(JSON)")
+
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# Backward-compatible import name. New code should use ``PipelineBaseModel``.
+pipelineBaseModel = PipelineBaseModel

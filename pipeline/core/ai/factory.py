@@ -4,52 +4,27 @@ LLM客户端工厂
 根据配置创建相应的LLM客户端，支持场景化配置
 """
 
-import hashlib
-import json
-from typing import Any, Dict, Optional
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, cast
 
 from pipeline.core.ai.base import BaseLLMClient, LLMRetryClient
-from pipeline.core.ai.models import ModelConfig, LLMProvider
+from pipeline.core.ai.embedding_provider import (
+    EmbeddingClientProvider,
+    ResolvedEmbeddingConfig,
+)
 from pipeline.core.ai.llm import OpenAIClient
-from pipeline.core.config import get_settings
+from pipeline.core.ai.models import LLMProvider, ModelConfig
+from pipeline.core.config import Settings, get_settings
 from pipeline.exceptions import ConfigError
 from pipeline.utils import get_logger
 
+if TYPE_CHECKING:
+    from pipeline.core.ai.embedding import EmbeddingClient
+
 logger = get_logger("ai.factory")
 
-# 全局客户端单例
-_embedding_client = None
-_embedding_config_fingerprint: Optional[str] = None
 
-
-def _get_client_fingerprint(config: Dict[str, Any]) -> str:
-    """
-    生成客户端配置指纹（通用函数）
-
-    只包含影响客户端实例的核心参数：
-    - model: 模型名称
-    - api_key: API密钥
-    - base_url: API地址
-
-    其他参数（temperature, dimensions, timeout等）不影响客户端实例本身
-
-    Args:
-        config: 配置字典
-
-    Returns:
-        配置指纹（MD5 hash）
-    """
-    key_params = {
-        "model": config.get("model"),
-        "api_key": config.get("api_key"),
-        "base_url": config.get("base_url"),
-    }
-    # 生成配置的hash值
-    config_str = json.dumps(key_params, sort_keys=True)
-    return hashlib.md5(config_str.encode()).hexdigest()
-
-
-async def _load_db_config(type: str = "llm", scenario: str = "general") -> Optional[Dict[str, Any]]:
+async def _load_db_config(type: str = "llm", scenario: str = "general") -> dict[str, Any] | None:
     """
     从数据库加载模型配置（通用函数）- 已禁用，默认使用环境变量
 
@@ -73,11 +48,67 @@ async def _load_db_config(type: str = "llm", scenario: str = "general") -> Optio
     return None
 
 
+def _build_judge_config(settings: Settings) -> dict[str, Any]:
+    """Build LLM config dict for the judge scenario from Settings.
+
+    Reads JUDGE_LLM_* env vars. Falls back to main LLM only if
+    judge_allow_fallback is explicitly enabled. Defaults:
+      - temperature=0.0
+      - enable_thinking=False
+    """
+    judge_key = settings.judge_llm_api_key
+    judge_model = settings.judge_llm_model
+
+    if not judge_key or not judge_model:
+        if settings.judge_allow_fallback:
+            logger.warning("Judge LLM 配置不完整，fallback 到主 LLM（judge_allow_fallback=True）")
+            return {
+                "model": settings.llm_model,
+                "api_key": settings.llm_api_key,
+                "base_url": settings.llm_base_url,
+                "temperature": 0.0,
+                "max_tokens": settings.judge_llm_max_tokens,
+                "top_p": 1.0,
+                "frequency_penalty": 0.0,
+                "presence_penalty": 0.0,
+                "timeout": settings.judge_llm_timeout,
+                "max_retries": settings.judge_llm_max_retries,
+                "top_k": -1,
+                "min_p": 0.0,
+                "repetition_penalty": 1.0,
+                "enable_thinking": settings.judge_llm_enable_thinking,
+            }
+        missing = []
+        if not judge_key:
+            missing.append("JUDGE_LLM_API_KEY")
+        if not judge_model:
+            missing.append("JUDGE_LLM_MODEL")
+        raise ConfigError(
+            f"Judge LLM 配置不完整，缺少: {', '.join(missing)}。"
+            f"请设置对应环境变量，或启用 judge_allow_fallback=true 回退到主 LLM。"
+        )
+
+    return {
+        "model": judge_model,
+        "api_key": judge_key,
+        "base_url": settings.judge_llm_base_url,
+        "temperature": 0.0,
+        "max_tokens": settings.judge_llm_max_tokens,
+        "top_p": 1.0,
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0,
+        "timeout": settings.judge_llm_timeout,
+        "max_retries": settings.judge_llm_max_retries,
+        "top_k": -1,
+        "min_p": 0.0,
+        "repetition_penalty": 1.0,
+        "enable_thinking": settings.judge_llm_enable_thinking,
+    }
 
 
 async def create_llm_client(
     scenario: str = "general",
-    model_config: Optional[Dict[str, Any]] = None,
+    model_config: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> BaseLLMClient | LLMRetryClient:
     """
@@ -95,12 +126,13 @@ async def create_llm_client(
             - 'summary' : 摘要
             - 'system'  : 系统（Agent创建等）
             - 'general' : 通用（默认）
+            - 'judge'   : LLM Judge 评测（独立配置，temperature=0.0，thinking 默认关闭）
 
         model_config: LLM配置字典（可选）
             {
                 'model': 'gpt-4',
                 'api_key': 'sk-xxx',
-                'base_url': 'https://api.302.ai',
+                'base_url': 'http://localhost:32768/v1',
                 'temperature': 0.7,
                 'max_tokens': 8000,
                 ...
@@ -137,19 +169,26 @@ async def create_llm_client(
 
     # ============ 配置合并（三层优先级）============
 
-    # Layer 3: 环境变量兜底
-    config = {
-        "model": settings.llm_model,
-        "api_key": settings.llm_api_key,
-        "base_url": settings.llm_base_url,
-        "temperature": settings.llm_temperature,
-        "max_tokens": settings.llm_max_tokens,
-        "top_p": settings.llm_top_p,
-        "frequency_penalty": settings.llm_frequency_penalty,
-        "presence_penalty": settings.llm_presence_penalty,
-        "timeout": settings.llm_timeout,
-        "max_retries": settings.llm_max_retries,
-    }
+    # Layer 3: 环境变量兜底（场景化）
+    if scenario == "judge":
+        config = _build_judge_config(settings)
+    else:
+        config = {
+            "model": settings.llm_model,
+            "api_key": settings.llm_api_key,
+            "base_url": settings.llm_base_url,
+            "temperature": settings.llm_temperature,
+            "max_tokens": settings.llm_max_tokens,
+            "top_p": settings.llm_top_p,
+            "frequency_penalty": settings.llm_frequency_penalty,
+            "presence_penalty": settings.llm_presence_penalty,
+            "timeout": settings.llm_timeout,
+            "max_retries": settings.llm_max_retries,
+            "top_k": settings.llm_top_k,
+            "min_p": settings.llm_min_p,
+            "repetition_penalty": settings.llm_repetition_penalty,
+            "enable_thinking": settings.llm_enable_think,
+        }
 
     # Layer 2: 数据库配置已移除，直接使用环境变量
 
@@ -165,9 +204,7 @@ async def create_llm_client(
     # ============ 验证必需参数 ============
     if not config.get("api_key"):
         raise ConfigError(
-            f"❌ LLM配置错误：缺少 API Key！\n"
-            f"场景: {scenario}\n"
-            f"请检查环境变量 LLM_API_KEY"
+            f"❌ LLM配置错误：缺少 API Key！\n" f"场景: {scenario}\n" f"请检查环境变量 LLM_API_KEY"
         )
 
     if not config.get("model"):
@@ -186,6 +223,10 @@ async def create_llm_client(
         presence_penalty=config["presence_penalty"],
         timeout=config["timeout"],
         max_retries=config["max_retries"],
+        top_k=config["top_k"],
+        min_p=config["min_p"],
+        repetition_penalty=config["repetition_penalty"],
+        enable_thinking=config.get("enable_thinking", False),
     )
 
     # ============ 创建客户端（统一使用OpenAIClient）============
@@ -216,222 +257,99 @@ async def create_llm_client(
     return base_client
 
 
-# ============================================================
-# 说明：
-# - LLM 客户端：每次创建新实例，各模块自行管理（extractor, searcher 等）
-# - Embedding 客户端：全局单例，配置变更自动替换
-# ============================================================
+# LLM clients are caller-owned. Embedding uses one provider-owned shared client.
 
 
-# ============ Embedding 客户端工厂 ============
+async def resolve_embedding_config(
+    scenario: str = "general",
+    overrides: Mapping[str, Any] | None = None,
+) -> ResolvedEmbeddingConfig:
+    """Resolve and validate embedding configuration in one place."""
+    settings = get_settings()
+    config: dict[str, Any] = {
+        "model": settings.embedding_model_name,
+        "api_key": settings.embedding_api_key or settings.llm_api_key,
+        "base_url": settings.embedding_base_url or settings.llm_base_url,
+        "dimensions": settings.embedding_request_dimensions,
+        "timeout": 60.0,
+        "max_retries": 3,
+    }
+
+    if settings.use_db_config:
+        db_config = await _load_db_config(type="embedding", scenario=scenario)
+        if db_config:
+            extra_data = db_config.get("extra_data") or {}
+            if "dimensions" in extra_data:
+                db_config["dimensions"] = extra_data["dimensions"]
+            config.update(db_config)
+
+    if overrides:
+        config.update(overrides)
+
+    if not config.get("api_key"):
+        raise ConfigError(
+            f"Embedding configuration is missing an API key for scenario '{scenario}'. "
+            "Set EMBEDDING_API_KEY or LLM_API_KEY."
+        )
+    if not config.get("model"):
+        raise ConfigError(f"Embedding configuration is missing a model for scenario '{scenario}'.")
+
+    return ResolvedEmbeddingConfig(
+        model=str(config["model"]),
+        base_url=str(config["base_url"]) if config.get("base_url") else None,
+        api_key=str(config["api_key"]),
+        dimensions=(int(config["dimensions"]) if config.get("dimensions") is not None else None),
+        timeout=float(config.get("timeout", 60.0)),
+        max_retries=int(config.get("max_retries", 3)),
+    )
+
+
+def _build_embedding_client(config: ResolvedEmbeddingConfig) -> "EmbeddingClient":
+    from pipeline.core.ai.embedding import EmbeddingClient
+
+    return EmbeddingClient(
+        model=config.model,
+        base_url=config.base_url,
+        api_key=config.api_key,
+        dimensions=config.dimensions,
+        timeout=config.timeout,
+        max_retries=config.max_retries,
+    )
+
+
+_embedding_provider = EmbeddingClientProvider(
+    config_resolver=resolve_embedding_config,
+    client_factory=_build_embedding_client,
+)
 
 
 async def create_embedding_client(
     scenario: str = "general",
-    embedding_config: Optional[Dict[str, Any]] = None,
+    embedding_config: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> "EmbeddingClient":
+    """Create a caller-owned embedding client.
+
+    The caller must close this client. Use ``get_embedding_client`` for the
+    provider-owned shared client.
     """
-    创建Embedding客户端（统一入口，支持分层配置）
-
-    配置优先级（从高到低）：
-    1. embedding_config 显式传入
-    2. 数据库配置 (if USE_DB_CONFIG=true, model_type='embedding')
-    3. 环境变量配置 (兜底)
-
-    Args:
-        scenario: 使用场景，默认 'general'（当前 embedding 只用 general，未来可扩展）
-        embedding_config: Embedding配置字典（可选）
-            {
-                'model': 'Qwen/Qwen3-Embedding-0.6B',
-                'api_key': 'sk-xxx',
-                'base_url': 'https://api.302.ai',
-                'dimensions': 1536,
-                ...
-            }
-        **kwargs: 零散参数（向后兼容）
-
-    Returns:
-        EmbeddingClient实例
-
-    Raises:
-        ConfigError: 无法获取有效配置时抛出
-
-    Examples:
-        # 方式1：自动获取配置（推荐）
-        >>> client = await create_embedding_client()
-
-        # 方式2：显式传入配置
-        >>> client = await create_embedding_client(
-        ...     embedding_config={'model': 'text-embedding-3-large'}
-        ... )
-    """
-    settings = get_settings()
-
-    # ============ 配置合并（三层优先级）============
-
-    # Layer 3: 环境变量兜底
-    config = {
-        "model": settings.embedding_model_name,
-        "api_key": settings.embedding_api_key or settings.llm_api_key,
-        "base_url": settings.embedding_base_url or settings.llm_base_url,
-        "dimensions": settings.embedding_dimensions,
-        "timeout": 60,
-        "max_retries": 3,
-    }
-
-    # Layer 2: 数据库配置（指定 type='embedding'）
-    if settings.use_db_config:
-        db_config = await _load_db_config(type="embedding", scenario=scenario)
-        if db_config:
-            # 提取 dimensions（可能在 extra_data 中）
-            if "extra_data" in db_config and db_config["extra_data"]:
-                if "dimensions" in db_config["extra_data"]:
-                    db_config["dimensions"] = db_config["extra_data"]["dimensions"]
-            config.update(db_config)
-            logger.info(f"📊 使用数据库Embedding配置: model={db_config.get('model')}")
-        else:
-            logger.debug("数据库无Embedding配置，使用环境变量")
-
-    # Layer 1: 显式配置（最高优先级）
-    if embedding_config:
-        config.update(embedding_config)
-        logger.info("🎯 使用显式Embedding配置")
-
-    # 兼容零散参数
-    if kwargs:
-        config.update(kwargs)
-
-    # ============ 验证必需参数 ============
-    if not config.get("api_key"):
-        raise ConfigError(
-            "❌ Embedding配置错误：缺少 API Key！\n"
-            f"场景: {scenario}\n"
-            "请检查：数据库配置 或 环境变量 EMBEDDING_API_KEY/LLM_API_KEY"
-        )
-
-    if not config.get("model"):
-        raise ConfigError(f"❌ Embedding配置错误：缺少模型名称！场景: {scenario}")
-
-    # ============ 创建客户端 ============
-    from pipeline.core.ai.embedding import EmbeddingClient
-
-    # ✅ 提取参数创建客户端（包含 api_key，确保数据库配置生效）
-    client = EmbeddingClient(
-        model=config["model"],
-        base_url=config.get("base_url"),
-        api_key=config.get("api_key"),
-        dimensions=config.get("dimensions"),
-    )
-
-    logger.info(
-        "✅ 创建Embedding客户端",
-        extra={
-            "scenario": scenario,
-            "model": config["model"],
-            "base_url": config.get("base_url") or "OpenAI官方",
-            "dimensions": config.get("dimensions") or "默认",
-        },
-    )
-    return client
-
-
-# 全局 Embedding 客户端单例（配置变更时自动替换）
-_embedding_client: Optional["EmbeddingClient"] = None
-_embedding_config_fingerprint: Optional[str] = None
+    overrides = dict(embedding_config or {})
+    overrides.update(kwargs)
+    client = await _embedding_provider.create_owned(scenario, overrides or None)
+    return cast("EmbeddingClient", client)
 
 
 async def get_embedding_client(scenario: str = "general") -> "EmbeddingClient":
-    """
-    获取Embedding客户端（单例，配置自动更新）
-
-    工作原理：
-    - 维护全局唯一实例
-    - 每次调用检测配置是否变化（基于指纹）
-    - 配置变化时自动替换为新实例
-    - 配置未变时复用现有实例
-
-    指纹参数：model, api_key, base_url（通用三要素）
-
-    Args:
-        scenario: 使用场景，默认 'general'
-
-    Returns:
-        EmbeddingClient实例
-    """
-    global _embedding_client, _embedding_config_fingerprint
-
-    # 1. 获取完整配置（合并环境变量、数据库配置等）
-    settings = get_settings()
-    config = {
-        "model": settings.embedding_model_name,
-        "api_key": settings.embedding_api_key or settings.llm_api_key,
-        "base_url": settings.embedding_base_url or settings.llm_base_url,
-        "dimensions": settings.embedding_dimensions,
-        "timeout": 60,
-        "max_retries": 3,
-    }
-
-    # 2. 尝试从数据库加载配置
-    if settings.use_db_config:
-        db_config = await _load_db_config(type="embedding", scenario=scenario)
-        if db_config:
-            # 提取 dimensions（可能在 extra_data 中）
-            if "extra_data" in db_config and db_config["extra_data"]:
-                if "dimensions" in db_config["extra_data"]:
-                    db_config["dimensions"] = db_config["extra_data"]["dimensions"]
-            config.update(db_config)
-            logger.debug(f"使用数据库Embedding配置: model={db_config.get('model')}")
-
-    # 3. 生成配置指纹（基于关键参数：model, api_key, base_url）
-    current_fingerprint = _get_client_fingerprint(config)
-
-    # 4. 检查配置是否变化
-    if _embedding_client is None or current_fingerprint != _embedding_config_fingerprint:
-        # 配置变化或首次创建
-        action = "更新" if _embedding_client else "创建"
-
-        from pipeline.core.ai.embedding import EmbeddingClient
-
-        _embedding_client = EmbeddingClient(
-            model=config["model"],
-            base_url=config.get("base_url"),
-            api_key=config.get("api_key"),
-            dimensions=config.get("dimensions"),
-        )
-        _embedding_config_fingerprint = current_fingerprint
-
-        logger.info(
-            f"🔄 {action}Embedding客户端: model={config['model']}, "
-            f"base_url={config.get('base_url') or '默认'}, "
-            f"fingerprint={current_fingerprint[:8]}..."
-        )
-    else:
-        logger.debug(f"♻️ 复用Embedding客户端（配置未变）: {config['model']}")
-
-    return _embedding_client
+    """Return the provider-owned shared embedding client."""
+    client = await _embedding_provider.get(scenario)
+    return cast("EmbeddingClient", client)
 
 
-def reset_embedding_client() -> None:
-    """重置Embedding客户端单例"""
-    global _embedding_client, _embedding_config_fingerprint
-    _embedding_client = None
-    _embedding_config_fingerprint = None
-    logger.info("已重置Embedding客户端")
+async def reset_embedding_client() -> None:
+    """Close and clear the provider-owned shared embedding client."""
+    await _embedding_provider.reset()
 
 
 async def close_all_clients() -> None:
-    """关闭所有全局客户端，释放资源"""
-    global _embedding_client, _embedding_config_fingerprint
-
-    if _embedding_client:
-        try:
-            # EmbeddingClient 可能没有 close 方法，先检查
-            if hasattr(_embedding_client, 'close'):
-                await _embedding_client.close()
-            logger.info("已关闭Embedding客户端")
-        except Exception as e:
-            logger.warning(f"关闭Embedding客户端时出错: {e}")
-        finally:
-            _embedding_client = None
-            _embedding_config_fingerprint = None
+    """Close provider-owned AI clients."""
+    await _embedding_provider.aclose()

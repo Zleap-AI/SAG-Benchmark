@@ -1,4 +1,3 @@
-import os
 import logging
 
 # # Base directory for storing logs (if not specified through environment variable, set it to `logs` dir under project root)
@@ -8,6 +7,7 @@ import logging
 #
 # # Logging level project-wide
 # LOG_LEVEL = getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
+
 
 def get_logger(name: str) -> logging.Logger:
     """
@@ -24,6 +24,7 @@ def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
 
     return logger
+
 
 # def get_logger(name: str, log_file: str = None, level: int = LOG_LEVEL) -> logging.Logger:
 #     """

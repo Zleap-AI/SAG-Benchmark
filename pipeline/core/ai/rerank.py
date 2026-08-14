@@ -4,12 +4,13 @@ rerank模型排序服务
 提供统一的事项/段落排序能力，支持 302.ai 等兼容的 Rerank API
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any
+
+import aiohttp
 
 from pipeline.core.config import get_settings
 from pipeline.exceptions import AIError
 from pipeline.utils import get_logger
-import aiohttp
 
 logger = get_logger("ai.rerank")
 
@@ -28,6 +29,7 @@ def _load_rerank_template(template_name: str):
     """从 PromptManager 加载指定 rerank 模板配置，返回模板字段字典；加载失败返回 None"""
     try:
         from pipeline.core.prompt.manager import get_prompt_manager
+
         pm = get_prompt_manager()
         config = pm.get_template_config(template_name)
         return {
@@ -61,10 +63,7 @@ class RerankClient:
     """
 
     def __init__(
-        self,
-        model: Optional[str] = None,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None
+        self, model: str | None = None, base_url: str | None = None, api_key: str | None = None
     ):
         """
         初始化 Rerank 客户端
@@ -77,26 +76,30 @@ class RerankClient:
         settings = get_settings()
 
         # Rerank 专用配置（优先），回退到 embedding 配置
-        self.model = model or getattr(settings, 'rerank_model_name', None) or "Qwen/Qwen3-Reranker-8B"
-        # 基础 URL，拼接 rerank 端点
-        base = (base_url or
-                getattr(settings, 'rerank_base_url', None) or
-                settings.embedding_base_url or
-                "https://api.302.ai/v1")
-        self.base_url = base.rstrip('/')
-        # Rerank 请求端点路径（可配置，默认 /rerank；兼容 /reranks 等其他路由）
-        endpoint = getattr(settings, 'rerank_endpoint', None) or "/rerank"
+        self.model = (
+            model or getattr(settings, "rerank_model_name", None) or "Qwen/Qwen3-Reranker-8B"
+        )
+        # 基础 URL，拼接 /rerank 端点
+        base = (
+            base_url
+            or getattr(settings, "rerank_base_url", None)
+            or settings.embedding_base_url
+        )
+        self.base_url = base.rstrip("/")
+        endpoint = getattr(settings, "rerank_endpoint", None) or "/rerank"
         endpoint = endpoint.strip()
         if not endpoint.startswith("/"):
             endpoint = "/" + endpoint
         self.endpoint = endpoint
-        self.api_key = (api_key or
-                       getattr(settings, 'rerank_api_key', None) or
-                       settings.embedding_api_key or
-                       settings.llm_api_key)
+        self.api_key = (
+            api_key
+            or getattr(settings, "rerank_api_key", None)
+            or settings.embedding_api_key
+            or settings.llm_api_key
+        )
 
         logger.info(
-            f"Rerank客户端初始化完成",
+            "Rerank客户端初始化完成",
             extra={
                 "model": self.model,
                 "base_url": self.base_url,
@@ -106,12 +109,12 @@ class RerankClient:
     async def rerank(
         self,
         query: str,
-        documents: List[Dict[str, str]],
-        top_n: Optional[int] = None,
-        return_documents: Optional[bool] = False,
+        documents: list[dict[str, str]],
+        top_n: int | None = None,
+        return_documents: bool | None = False,
         use_prompt_template: bool = False,
-        instruction: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        instruction: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         使用 Rerank 模型对文档重新排序
 
@@ -140,7 +143,7 @@ class RerankClient:
             return []
 
         top_n = top_n or len(documents)
-        logger.warning(f"Rerank排序 返回 top-{top_n} 个事项/段落的排序结果")
+        logger.info(f"Rerank排序 返回 top-{top_n} 个事项/段落的排序结果")
         # 提取文档文本
         texts = [doc.get("text", "") for doc in documents]
 
@@ -155,29 +158,31 @@ class RerankClient:
                     query, texts = _format_with_template(query, texts, inst, tpl)
                     logger.info(f"已注入 Rerank 提示词模板: {tpl_name}")
                 else:
-                    logger.warning(f"use_prompt_template=True 但模板 '{tpl_name}' 加载失败，使用原始文本")
+                    logger.warning(
+                        f"use_prompt_template=True 但模板 '{tpl_name}' 加载失败，使用原始文本"
+                    )
             else:
-                logger.info(f"模型 '{self.model}' 无专用模板 (server_type={settings.server_type})，使用原始文本")
+                logger.info(
+                    f"模型 '{self.model}' 无专用模板 (server_type={settings.server_type})，使用原始文本"
+                )
 
-        # 构建 Rerank 请求 URL：
-        # - 若 base_url 已包含 rerank 端点路径（如 /rerank、/reranks），直接使用，避免重复拼接
-        # - 否则拼接配置的 self.endpoint（默认 /rerank，可通过 RERANK_ENDPOINT 自定义）
+        # 如果 base_url 已包含 /rerank，直接使用；否则拼接
         base_lower = self.base_url.lower()
-        if (base_lower.endswith("/rerank") or base_lower.endswith("/reranks")
-                or base_lower.endswith(self.endpoint.lower())):
+        if (
+            base_lower.endswith("/rerank")
+            or base_lower.endswith("/reranks")
+            or base_lower.endswith(self.endpoint.lower())
+        ):
             url = self.base_url
         else:
             url = f"{self.base_url}{self.endpoint}"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+        headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
         payload = {
             "model": self.model,
             "query": query,
             "top_n": top_n,
             "return_documents": return_documents,  # 不返回文档内容，节省带宽
-            "documents": texts
+            "documents": texts,
         }
 
         try:
@@ -193,13 +198,17 @@ class RerankClient:
             results = []
             for item in resp_json.get("results", []):
                 idx = item.get("index")
-                results.append({
-                    "index": idx,
-                    "id": documents[idx].get("id", str(idx)),
-                    "score": item.get("relevance_score", item.get("score", 0.0))
-                })
+                results.append(
+                    {
+                        "index": idx,
+                        "id": documents[idx].get("id", str(idx)),
+                        "score": item.get("relevance_score", item.get("score", 0.0)),
+                    }
+                )
 
-            logger.info(f"Rerank 完成: 查询='{query[:30]}...', 文档数={len(documents)}, 返回={len(results)}")
+            logger.info(
+                f"Rerank 完成: 查询='{query[:30]}...', 文档数={len(documents)}, 返回={len(results)}"
+            )
             return results
 
         except Exception as e:
@@ -210,7 +219,7 @@ class RerankClient:
 # ==================== 全局单例 ====================
 
 # 全局单例
-_rerank_client: Optional[RerankClient] = None
+_rerank_client: RerankClient | None = None
 
 
 def get_rerank_client() -> RerankClient:
@@ -234,11 +243,11 @@ def reset_rerank_client() -> None:
 
 async def rerank_documents(
     query: str,
-    documents: List[Dict[str, str]],
-    top_n: Optional[int] = None,
+    documents: list[dict[str, str]],
+    top_n: int | None = None,
     use_prompt_template: bool = False,
-    instruction: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    instruction: str | None = None,
+) -> list[dict[str, Any]]:
     """
     Rerank 文档的便捷函数
 
@@ -253,6 +262,6 @@ async def rerank_documents(
         排序后的结果列表
     """
     client = get_rerank_client()
-    return await client.rerank(query, documents, top_n,
-                               use_prompt_template=use_prompt_template,
-                               instruction=instruction)
+    return await client.rerank(
+        query, documents, top_n, use_prompt_template=use_prompt_template, instruction=instruction
+    )

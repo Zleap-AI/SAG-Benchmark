@@ -34,11 +34,11 @@ Token 消耗统计工具
 import json
 import time
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 from functools import wraps
+from pathlib import Path
+from typing import Any
 
-from pipeline.utils import get_logger
+from pipeline.utils.logger import get_logger
 
 logger = get_logger("utils.token_counter")
 
@@ -47,8 +47,8 @@ class TokenCounter:
     """Token 消耗统计器"""
 
     def __init__(self):
-        self.records: List[Dict[str, Any]] = []
-        self.summary: Dict[str, Dict[str, int]] = {}
+        self.records: list[dict[str, Any]] = []
+        self.summary: dict[str, dict[str, int]] = {}
 
     def add_record(
         self,
@@ -57,7 +57,7 @@ class TokenCounter:
         input_tokens: int,
         output_tokens: int,
         total_tokens: int,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         添加一条 token 消耗记录
@@ -99,7 +99,7 @@ class TokenCounter:
             f"input={input_tokens}, output={output_tokens}, total={total_tokens}"
         )
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """
         获取汇总统计
 
@@ -175,7 +175,7 @@ class TokenTracker:
     def __init__(
         self,
         scenario: str,
-        counter: Optional[TokenCounter] = None,
+        counter: TokenCounter | None = None,
     ):
         self.scenario = scenario
         self.counter = counter or _global_counter
@@ -201,9 +201,9 @@ class TokenTracker:
 
     def record(
         self,
-        response: Dict[str, Any],
+        response: dict[str, Any],
         model: str = "unknown",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """
         记录 LLM 响应的 token 消耗
@@ -232,7 +232,7 @@ class TokenTracker:
         )
 
 
-def track_tokens(scenario: str, counter: Optional[TokenCounter] = None):
+def track_tokens(scenario: str, counter: TokenCounter | None = None):
     """
     Token 追踪装饰器
 
@@ -242,6 +242,7 @@ def track_tokens(scenario: str, counter: Optional[TokenCounter] = None):
             response = await llm_client.chat_with_schema(...)
             return response
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -251,7 +252,9 @@ def track_tokens(scenario: str, counter: Optional[TokenCounter] = None):
                 if isinstance(result, dict) and "usage" in result:
                     tracker.record(result)
                 return result
+
         return wrapper
+
     return decorator
 
 

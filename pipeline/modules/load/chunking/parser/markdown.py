@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from pipeline.modules.load.chunking.base import BaseBlockParser, BaseInputNormalizer
 from pipeline.modules.load.chunking.types import BlockType, InputDocument, StructuredBlock
@@ -16,7 +15,7 @@ from pipeline.utils import normalize_heading_text
 class MarkdownInputNormalizer(BaseInputNormalizer):
     """Markdown 输入标准化"""
 
-    def normalize(self, content: str, source_path: Optional[Path] = None) -> InputDocument:
+    def normalize(self, content: str, source_path: Path | None = None) -> InputDocument:
         return InputDocument(
             content=content or "",
             source_path=source_path,
@@ -30,7 +29,7 @@ class MarkdownBlockParser(BaseBlockParser):
 
     HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
-    def parse_blocks(self, doc: InputDocument) -> List[StructuredBlock]:
+    def parse_blocks(self, doc: InputDocument) -> list[StructuredBlock]:
         """纯文本 md：按标题边界拆分为 TEXT blocks"""
         text = doc.content
         headings = self._heading_positions(text, [])
@@ -46,15 +45,15 @@ class MarkdownBlockParser(BaseBlockParser):
     def _heading_positions(
         self,
         text: str,
-        occupied: Optional[List[Tuple[int, int]]] = None,
-    ) -> List[Tuple[int, str]]:
-        headings: List[Tuple[int, str]] = []
+        occupied: list[tuple[int, int]] | None = None,
+    ) -> list[tuple[int, str]]:
+        headings: list[tuple[int, str]] = []
         for match in self.HEADING_PATTERN.finditer(text):
             headings.append((match.start(), normalize_heading_text(match.group(2))))
         return headings
 
     @staticmethod
-    def _resolve_heading(headings: List[Tuple[int, str]], position: int) -> str:
+    def _resolve_heading(headings: list[tuple[int, str]], position: int) -> str:
         if not headings:
             return ""
         candidate = ""
@@ -70,16 +69,16 @@ class MarkdownBlockParser(BaseBlockParser):
         text: str,
         start: int,
         end: int,
-        headings: List[Tuple[int, str]],
+        headings: list[tuple[int, str]],
         counter: int,
-    ) -> Tuple[List[StructuredBlock], int]:
+    ) -> tuple[list[StructuredBlock], int]:
         """把文本段按标题边界进一步拆分，保证 Section 可拿到就近标题。"""
         if start >= end:
             return [], counter
 
         split_points = [pos for pos, _ in headings if start < pos < end]
         boundaries = [start, *split_points, end]
-        blocks: List[StructuredBlock] = []
+        blocks: list[StructuredBlock] = []
 
         for idx in range(len(boundaries) - 1):
             seg_start = boundaries[idx]
@@ -100,4 +99,3 @@ class MarkdownBlockParser(BaseBlockParser):
             counter += 1
 
         return blocks, counter
-

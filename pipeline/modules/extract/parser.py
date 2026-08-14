@@ -15,14 +15,14 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from pipeline.db import Entity, EventEntity, SourceEvent, get_session_factory
 from pipeline.db.models import EntityType as DBEntityType
-from pipeline.modules.extract.config import ExtractConfig
+from pipeline.modules.extract.config import ExtractConfig, ExtractPromptStrategy
 from pipeline.utils import get_logger, get_utc_now
 
 logger = get_logger("extract.parser")
@@ -36,7 +36,7 @@ class ParseContext:
     source_type: str  # "ARTICLE" or "CHAT"
     source_id: str
     chunk_id: str
-    source_created_time: Optional[datetime] = None
+    source_created_time: datetime | None = None
 
 
 class ResultParser:
@@ -61,10 +61,10 @@ class ResultParser:
 
     def parse_events(
         self,
-        raw_items: List[Dict],
-        items: List,
+        raw_items: list[dict],
+        items: list,
         context: ParseContext,
-    ) -> List[SourceEvent]:
+    ) -> list[SourceEvent]:
         """
         解析事项（LLM结果 -> SourceEvent列表）
 
@@ -97,13 +97,13 @@ class ResultParser:
 
     def _parse_item_recursive(
         self,
-        item_data: Dict,
-        index_map: Dict,
-        all_item_ids: List[str],
+        item_data: dict,
+        index_map: dict,
+        all_item_ids: list[str],
         context: ParseContext,
-        parent_id: Optional[str],
+        parent_id: str | None,
         level: int = 0,
-    ) -> List[SourceEvent]:
+    ) -> list[SourceEvent]:
         """
         递归解析单个事项（返回扁平列表）
 
@@ -124,9 +124,11 @@ class ResultParser:
             logger.info(f"过滤无效事项: {item_data.get('title', '')} - {reason}")
             return []
 
-        # 解析 references
-        ref_indices = item_data.get("references", [])
-        valid_refs = self._parse_references(ref_indices, index_map, all_item_ids)
+        item_data = self._project_item_for_storage(item_data)
+
+        # 按提示词策略路由引用解析。compact 模板不输出 references，
+        # 因此直接关联当前批次全部片段，不进入 original 的索引解析与告警逻辑。
+        valid_refs = self._resolve_references(item_data, index_map, all_item_ids)
 
         # 提取时间
         start_time, end_time = self._extract_times(
@@ -190,12 +192,53 @@ class ResultParser:
 
         return result
 
+    def _project_item_for_storage(self, item_data: dict) -> dict:
+        """限制 compact 事项进入数据库的字段边界。
+
+        原版保持完整原始结构；compact 只保存 SAG 检索实际需要的扁平字段，
+        即使上游校验被绕过，也不会把已删除字段写入 extra_data.raw_data。
+        """
+        if self.config.extract_prompt_strategy != ExtractPromptStrategy.COMPACT:
+            return item_data
+
+        entities = []
+        for entity in item_data.get("entities", []):
+            if not isinstance(entity, dict):
+                continue
+            entities.append(
+                {
+                    key: entity[key]
+                    for key in ("type", "name", "description")
+                    if key in entity
+                }
+            )
+
+        return {
+            "title": item_data.get("title", ""),
+            "content": item_data.get("content", ""),
+            "entities": entities,
+            "is_valid": item_data.get("is_valid", True),
+        }
+
+    def _resolve_references(
+        self,
+        item_data: dict,
+        index_map: dict,
+        all_item_ids: list[str],
+    ) -> list[str]:
+        """按提示词策略选择引用解析方式。"""
+        if self.config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT:
+            return list(all_item_ids)
+
+        ref_indices = item_data.get("references", [])
+        return self._parse_references(ref_indices, index_map, all_item_ids)
+
     def _parse_references(
         self,
-        ref_indices: List,
-        index_map: Dict,
-        all_item_ids: List[str],
-    ) -> List[str]:
+        ref_indices: list,
+        index_map: dict,
+        all_item_ids: list[str],
+    ) -> list[str]:
         """
         解析 references（index -> UUID）
 
@@ -241,9 +284,9 @@ class ResultParser:
     def _extract_times(
         self,
         source_type: str,
-        valid_refs: List[str],
-        index_map: Dict,
-        source_created_time: Optional[datetime],
+        valid_refs: list[str],
+        index_map: dict,
+        source_created_time: datetime | None,
     ) -> tuple:
         """
         提取时间
@@ -266,7 +309,7 @@ class ResultParser:
 
         return None, None
 
-    def _parse_raw_entities(self, entities_list: List) -> List[Dict]:
+    def _parse_raw_entities(self, entities_list: list) -> list[dict]:
         """
         解析实体格式（统一为列表格式）
 
@@ -292,9 +335,9 @@ class ResultParser:
 
     async def process_entity_associations(
         self,
-        events: List[SourceEvent],
-        entity_types: List[DBEntityType],
-    ) -> List[SourceEvent]:
+        events: list[SourceEvent],
+        entity_types: list[DBEntityType],
+    ) -> list[SourceEvent]:
         """
         处理实体关联（完整流程）
 
@@ -350,7 +393,6 @@ class ResultParser:
 
             # 创建 EventEntity 关联
             event.event_associations = []
-            event.entities = []
             for entity_id, info in entity_map.items():
                 final_description = self._merge_descriptions(info["descriptions"])
                 assoc = EventEntity(
@@ -360,26 +402,25 @@ class ResultParser:
                     description=final_description,
                 )
                 event.event_associations.append(assoc)
-                event.entities.append(entity_id)
 
         return events
 
-    def _build_cache_key(self, entity_data: Dict) -> tuple:
+    def _build_cache_key(self, entity_data: dict) -> tuple:
         """构建实体缓存键"""
         return (
             entity_data.get("type", ""),
             entity_data.get("name", "").strip().lower(),
         )
 
-    def _merge_descriptions(self, descriptions: List[str]) -> str:
+    def _merge_descriptions(self, descriptions: list[str]) -> str:
         """合并描述列表"""
         return "、".join(descriptions) if descriptions else ""
 
     async def _get_or_create_entity(
         self,
-        entity_data: Dict,
-        entity_types: List[DBEntityType],
-    ) -> Optional[Entity]:
+        entity_data: dict,
+        entity_types: list[DBEntityType],
+    ) -> Entity | None:
         """
         查找或创建实体（并发安全）
 
@@ -411,9 +452,13 @@ class ResultParser:
                 is_deadlock = "1213" in error_str or "Deadlock" in error_str
                 is_lost_connection = "2013" in error_str or "Lost connection" in error_str
 
-                if (is_lock_timeout or is_deadlock or is_lost_connection) and attempt < max_retries - 1:
+                if (
+                    is_lock_timeout or is_deadlock or is_lost_connection
+                ) and attempt < max_retries - 1:
                     delay = base_delay * (2**attempt)
-                    logger.warning(f"实体创建异常({e.orig if hasattr(e, 'orig') else e})，重试 {attempt + 1}/{max_retries}: {delay}s")
+                    logger.warning(
+                        f"实体创建异常({e.orig if hasattr(e, 'orig') else e})，重试 {attempt + 1}/{max_retries}: {delay}s"
+                    )
                     await asyncio.sleep(delay)
                     continue
                 raise
@@ -422,10 +467,10 @@ class ResultParser:
 
     async def _get_or_create_entity_inner(
         self,
-        entity_data: Dict,
+        entity_data: dict,
         normalized_name: str,
-        entity_types: List[DBEntityType],
-    ) -> Optional[Entity]:
+        entity_types: list[DBEntityType],
+    ) -> Entity | None:
         """实际执行查找或创建"""
         async with self.session_factory() as session:
             # 查找已存在
@@ -499,7 +544,7 @@ class ResultParser:
                 )
                 return retry.scalar_one_or_none()
 
-    def _parse_entity_value(self, entity_data: Dict, entity_type: DBEntityType) -> Dict[str, Any]:
+    def _parse_entity_value(self, entity_data: dict, entity_type: DBEntityType) -> dict[str, Any]:
         """
         解析实体值类型（LLM优先 + 代码兜底）
 
@@ -660,10 +705,10 @@ class EntityValueParser:
     def parse(
         self,
         text: str,
-        entity_type: Optional[str] = None,
-        entity_type_category: Optional[str] = None,
-        value_constraints: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        entity_type: str | None = None,
+        entity_type_category: str | None = None,
+        value_constraints: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """
         解析实体值
 
@@ -736,11 +781,11 @@ class EntityValueParser:
     def _parse_number(
         self,
         text: str,
-        _entity_type: Optional[str] = None,
-        _value_constraints: Optional[Dict[str, Any]] = None,
+        _entity_type: str | None = None,
+        _value_constraints: dict[str, Any] | None = None,
         force_int: bool = False,
         force_float: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """解析数值类型"""
         configured_unit = _value_constraints.get("unit") if _value_constraints else None
         if configured_unit:
@@ -812,7 +857,7 @@ class EntityValueParser:
 
         return None
 
-    def _parse_chinese_number(self, text: str) -> Optional[Dict[str, Any]]:
+    def _parse_chinese_number(self, text: str) -> dict[str, Any] | None:
         """解析中文数字"""
         if len(text) > 6:
             return None
@@ -839,7 +884,7 @@ class EntityValueParser:
         configured_unit: str,
         force_int: bool = False,
         force_float: bool = False,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """智能单位匹配解析"""
         quantifiers = ["个", "件", "条", "项", "批", "次", "笔", "单", "组"]
 
@@ -919,7 +964,7 @@ class EntityValueParser:
 
         return None
 
-    def _simple_chinese_to_num(self, cn_text: str) -> Optional[int]:
+    def _simple_chinese_to_num(self, cn_text: str) -> int | None:
         """简化的中文数字转换"""
         total = 0
         unit = 1
@@ -942,9 +987,9 @@ class EntityValueParser:
     def _parse_datetime(
         self,
         text: str,
-        _entity_type: Optional[str] = None,
-        _value_constraints: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        _entity_type: str | None = None,
+        _value_constraints: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """解析时间类型"""
         text_clean = text.replace("年", "-").replace("月", "-").replace("日", "")
         text_clean = re.sub(r"-+", "-", text_clean)
@@ -1049,7 +1094,7 @@ class EntityValueParser:
 
         return None
 
-    def _parse_compact_datetime(self, text: str) -> Optional[Dict[str, Any]]:
+    def _parse_compact_datetime(self, text: str) -> dict[str, Any] | None:
         """解析紧凑日期格式"""
         # YYYYMMDDHHmmss（14位）
         if re.match(r"^(\d{14})$", text):
@@ -1104,9 +1149,9 @@ class EntityValueParser:
     def _parse_bool(
         self,
         text: str,
-        _entity_type: Optional[str] = None,
-        _value_constraints: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        _entity_type: str | None = None,
+        _value_constraints: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """解析布尔类型"""
         if len(text) > 10:
             return None
@@ -1124,14 +1169,14 @@ class EntityValueParser:
     def _parse_enum(
         self,
         text: str,
-        _entity_type: Optional[str] = None,
-        value_constraints: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        _entity_type: str | None = None,
+        value_constraints: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """解析枚举类型"""
         if not value_constraints or "enum_values" not in value_constraints:
             return None
 
-        enum_values: List[str] = value_constraints["enum_values"]
+        enum_values: list[str] = value_constraints["enum_values"]
 
         # 精确匹配
         if text in enum_values:
@@ -1145,17 +1190,17 @@ class EntityValueParser:
 
         return {"type": "enum", "value": "UNKNOWN", "unit": None, "confidence": 0.0}
 
-    def _parse_text(self, text: str) -> Optional[Dict[str, Any]]:
+    def _parse_text(self, text: str) -> dict[str, Any] | None:
         """解析为纯文本类型"""
         return {"type": "text", "value": text, "unit": None, "confidence": 1.0}
 
     def parse_to_typed_fields(
         self,
         text: str,
-        entity_type: Optional[str] = None,
-        entity_type_category: Optional[str] = None,
-        value_constraints: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        entity_type: str | None = None,
+        entity_type_category: str | None = None,
+        value_constraints: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """解析为类型化字段（直接映射到数据库字段）"""
         result = self.parse(text, entity_type, entity_type_category, value_constraints)
 

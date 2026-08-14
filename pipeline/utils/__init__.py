@@ -2,15 +2,36 @@
 工具函数模块
 """
 
+from pipeline.utils.batch import (
+    EmbeddingBatchProcessor,
+    ESBulkIndexProcessor,
+    batch_generate_embeddings,
+    batch_index_to_es,
+)
+from pipeline.utils.llm_tracking import (
+    LLMTokenTracker,
+    enable_llm_tracking,
+    llm_tracking_scope,
+    llm_tracking_stage,
+    record_llm_usage,
+)
 from pipeline.utils.logger import get_logger, logger, setup_logging
+from pipeline.utils.retry import (
+    is_retryable_db_error,
+    is_retryable_error,
+    is_retryable_network_error,
+    retry_async,
+)
+from pipeline.utils.run_stats import RunStatsTracker, StageMeasurement
 from pipeline.utils.text import (
+    TokenEstimator,
     clean_whitespace,
     compute_text_hash,
     count_chinese_characters,
     estimate_tokens,
     extract_markdown_headings,
-    normalize_heading_text,
     normalize_entity_name,
+    normalize_heading_text,
     normalize_text,
     split_text_by_paragraphs,
     truncate_text,
@@ -21,19 +42,6 @@ from pipeline.utils.time import (
     get_time_ago,
     get_utc_now,
     parse_iso_datetime,
-)
-from pipeline.utils.text import TokenEstimator
-from pipeline.utils.retry import (
-    is_retryable_error,
-    is_retryable_db_error,
-    is_retryable_network_error,
-    retry_async,
-)
-from pipeline.utils.batch import (
-    batch_generate_embeddings,
-    batch_index_to_es,
-    EmbeddingBatchProcessor,
-    ESBulkIndexProcessor,
 )
 
 __all__ = [
@@ -60,6 +68,13 @@ __all__ = [
     "calculate_time_decay",
     # Token
     "TokenEstimator",
+    "LLMTokenTracker",
+    "enable_llm_tracking",
+    "llm_tracking_scope",
+    "llm_tracking_stage",
+    "record_llm_usage",
+    "RunStatsTracker",
+    "StageMeasurement",
     # Retry
     "is_retryable_error",
     "is_retryable_db_error",

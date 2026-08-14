@@ -13,7 +13,7 @@ from pipeline.storage.facade import (
     get_storage_facade,
     reset_storage_facade,
 )
-from pipeline.storage.provider import create_storage_facade
+from pipeline.storage.factory import create_storage_facade
 
 __all__ = [
     "StorageCapabilities",

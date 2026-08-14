@@ -43,4 +43,3 @@ class OutputMode(str, Enum):
 
     ID_ONLY = "id_only"  # 只输出ID
     FULL = "full"  # 输出完整内容
-

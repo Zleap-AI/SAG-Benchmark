@@ -5,13 +5,15 @@
 """
 
 import time
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-from pipeline.utils import get_logger, is_retryable_error
+from pipeline.utils.logger import get_logger
+from pipeline.utils.retry import is_retryable_error
 
 logger = get_logger("utils.batch")
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BatchProcessor:
@@ -20,7 +22,7 @@ class BatchProcessor:
     def __init__(
         self,
         batch_size: int = 10,
-        logger_name: Optional[str] = None,
+        logger_name: str | None = None,
     ):
         """
         初始化批量处理器
@@ -38,11 +40,11 @@ class EmbeddingBatchProcessor(BatchProcessor):
 
     async def process(
         self,
-        items: List[T],
+        items: list[T],
         text_extractor: Callable[[T], str],
         embedding_client,
-        on_success: Optional[Callable[[T, List[float]], Any]] = None,
-    ) -> Dict[str, Any]:
+        on_success: Callable[[T, list[float]], Any] | None = None,
+    ) -> dict[str, Any]:
         """
         批量生成向量
 
@@ -94,9 +96,9 @@ class EmbeddingBatchProcessor(BatchProcessor):
                         failed_count += 1
                         # 记录是否可重试
                         if is_retryable_error(retry_e):
-                            self.logger.warning(f"向量生成失败（可重试）")
+                            self.logger.warning("向量生成失败（可重试）")
                         else:
-                            self.logger.error(f"向量生成失败（不可重试）")
+                            self.logger.error("向量生成失败（不可重试）")
 
         total_time = time.perf_counter() - start_time
 
@@ -114,11 +116,11 @@ class ESBulkIndexProcessor(BatchProcessor):
 
     async def process(
         self,
-        documents: List[Dict[str, Any]],
+        documents: list[dict[str, Any]],
         es_client,
         index_name: str,
-        routing: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        routing: str | None = None,
+    ) -> dict[str, Any]:
         """
         批量索引到ES
 
@@ -196,12 +198,12 @@ class ESBulkIndexProcessor(BatchProcessor):
 
 
 async def batch_generate_embeddings(
-    items: List[T],
+    items: list[T],
     text_extractor: Callable[[T], str],
     embedding_client,
     batch_size: int = 10,
-    on_success: Optional[Callable[[T, List[float]], Any]] = None,
-) -> Dict[str, Any]:
+    on_success: Callable[[T, list[float]], Any] | None = None,
+) -> dict[str, Any]:
     """
     批量生成向量（便捷函数）
 
@@ -220,12 +222,12 @@ async def batch_generate_embeddings(
 
 
 async def batch_index_to_es(
-    documents: List[Dict[str, Any]],
+    documents: list[dict[str, Any]],
     es_client,
     index_name: str,
     batch_size: int = 50,
-    routing: Optional[str] = None,
-) -> Dict[str, Any]:
+    routing: str | None = None,
+) -> dict[str, Any]:
     """
     批量索引到ES（便捷函数）
 

@@ -60,6 +60,8 @@ services:
       --default-artifact-root /mlflow/artifacts
       --host 0.0.0.0
       --port 5000
+      --allowed-hosts '*'
+      --cors-allowed-origins '*'
     ports:
       - "${MLFLOW_PORT:-5000}:5000"
     volumes:

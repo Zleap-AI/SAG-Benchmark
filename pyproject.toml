@@ -1,5 +1,5 @@
 [project]
-name = "pipeline"
+name = "sag-benchmark"
 version = "0.1.0"
 description = "数据流智能引擎 - AI驱动的数据处理与聚合检索"
 authors = [
@@ -36,9 +36,6 @@ dependencies = [
     "elasticsearch-dsl==8.18.0",
     "numpy>=2.3.4",
     "jieba>=0.42.1",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-    "pytest-asyncio>=1.2.0",
     "psutil>=7.1.1",
     "aiofiles>=25.1.0",
     "minio>=7.2.18",
@@ -51,8 +48,7 @@ dependencies = [
     "alembic>=1.17.0",
     "spacy>=3.8.7",
     "rank-bm25>=0.2.2",
-    "ragas>=0.3.1",
-    "datasets>=4.3.0",
+    "rouge-score>=0.1.2",
     "pillow>=12.0.0",
     "markitdown[all]>=0.0.1a4",
     "mlflow>=3.7.0",
@@ -64,21 +60,20 @@ dependencies = [
     "aio-pika>=9.4.0",
     "igraph>=1.0.0",
     "jsonschema>=4.26.0",
+    "setuptools<70",  # Required for pkg_resources (graspologic dependency)
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.1.0",
-    "pytest-mock>=3.12.0",
     "black>=23.12.0",
     "ruff>=0.1.9",
     "mypy>=1.7.0",
     "pre-commit>=3.6.0",
     "ipython>=8.18.0",
     "numpy==2.3.4",
-    "jieba==0.42.1"
+    "jieba==0.42.1",
+    "pytest>=9.0",
+    "pytest-asyncio>=1.0",
 ]
 
 api = [
@@ -89,6 +84,9 @@ api = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pipeline"]
 
 [tool.black]
 line-length = 100
@@ -110,6 +108,8 @@ extend-exclude = '''
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
@@ -121,12 +121,30 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by black)
+    "E402",  # module level import not at top of file（scripts 里 sys.path.insert 后 import 的合法模式）
+    "E712",  # == True 比较（SQLAlchemy / ORM 过滤表达式必须用 ==，不能改 is）
+    "E741",  # ambiguous variable name
     "B008",  # do not perform function calls in argument defaults
+    "B901",  # return value in generator
+    "B904",  # raise from（项目内自定义异常体系不强制 from 链，避免大面积改动）
+    "B905",  # zip() without strict=（项目内 zip 均为已知等长序列，逐个加 strict 风险大于收益）
     "C901",  # too complex
+    "UP042", # class X(str, Enum) -> StrEnum（破坏性重构，影响序列化/Pydantic，暂不迁移）
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+# 前向引用字符串注解 + 循环变量与 import 同名等 ruff 误报
+"pipeline/core/ai/factory.py" = ["F821"]
+"pipeline/modules/search/multi_vector.py" = ["F402"]
+# pipeline 基类/抽象方法采用空方法 + 子类覆盖的约定，不强制 @abstractmethod
+"pipeline/core/ai/base.py" = ["B027"]
+"pipeline/core/storage/repositories/base.py" = ["B024"]
+
+[tool.pytest.ini_options]
+# External projects are validated in their shared graph runtime. Keep the root
+# default suite scoped to the pipeline's own tests and dependencies.
+testpaths = ["tests"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -149,30 +167,6 @@ module = [
     "tiktoken.*",
 ]
 ignore_missing_imports = true
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --strict-markers"
-testpaths = ["tests"]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "search_tests: marks tests as search module tests",
-]
-
-[tool.coverage.run]
-source = ["pipeline"]
-omit = [
-    "*/tests/*",
-    "*/test_*.py",
-]
-
-[tool.coverage.report]
-precision = 2
-show_missing = true
-skip_covered = false
 
 [tool.pylint.messages_control]
 disable = [

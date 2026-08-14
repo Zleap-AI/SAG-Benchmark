@@ -7,7 +7,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
 
 
 class BlockType(str, Enum):
@@ -25,9 +24,9 @@ class InputDocument:
     """输入层标准化后的文档"""
 
     content: str
-    source_path: Optional[Path] = None
+    source_path: Path | None = None
     is_markdown: bool = True
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -40,7 +39,7 @@ class StructuredBlock:
     heading: str = ""
     start_index: int = 0
     end_index: int = 0
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -53,7 +52,7 @@ class SectionDraft:
     content: str
     raw_content: str
     section_type: str
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -65,8 +64,8 @@ class ChunkDraft:
     content: str
     raw_content: str
     chunk_type: str
-    section_order_indices: List[int]
-    metadata: Dict = field(default_factory=dict)
+    section_order_indices: list[int]
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -74,6 +73,6 @@ class ChunkingResult:
     """整条切片链路结果"""
 
     input_doc: InputDocument
-    blocks: List[StructuredBlock]
-    article_sections: List[SectionDraft]
-    source_chunks: List[ChunkDraft]
+    blocks: list[StructuredBlock]
+    article_sections: list[SectionDraft]
+    source_chunks: list[ChunkDraft]

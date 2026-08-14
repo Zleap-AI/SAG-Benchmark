@@ -4,15 +4,20 @@ Extract模块配置类
 定义事项提取的配置选项
 """
 
-from typing import List, Optional
+from enum import Enum
 
 from pydantic import Field, model_validator
 
-from pipeline.models.base import pipelineBaseModel
+from pipeline.models.base import PipelineBaseModel
 from pipeline.models.entity import CustomEntityType
 
 
-class ExtractBaseConfig(pipelineBaseModel):
+class ExtractPromptStrategy(str, Enum):
+    ORIGINAL = "original"
+    COMPACT = "compact"
+
+
+class ExtractBaseConfig(PipelineBaseModel):
     """
     提取配置基类 - 基础配置
 
@@ -72,12 +77,12 @@ class ExtractBaseConfig(pipelineBaseModel):
         default=False,
         description="是否过滤图片类型的section（不参与事项提取，避免噪音；如果过滤后无正文则跳过该chunk）",
     )
-    filter_keywords: List[str] = Field(
+    filter_keywords: list[str] = Field(
         default_factory=lambda: ["扫码", "加群", "优惠券", "点击领取", "限时免费"],
         description="过滤关键词黑名单（匹配时计入低质量信号）",
     )
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def set_local_defaults(self):
         """LOCAL 模式下自动开启向量同步（因为没有 MySQL embedding 表）"""
         from pipeline.core.config import get_settings
@@ -91,8 +96,21 @@ class ExtractBaseConfig(pipelineBaseModel):
                 self.enable_event_entity_vector_sync = True
         return self
 
+    @model_validator(mode="after")
+    def validate_strategy_test_mode(self):
+        """compact 策略不能与 test_mode 组合（test_mode 对应 test_extract，compact 对应 extract_compact）"""
+        if self.extract_prompt_strategy == ExtractPromptStrategy.COMPACT and self.test_mode:
+            raise ValueError(
+                "compact extract strategy cannot be combined with test_mode. "
+                "test_mode (--atomic) uses test_extract template; "
+                "compact strategy uses extract_compact template. "
+                "These are incompatible. Use either --atomic (original strategy) "
+                "or --extract-prompt-strategy compact (without --atomic)."
+            )
+        return self
+
     # ==================== 实体配置 ====================
-    custom_entity_types: List[CustomEntityType] = Field(
+    custom_entity_types: list[CustomEntityType] = Field(
         default_factory=list, description="自定义实体类型列表（运行时优先级最高）"
     )
 
@@ -116,8 +134,13 @@ class ExtractBaseConfig(pipelineBaseModel):
     enable_strict_filtering: bool = Field(
         default=True, description="是否启用严格的内容过滤（会传入严格过滤到custom_requirements）"
     )
+    extract_prompt_strategy: ExtractPromptStrategy = Field(
+        default=ExtractPromptStrategy.COMPACT,
+        description="Extract 提示词策略：original 使用 extract；compact 使用 extract_compact",
+    )
     test_mode: bool = Field(
-        default=False, description="测试模式：读取test_extract.yaml而非extract.yaml，读取entity_types_test列表而非entity_types表"
+        default=False,
+        description="测试模式：读取test_extract.yaml而非extract.yaml，读取entity_types_test列表而非entity_types表",
     )
 
 
@@ -133,8 +156,6 @@ class ExtractConfig(ExtractBaseConfig):
 
     # ==================== 运行时上下文 ====================
     source_config_id: str = Field(..., description="信息源ID")
-    article_id: Optional[str] = Field(
-        default=None, description="文档ID（用于文档级别的实体类型配置）"
-    )
-    chunk_ids: List[str] = Field(..., min_length=1, description="Chunk ID列表")
+    article_id: str | None = Field(default=None, description="文档ID（用于文档级别的实体类型配置）")
+    chunk_ids: list[str] = Field(..., min_length=1, description="Chunk ID列表")
     # 注意：enable_strict_filtering 和 test_mode 继承自 ExtractBaseConfig，不需要重复定义

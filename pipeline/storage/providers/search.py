@@ -10,10 +10,10 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import bindparam, or_, select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from pipeline.core.storage.elasticsearch import get_es_client
-from pipeline.core.storage.repositories.entity_repository import EntityVectorRepository
-from pipeline.core.storage.repositories.event_entity_repository import EventEntityRepository
-from pipeline.core.storage.repositories.event_repository import EventVectorRepository
+from pipeline.storage.backends.elasticsearch.client import get_es_client
+from pipeline.storage.backends.elasticsearch.repositories.entity_repository import EntityVectorRepository
+from pipeline.storage.backends.elasticsearch.repositories.event_entity_repository import EventEntityRepository
+from pipeline.storage.backends.elasticsearch.repositories.event_repository import EventVectorRepository
 from pipeline.db import Entity, EventEntity, SourceEvent, get_session_factory
 from pipeline.storage.interfaces import VectorSearchStore
 from pipeline.utils import get_logger
@@ -42,12 +42,17 @@ class ElasticsearchSearchStore:
         query: str,
         source_config_ids: Optional[List[str]] = None,
         size: int = 20,
+        entity_ids: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         return await self._entity_repo.search_by_query_bm25(
             query=query,
             source_config_ids=source_config_ids,
             size=size,
+            allowed_entity_ids=entity_ids,
         )
+
+    async def get_entities_by_ids(self, entity_ids: List[str]) -> List[Dict[str, Any]]:
+        return await self._entity_repo.get_entities_by_ids(entity_ids)
 
     async def get_event_ids_by_entity_ids(
         self,
@@ -72,6 +77,21 @@ class ElasticsearchSearchStore:
         return await self._event_repo.get_events_by_ids(
             event_ids,
             source_includes=source_includes,
+        )
+
+    async def search_events_by_text(
+        self,
+        *,
+        query: str,
+        event_ids: List[str],
+        k: int = 100,
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        return await self._event_repo.search_bm25_by_text(
+            query=query,
+            event_ids=event_ids,
+            k=k,
+            source_config_ids=source_config_ids,
         )
 
     async def search_events_by_vector(
@@ -126,6 +146,7 @@ class OceanBaseSearchStore:
         query: str,
         source_config_ids: Optional[List[str]] = None,
         size: int = 20,
+        entity_ids: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         query_text = (query or "").strip()
         if not query_text or size <= 0:
@@ -136,6 +157,7 @@ class OceanBaseSearchStore:
                 query_text,
                 source_config_ids=source_config_ids,
                 size=size,
+                entity_ids=entity_ids,
             )
         except SQLAlchemyError as exc:
             logger.warning(
@@ -146,7 +168,28 @@ class OceanBaseSearchStore:
                 query_text,
                 source_config_ids=source_config_ids,
                 size=size,
+                entity_ids=entity_ids,
             )
+
+    async def get_entities_by_ids(self, entity_ids: List[str]) -> List[Dict[str, Any]]:
+        if not entity_ids:
+            return []
+        stmt = select(Entity).where(Entity.id.in_(entity_ids))
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            result = await session.execute(stmt)
+            entities = result.scalars().all()
+        return [
+            {
+                "entity_id": entity.id,
+                "source_config_id": entity.source_config_id,
+                "type": entity.type,
+                "name": entity.name,
+                "normalized_name": entity.normalized_name,
+                "description": entity.description,
+            }
+            for entity in entities
+        ]
 
     async def _search_entities_by_fulltext(
         self,
@@ -154,6 +197,7 @@ class OceanBaseSearchStore:
         *,
         source_config_ids: Optional[List[str]],
         size: int,
+        entity_ids: Optional[List[str]],
     ) -> List[Dict[str, Any]]:
         params: Dict[str, Any] = {
             "query": query,
@@ -167,6 +211,10 @@ class OceanBaseSearchStore:
             where.append("source_config_id IN :source_config_ids")
             params["source_config_ids"] = source_config_ids
             bindparams.append(bindparam("source_config_ids", expanding=True))
+        if entity_ids:
+            where.append("id IN :entity_ids")
+            params["entity_ids"] = entity_ids
+            bindparams.append(bindparam("entity_ids", expanding=True))
 
         stmt = text(
             f"""
@@ -205,6 +253,7 @@ class OceanBaseSearchStore:
         *,
         source_config_ids: Optional[List[str]],
         size: int,
+        entity_ids: Optional[List[str]],
     ) -> List[Dict[str, Any]]:
         query = query.strip()
         if not query:
@@ -240,6 +289,8 @@ class OceanBaseSearchStore:
         )
         if source_config_ids:
             stmt = stmt.where(Entity.source_config_id.in_(source_config_ids))
+        if entity_ids:
+            stmt = stmt.where(Entity.id.in_(entity_ids))
 
         session_factory = get_session_factory()
         async with session_factory() as session:
@@ -338,10 +389,52 @@ class OceanBaseSearchStore:
                     continue
                 if field == "entity_ids":
                     row[field] = event_entity_map.get(event.id, [])
+                elif field == "entities" and hasattr(event, "entity_ids_json"):
+                    row[field] = event.entity_ids_json
                 else:
                     row[field] = getattr(event, field, None)
             rows.append(row)
         return rows
+
+    async def search_events_by_text(
+        self,
+        *,
+        query: str,
+        event_ids: List[str],
+        k: int = 100,
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        if not query.strip() or not event_ids or k <= 0:
+            return []
+        stmt = select(SourceEvent).where(SourceEvent.id.in_(event_ids))
+        if source_config_ids:
+            stmt = stmt.where(SourceEvent.source_config_id.in_(source_config_ids))
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            result = await session.execute(stmt)
+            events = result.scalars().all()
+
+        tokens = [token.casefold() for token in query.split() if token.strip()]
+        if not tokens:
+            tokens = [query.casefold()]
+        ranked: List[Dict[str, Any]] = []
+        for event in events:
+            title = str(event.title or "")
+            summary = str(event.summary or "")
+            content = str(event.content or "")
+            searchable = f"{title} {summary} {content}".casefold()
+            score = float(sum(searchable.count(token) for token in tokens))
+            if score <= 0:
+                continue
+            ranked.append({
+                "event_id": event.id,
+                "title": title,
+                "summary": summary,
+                "content": content,
+                "_score": score,
+            })
+        ranked.sort(key=lambda item: (-float(item["_score"]), str(item["event_id"])))
+        return ranked[:k]
 
     async def search_events_by_vector(
         self,
