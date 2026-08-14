@@ -10,6 +10,8 @@
 
 **论文链接：** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
+文档与资源：[变更日志](CHANGELOG.md) | [v2.0.0 发布说明](docs/releases/v2.0.0.md) | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md) | [支持渠道](SUPPORT.md)
+
 ## Benchmark 分数复现
 
 本仓库提供 SAG 在 HotpotQA、2WikiMultiHopQA 和 MuSiQue 上的上传、检索与评估脚本。当前快速开始流程支持复现 SAG、BM25 以及 bge-large-en-v1.5 向量检索结果，并通过 atomic 上传/检索路径支持 Triple indexing 消融实验。
@@ -555,4 +557,3 @@ SAG-Benchmark/
 - `run_search_benchmark.py` 未显式传 `--source-config-id` 时，会按 `.env` 的 `LLM_MODEL` 查找最新上传的数据源。
 - 完整数据集上传和 benchmark 会调用外部模型服务，运行前请确认额度、并发和超时配置。
 - 停止本地服务使用 `docker compose down`；如需删除本地数据库卷，使用 `docker compose down -v`，该操作会清空已上传数据。
-https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a

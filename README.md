@@ -10,6 +10,7 @@ English | [中文](README-CN.md)
 
 **Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
+
 ## Benchmark Score Reproduction
 
 This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The current quick-start workflow reproduces the SAG, BM25, and bge-large-en-v1.5 vector retrieval results, and supports the Triple indexing ablation through the atomic upload/search path.
@@ -555,4 +556,3 @@ SAG-Benchmark/
 - When `--source-config-id` is omitted, `run_search_benchmark.py` looks up the latest uploaded source based on `LLM_MODEL` in `.env`.
 - Full dataset upload and benchmark runs call external model services. Check quota, concurrency, and timeout settings before running.
 - Stop local services with `docker compose down`. To delete local database volumes, use `docker compose down -v`; this removes uploaded data.
-https://github.com/user-attachments/assets/ac805e3c-ab52-4857-bef6-2865f3831b2f
