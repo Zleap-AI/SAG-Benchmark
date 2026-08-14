@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List
 
 from pipeline.modules.load.chunking.types import SectionDraft, StructuredBlock
 
@@ -17,5 +16,5 @@ class BaseBlockChunker(ABC):
         block: StructuredBlock,
         order_start: int,
         render_group_index: int,
-    ) -> List[SectionDraft]:
+    ) -> list[SectionDraft]:
         pass

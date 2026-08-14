@@ -1,6 +1,6 @@
 """Protocols for database and vector/search backends."""
 
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol, Tuple
 
 from pipeline.storage.capabilities import StorageCapabilities
 
@@ -16,6 +16,77 @@ class DatabaseStore(Protocol):
 
     async def close(self) -> None:
         """Close database resources owned by this store."""
+        ...
+
+
+class EventUniverseStore(Protocol):
+    """Canonical relational reads used by the SAG2 event universe.
+
+    This protocol deliberately exposes relation reads separately from
+    ``SearchStore``. The event-universe algorithm owns mapping, ordering,
+    deduplication, and limits; the provider only returns canonical rows.
+    """
+
+    backend_name: str
+
+    async def filter_active_event_ids(
+        self,
+        event_ids: List[str],
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[str]:
+        """Return active event ids in the same order as ``event_ids``."""
+        ...
+
+    async def get_event_entity_pairs_by_events(
+        self,
+        event_ids: List[str],
+        source_config_ids: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+    ) -> List[Tuple[str, str]]:
+        """Return canonical ``(event_id, entity_id)`` rows for scope building."""
+        ...
+
+    async def get_event_entity_pairs_by_entities(
+        self,
+        entity_ids: List[str],
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[Tuple[str, str]]:
+        """Return canonical ``(event_id, entity_id)`` rows for entity recall."""
+        ...
+
+    async def get_chunks_by_event_ids(
+        self,
+        event_ids: List[str],
+    ) -> Dict[str, Dict[str, Any]]:
+        """Hydrate event chunks while preserving the SAG2 result shape."""
+        ...
+
+    async def close(self) -> None:
+        """Close resources owned by this store."""
+        ...
+
+
+class ChunkTextSearchStore(Protocol):
+    """Keyword retrieval boundary for source chunks.
+
+    The strategy layer consumes this narrow port so the concrete full-text
+    engine and its repository implementation remain storage concerns.
+    """
+
+    backend_name: str
+
+    async def search_chunks_by_text(
+        self,
+        *,
+        query: str,
+        source_config_ids: Optional[List[str]] = None,
+        size: int = 10,
+    ) -> List[Dict[str, Any]]:
+        """Return chunk payloads ranked by backend text relevance."""
+        ...
+
+    async def close(self) -> None:
+        """Close resources used by the chunk text backend."""
         ...
 
 
@@ -87,8 +158,13 @@ class SearchStore(Protocol):
         query: str,
         source_config_ids: Optional[List[str]] = None,
         size: int = 20,
+        entity_ids: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Search entities by text relevance."""
+        ...
+
+    async def get_entities_by_ids(self, entity_ids: List[str]) -> List[Dict[str, Any]]:
+        """Fetch entity fields by id."""
         ...
 
     async def get_event_ids_by_entity_ids(
@@ -108,6 +184,17 @@ class SearchStore(Protocol):
         source_includes: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Fetch event fields by id."""
+        ...
+
+    async def search_events_by_text(
+        self,
+        *,
+        query: str,
+        event_ids: List[str],
+        k: int = 100,
+        source_config_ids: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Rank a bounded event candidate set by text relevance."""
         ...
 
     async def search_events_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:

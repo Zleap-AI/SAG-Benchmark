@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from pipeline.modules.load.chunking.chunker.base import BaseBlockChunker
 from pipeline.modules.load.chunking.tokenizer import TokenizerTokenEstimator
 from pipeline.modules.load.chunking.types import BlockType, SectionDraft, StructuredBlock
@@ -42,9 +40,9 @@ class MarkdownTextChunker(BaseBlockChunker):
         block: StructuredBlock,
         order_start: int,
         render_group_index: int,
-    ) -> List[SectionDraft]:
+    ) -> list[SectionDraft]:
         text_parts = self._split_text(block.raw_content)
-        sections: List[SectionDraft] = []
+        sections: list[SectionDraft] = []
         for idx, part in enumerate(text_parts):
             sections.append(
                 SectionDraft(
@@ -64,14 +62,14 @@ class MarkdownTextChunker(BaseBlockChunker):
             )
         return sections
 
-    def _split_text(self, text: str) -> List[str]:
+    def _split_text(self, text: str) -> list[str]:
         if text == "":
             return [""]
         first_pass = self._split_by_delimiters(text, self.PRIMARY_DELIMITERS)
         if not first_pass:
             first_pass = [text]
 
-        result: List[str] = []
+        result: list[str] = []
         for part in first_pass:
             tokens = self.token_estimator.estimate_tokens(part)
             if tokens <= self.section_max_tokens:
@@ -91,8 +89,8 @@ class MarkdownTextChunker(BaseBlockChunker):
                     result.extend(self._force_split(frag))
         return result
 
-    def _split_by_delimiters(self, text: str, delimiters: tuple[str, ...]) -> List[str]:
-        parts: List[str] = []
+    def _split_by_delimiters(self, text: str, delimiters: tuple[str, ...]) -> list[str]:
+        parts: list[str] = []
         start = 0
         idx = 0
         while idx < len(text):
@@ -115,8 +113,8 @@ class MarkdownTextChunker(BaseBlockChunker):
         normalized_parts = self._merge_whitespace_only_parts(parts if parts else [text])
         return normalized_parts if normalized_parts else [text]
 
-    def _force_split(self, text: str) -> List[str]:
-        chunks: List[str] = []
+    def _force_split(self, text: str) -> list[str]:
+        chunks: list[str] = []
         current_pos = 0
         while current_pos < len(text):
             remaining = text[current_pos:]
@@ -144,11 +142,11 @@ class MarkdownTextChunker(BaseBlockChunker):
         return best
 
     @staticmethod
-    def _merge_whitespace_only_parts(parts: List[str]) -> List[str]:
+    def _merge_whitespace_only_parts(parts: list[str]) -> list[str]:
         if len(parts) <= 1:
             return parts
 
-        merged: List[str] = []
+        merged: list[str] = []
         leading_whitespace = ""
         for part in parts:
             if part.strip() == "":

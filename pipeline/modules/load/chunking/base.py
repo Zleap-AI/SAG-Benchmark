@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional
 
 from pipeline.modules.load.chunking.types import (
     ChunkDraft,
@@ -20,7 +19,7 @@ class BaseInputNormalizer(ABC):
     """输入层：统一输入格式"""
 
     @abstractmethod
-    def normalize(self, content: str, source_path: Optional[Path] = None) -> InputDocument:
+    def normalize(self, content: str, source_path: Path | None = None) -> InputDocument:
         pass
 
 
@@ -28,7 +27,7 @@ class BaseBlockParser(ABC):
     """结构识别层：识别块结构"""
 
     @abstractmethod
-    def parse_blocks(self, doc: InputDocument) -> List[StructuredBlock]:
+    def parse_blocks(self, doc: InputDocument) -> list[StructuredBlock]:
         pass
 
 
@@ -39,8 +38,8 @@ class BaseArticleSectionBuilder(ABC):
     async def build_sections(
         self,
         doc: InputDocument,
-        blocks: List[StructuredBlock],
-    ) -> List[SectionDraft]:
+        blocks: list[StructuredBlock],
+    ) -> list[SectionDraft]:
         pass
 
 
@@ -51,6 +50,6 @@ class BaseSourceChunkAssembler(ABC):
     def assemble_chunks(
         self,
         doc: InputDocument,
-        sections: List[SectionDraft],
-    ) -> List[ChunkDraft]:
+        sections: list[SectionDraft],
+    ) -> list[ChunkDraft]:
         pass

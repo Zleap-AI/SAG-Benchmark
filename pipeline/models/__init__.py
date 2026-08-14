@@ -4,7 +4,12 @@
 导出所有数据模型
 """
 
-from pipeline.models.base import pipelineBaseModel, MetadataMixin, TimestampMixin
+from pipeline.models.base import (
+    MetadataMixin,
+    PipelineBaseModel,
+    TimestampMixin,
+    pipelineBaseModel,
+)
 from pipeline.models.entity import (
     CustomEntityType,
     Entity,
@@ -14,6 +19,7 @@ from pipeline.models.entity import (
 
 __all__ = [
     # Base
+    "PipelineBaseModel",
     "pipelineBaseModel",
     "TimestampMixin",
     "MetadataMixin",

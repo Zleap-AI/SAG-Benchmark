@@ -4,11 +4,13 @@
 负责加载文档、调用解析器和处理器、保存到数据库
 """
 
-from abc import ABC, abstractmethod
 import asyncio
 import inspect
+import uuid
+from abc import ABC, abstractmethod
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import OperationalError
@@ -17,18 +19,17 @@ from pipeline.db import (
     Article,
     ArticleParseStatus,
     ArticleSection,
-    SourceEvent,
     SourceChunk,
     SourceConfig,
+    SourceEvent,
     get_session_factory,
 )
 from pipeline.exceptions import LoadError
-from pipeline.modules.load.config import DocumentLoadConfig, LoadResult
 from pipeline.modules.load.chunking import ChunkingResult
+from pipeline.modules.load.config import DocumentLoadConfig, LoadResult
 from pipeline.modules.load.parser import MarkdownParser
 from pipeline.modules.load.processor import DocumentProcessor
-from pipeline.utils import estimate_tokens, get_logger, normalize_heading_text, is_retryable_error
-import uuid
+from pipeline.utils import estimate_tokens, get_logger, is_retryable_error, normalize_heading_text
 
 logger = get_logger("modules.load.loader")
 
@@ -38,8 +39,8 @@ class BaseLoader(ABC):
 
     def __init__(
         self,
-        processor: Optional[DocumentProcessor] = None,
-        progress_callback: Optional[Callable[[str], Optional[Awaitable[None]]]] = None,
+        processor: DocumentProcessor | None = None,
+        progress_callback: Callable[[str], Awaitable[None] | None] | None = None,
     ) -> None:
         """
         初始化加载器
@@ -66,7 +67,7 @@ class BaseLoader(ABC):
         pass
 
     @abstractmethod
-    async def _save_to_database(self, *args, **kwargs) -> tuple[str, List[str]]:
+    async def _save_to_database(self, *args, **kwargs) -> tuple[str, list[str]]:
         """
         保存到数据库
 
@@ -75,7 +76,7 @@ class BaseLoader(ABC):
         """
         pass
 
-    async def _generate_embedding(self, text: str):
+    async def _generate_embedding(self, text: str) -> list[float]:
         """
         生成向量（委托给 processor）
 
@@ -87,7 +88,7 @@ class BaseLoader(ABC):
         """
         return await self.processor.generate_embedding(text)
 
-    async def _notify_progress(self, message: str):
+    async def _notify_progress(self, message: str) -> None:
         """通知外层当前阶段进度消息"""
         if not self._progress_callback:
             return
@@ -98,11 +99,9 @@ class BaseLoader(ABC):
         except Exception as e:  # noqa: BLE001
             logger.warning(f"进度通知失败: {e}")
 
-    async def _index_source_chunks_to_es(
-        self, source_id: str, source_type: str
-    ) -> None:
+    async def _index_source_chunks_to_es(self, source_id: str, source_type: str) -> None:
         """
-        索引 SourceChunk 到当前配置的向量/检索后端（通用方法）
+        索引 SourceChunk 到 Elasticsearch（通用方法）
 
         Args:
             source_id: 源ID (UUID)
@@ -127,25 +126,22 @@ class BaseLoader(ABC):
                 chunks = result.scalars().all()
 
                 if not chunks:
-                    logger.warning(
-                        f"源没有 SourceChunk: {source_id} (type={source_type})"
-                    )
+                    logger.warning(f"源没有 SourceChunk: {source_id} (type={source_type})")
                     return
 
                 # 批量处理配置
-                embedding_batch_size = getattr(self, '_embedding_batch_size', 10)
-                es_bulk_size = getattr(self, '_es_bulk_index_size', 50)
+                embedding_batch_size = getattr(self, "_embedding_batch_size", 10)
+                es_bulk_size = getattr(self, "_es_bulk_index_size", 50)
 
                 stats = await self._batch_index_chunks(
                     chunks=chunks,
                     vector_store=storage.vector,
                     embedding_batch_size=embedding_batch_size,
                     es_bulk_size=es_bulk_size,
-                    source_config_id=chunks[0].source_config_id
+                    source_config_id=chunks[0].source_config_id,
                 )
                 logger.info(
-                    f"SourceChunk 批量索引完成: {source_id} (type={source_type})",
-                    extra=stats
+                    f"SourceChunk 批量索引完成: {source_id} (type={source_type})", extra=stats
                 )
 
         except Exception as e:
@@ -153,45 +149,43 @@ class BaseLoader(ABC):
 
     async def _batch_index_chunks(
         self,
-        chunks: List,
+        chunks: list,
         vector_store,
         embedding_batch_size: int,
         es_bulk_size: int,
-        source_config_id: str
-    ) -> Dict[str, Any]:
+        source_config_id: str,
+    ) -> dict[str, Any]:
         """
         批量处理 chunks 的向量生成和ES索引
 
         Args:
             chunks: SourceChunk 列表
-            vector_store: 当前配置的向量/检索后端
+            vector_store: 统一向量存储接口
             embedding_batch_size: 向量生成批量大小
-            es_bulk_size: 批量写入大小
+            es_bulk_size: ES索引批量大小
             source_config_id: 信息源配置ID（用于路由）
 
         Returns:
             统计信息字典
         """
         import time
+
         from pipeline.core.ai.factory import get_embedding_client
 
         start_time = time.perf_counter()
-        embedding_client = await get_embedding_client(scenario='general')
+        embedding_client = await get_embedding_client(scenario="general")
 
         documents = []
         embedding_failed = 0
 
         # === 阶段1: 批量生成向量 ===
         for i in range(0, len(chunks), embedding_batch_size):
-            batch_chunks = chunks[i:i+embedding_batch_size]
+            batch_chunks = chunks[i : i + embedding_batch_size]
 
             try:
                 # 准备文本
                 heading_texts = [c.heading for c in batch_chunks if c.heading]
-                content_texts = [
-                    f"{c.heading}\n\n{c.content[:1024]}"
-                    for c in batch_chunks
-                ]
+                content_texts = [f"{c.heading}\n\n{c.content[:1024]}" for c in batch_chunks]
 
                 # 批量生成向量
                 heading_vectors = []
@@ -261,12 +255,12 @@ class BaseLoader(ABC):
                         else:
                             logger.error(f"向量生成失败（不可重试）: {chunk.id}")
 
-        # === 阶段2: 批量写入向量/检索后端 ===
+        # === 阶段2: 批量写入当前向量/检索后端 ===
         indexed = 0
         vector_failed = 0
 
         for i in range(0, len(documents), es_bulk_size):
-            batch = documents[i:i+es_bulk_size]
+            batch = documents[i : i + es_bulk_size]
 
             try:
                 result = await vector_store.upsert_chunk_vectors(
@@ -275,24 +269,25 @@ class BaseLoader(ABC):
                     batch_size=es_bulk_size,
                 )
 
-                if result.get("failed", 0) > 0:
-                    logger.warning(
-                        "批量写入向量后端部分失败，逐条重试: "
-                        f"indexed={result.get('indexed', 0)}, failed={result.get('failed', 0)}"
-                    )
+                indexed += int(result.get("indexed", 0))
+                failed_ids = {str(item) for item in result.get("failed_ids", [])}
+                if failed_ids:
                     retry_indexed, retry_failed = await self._retry_chunk_vector_upserts(
                         vector_store=vector_store,
-                        documents=batch,
+                        documents=[
+                            doc
+                            for doc in batch
+                            if str(doc.get("id") or doc.get("chunk_id")) in failed_ids
+                        ],
                         source_config_id=source_config_id,
                     )
                     indexed += retry_indexed
                     vector_failed += retry_failed
                 else:
-                    indexed += result["indexed"]
-                    vector_failed += result["failed"]
+                    vector_failed += int(result.get("failed", 0))
 
             except Exception as e:
-                logger.error(f"批量写入向量后端失败，降级重试: {e}")
+                logger.error(f"批量索引失败，降级重试: {e}")
                 # 降级：整批逐个重试
                 for doc in batch:
                     try:
@@ -301,16 +296,16 @@ class BaseLoader(ABC):
                             routing=source_config_id,
                             batch_size=1,
                         )
-                        indexed += result["indexed"]
-                        vector_failed += result["failed"]
+                        indexed += int(result.get("indexed", 0))
+                        vector_failed += int(result.get("failed", 0))
                     except Exception as retry_e:
-                        logger.error(f"降级写入向量后端失败: {doc['id']}: {retry_e}")
+                        logger.error(f"降级索引失败: {doc['id']}: {retry_e}")
                         vector_failed += 1
                         # 记录是否可重试
                         if is_retryable_error(retry_e):
-                            logger.warning(f"向量后端写入失败（可重试）: {doc['id']}")
+                            logger.warning(f"ES索引失败（可重试）: {doc['id']}")
                         else:
-                            logger.error(f"向量后端写入失败（不可重试）: {doc['id']}")
+                            logger.error(f"ES索引失败（不可重试）: {doc['id']}")
 
         total_time = time.perf_counter() - start_time
 
@@ -322,20 +317,19 @@ class BaseLoader(ABC):
             "embedding_batches": (len(chunks) + embedding_batch_size - 1) // embedding_batch_size,
             "vector_batches": (len(documents) + es_bulk_size - 1) // es_bulk_size,
             "total_time": f"{total_time:.2f}s",
-            "avg_time": f"{total_time/len(chunks):.3f}s/chunk"
+            "avg_time": f"{total_time/len(chunks):.3f}s/chunk",
         }
 
     async def _retry_chunk_vector_upserts(
         self,
         vector_store,
-        documents: List[Dict[str, Any]],
+        documents: list[dict[str, Any]],
         source_config_id: str,
     ) -> tuple[int, int]:
-        """Retry chunk vector writes one by one after a bulk failure/partial failure."""
+        """Retry chunk vector writes one by one after a partial bulk failure."""
         indexed = 0
         failed = 0
         for doc in documents:
-            doc_id = doc.get("id") or doc.get("chunk_id")
             try:
                 result = await vector_store.upsert_chunk_vectors(
                     documents=[doc],
@@ -344,15 +338,9 @@ class BaseLoader(ABC):
                 )
                 indexed += int(result.get("indexed", 0))
                 failed += int(result.get("failed", 0))
-                if result.get("failed", 0):
-                    logger.error(f"逐条写入向量后端失败: {doc_id}")
-            except Exception as retry_e:
-                logger.error(f"逐条写入向量后端异常: {doc_id}: {retry_e}")
+            except Exception as retry_error:
+                logger.error("逐条写入向量后端异常: %s: %s", doc.get("id"), retry_error)
                 failed += 1
-                if is_retryable_error(retry_e):
-                    logger.warning(f"向量后端写入失败（可重试）: {doc_id}")
-                else:
-                    logger.error(f"向量后端写入失败（不可重试）: {doc_id}")
         return indexed, failed
 
 
@@ -361,13 +349,13 @@ class DocumentLoader(BaseLoader):
 
     def __init__(
         self,
-        parser: Optional[MarkdownParser] = None,
-        processor: Optional[DocumentProcessor] = None,
-        max_tokens: Optional[int] = None,
+        parser: MarkdownParser | None = None,
+        processor: DocumentProcessor | None = None,
+        max_tokens: int | None = None,
         min_content_length: int = 100,
         merge_short_sections: bool = True,
         chunk_mode: str = "standard",
-        progress_callback: Optional[Callable[[str], Optional[Awaitable[None]]]] = None,
+        progress_callback: Callable[[str], Awaitable[None] | None] | None = None,
     ) -> None:
         """
         初始化文档加载器
@@ -392,7 +380,7 @@ class DocumentLoader(BaseLoader):
                 parser_params["max_tokens"] = max_tokens
             self.parser = MarkdownParser(**parser_params)
 
-    async def _mark_article_parse_failed(self, article_id: Optional[str], error: str) -> None:
+    async def _mark_article_parse_failed(self, article_id: str | None, error: str) -> None:
         """将文章 parse_status 标记为 EXTRACTION_FAILED（best effort）。"""
         if not article_id:
             return
@@ -461,10 +449,10 @@ class DocumentLoader(BaseLoader):
         source_config_id: str,
         background: str = "",
         auto_vector: bool = True,
-        max_tokens: Optional[int] = None,
-        min_content_length: Optional[int] = None,
-        merge_short_sections: Optional[bool] = None,
-        chunk_mode: Optional[str] = None,
+        max_tokens: int | None = None,
+        min_content_length: int | None = None,
+        merge_short_sections: bool | None = None,
+        chunk_mode: str | None = None,
     ) -> LoadResult:
         """
         加载文档文件
@@ -516,7 +504,7 @@ class DocumentLoader(BaseLoader):
             if chunk_mode is not None:
                 parser_params["chunk_mode"] = chunk_mode
 
-            chunking_result: Optional[ChunkingResult] = None
+            chunking_result: ChunkingResult | None = None
             if parser_params:
                 # 创建临时 parser 使用指定参数
                 parser = MarkdownParser(**parser_params)
@@ -564,7 +552,7 @@ class DocumentLoader(BaseLoader):
                 extra={
                     "file_path": str(file_path),
                     "section_count": section_count,
-                }
+                },
             )
 
         except Exception as e:
@@ -589,8 +577,8 @@ class DocumentLoader(BaseLoader):
         source_config_id: str,
         article_id: str,
         chunking_result: ChunkingResult,
-        document_id_for_binding: Optional[str] = None,
-    ) -> tuple[str, List[str]]:
+        document_id_for_binding: str | None = None,
+    ) -> tuple[str, list[str]]:
         """
         保存文章、SourceChunk 和 ArticleSection 到数据库
 
@@ -610,7 +598,7 @@ class DocumentLoader(BaseLoader):
 
         # ── 事务外预计算：构建所有待插入数据，避免持锁期间做 CPU 密集操作 ──
         all_section_data = []
-        section_id_by_order: Dict[int, str] = {}
+        section_id_by_order: dict[int, str] = {}
 
         for section_draft in chunking_result.article_sections:
             section_id = str(uuid.uuid4())
@@ -619,9 +607,7 @@ class DocumentLoader(BaseLoader):
             if section_draft.section_type == "IMAGE":
                 image_url = (section_draft.metadata or {}).get("image_src")
             section_extra_data = dict(section_draft.metadata or {})
-            section_extra_data["token_count"] = max(
-                0, estimate_tokens(section_draft.content or "")
-            )
+            section_extra_data["token_count"] = max(0, estimate_tokens(section_draft.content or ""))
             all_section_data.append(
                 {
                     "id": section_id,
@@ -696,13 +682,13 @@ class DocumentLoader(BaseLoader):
 
                     # 删除旧的 SourceChunk 和 ArticleSection，并软删除关联的 SourceEvent
                     stmt_chunk = delete(SourceChunk).where(
-                        SourceChunk.source_id == article_id,
-                        SourceChunk.source_type == "ARTICLE"
+                        SourceChunk.source_id == article_id, SourceChunk.source_type == "ARTICLE"
                     )
                     await session.execute(stmt_chunk)
 
                     stmt_section = delete(ArticleSection).where(
-                        ArticleSection.article_id == article_id)
+                        ArticleSection.article_id == article_id
+                    )
                     await session.execute(stmt_section)
 
                     # 软删除旧事项（与 ArticleSection 物理删除保持同步）
@@ -718,20 +704,20 @@ class DocumentLoader(BaseLoader):
                     # 批量插入预计算好的 section 和 chunk 数据
                     if all_section_data:
                         for i in range(0, len(all_section_data), batch_size):
-                            batch = all_section_data[i:i + batch_size]
+                            batch = all_section_data[i : i + batch_size]
                             stmt = insert(ArticleSection).values(batch)
                             await session.execute(stmt)
 
                     if all_chunk_data:
                         for i in range(0, len(all_chunk_data), batch_size):
-                            batch = all_chunk_data[i:i + batch_size]
+                            batch = all_chunk_data[i : i + batch_size]
                             stmt = insert(SourceChunk).values(batch)
                             await session.execute(stmt)
 
                     await session.commit()
 
                     logger.info(
-                        f"文章保存成功",
+                        "文章保存成功",
                         extra={
                             "article_id": article.id,
                             "chunk_count": len(chunk_ids),
@@ -745,7 +731,7 @@ class DocumentLoader(BaseLoader):
                 err_msg = str(e)
                 is_retryable = "Deadlock" in err_msg or "Lock wait timeout" in err_msg
                 if is_retryable and attempt < max_retries - 1:
-                    wait_time = 1.0 * (2 ** attempt)  # 指数退避: 1s, 2s, 4s
+                    wait_time = 1.0 * (2**attempt)  # 指数退避: 1s, 2s, 4s
                     logger.warning(
                         f"数据库锁冲突（可重试），{wait_time}s 后重试 (attempt {attempt + 1}/{max_retries}): {err_msg}"
                     )
@@ -757,7 +743,7 @@ class DocumentLoader(BaseLoader):
 
     async def _index_to_elasticsearch(self, article_id: str) -> None:
         """
-        索引文章 SourceChunk 到当前配置的向量/检索后端
+        索引文章 SourceChunk 到 Elasticsearch
 
         Args:
             article_id: 文章ID (UUID)

@@ -6,14 +6,14 @@
 
 import logging
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 from pipeline.core.config import get_settings
 
 
 def setup_logging(
-    level: Optional[str] = None,
-    format_type: Optional[str] = None,
+    level: str | None = None,
+    format_type: str | None = None,
 ) -> logging.Logger:
     """
     配置日志系统
@@ -63,7 +63,7 @@ class JsonFormatter(logging.Formatter):
         import json
         from datetime import datetime
 
-        log_data: Dict[str, Any] = {
+        log_data: dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),
             "level": record.levelname,
             "logger": record.name,

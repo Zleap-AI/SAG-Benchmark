@@ -11,7 +11,6 @@
 import copy
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -20,9 +19,11 @@ from pipeline.core.ai.base import BaseLLMClient
 from pipeline.core.ai.models import LLMMessage, LLMRole
 from pipeline.core.prompt.manager import PromptManager
 from pipeline.db import get_session_factory
-from pipeline.db.models import Article, EntityType as DBEntityType, SourceEvent
+from pipeline.db.models import Article, SourceEvent
+from pipeline.db.models import EntityType as DBEntityType
 from pipeline.exceptions import ExtractError
-from pipeline.modules.extract.config import ExtractConfig
+from pipeline.modules.extract.config import ExtractConfig, ExtractPromptStrategy
+from pipeline.modules.extract.prompt_router import resolve_extract_prompt_route
 from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
@@ -52,13 +53,13 @@ class EventProcessor:
         self.session_factory = get_session_factory()
 
         # 状态
-        self.entity_types: List[DBEntityType] = []
+        self.entity_types: list[DBEntityType] = []
 
         # 历史事项召回相关（延迟初始化）
         self._vector_store = None
         self._embedding_client = None
 
-    async def initialize(self, entity_types: List[DBEntityType]):
+    async def initialize(self, entity_types: list[DBEntityType]):
         """
         初始化（设置实体类型）
 
@@ -69,10 +70,10 @@ class EventProcessor:
 
     async def process(
         self,
-        items: List,
-        metadata: Dict,
+        items: list,
+        metadata: dict,
         source_type: str,
-    ) -> Dict:
+    ) -> dict:
         """
         处理提取（调用LLM）
 
@@ -119,12 +120,8 @@ class EventProcessor:
             # 6. 校验输出
             self._validate_output(result)
 
-            # 记录元数据（meta 在 data 内部）
-            meta = result.get("data", {}).get("meta", {})
-            logger.info(
-                f"LLM返回: reason={meta.get('reason', '')}, "
-                f"confidence={meta.get('confidence', 0)}"
-            )
+            # 记录结果
+            self._log_extract_result(result)
 
             return result
 
@@ -132,7 +129,7 @@ class EventProcessor:
             logger.error(f"提取失败: {e}", exc_info=True)
             raise ExtractError(f"提取失败: {e}") from e
 
-    async def get_source_created_time(self, items: List, source_type: str) -> Optional[datetime]:
+    async def get_source_created_time(self, items: list, source_type: str) -> datetime | None:
         """
         获取源创建时间
 
@@ -160,13 +157,30 @@ class EventProcessor:
             logger.info(f"获取文章创建时间失败: {e}")
             return None
 
+    def _get_extract_prompt_config(self) -> tuple[str, dict]:
+        """解析当前策略对应的模板名和配置（processor 中所有模板读取的唯一入口）"""
+        route = resolve_extract_prompt_route(
+            self.config.extract_prompt_strategy,
+            test_mode=self.config.test_mode,
+        )
+        prompt_config = self.prompt_manager.get_template_config(
+            route.template_name,
+            test_mode=route.test_mode,
+        )
+        return route.template_name, prompt_config
+
     def _build_system_prompt(self) -> str:
         """构建系统提示词（从 YAML 读取，不含示例）"""
+        template_name, config = self._get_extract_prompt_config()
+        template = config.get("template", "")
+
+        # compact 是完全独立的静态英文模板，不继承原版的变量、
+        # custom background/requirements、strict_requirements 或 few-shot。
+        if self.config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT:
+            return template
+
         tz = ZoneInfo(self.config.timezone)
         time_str = datetime.now(tz).strftime("%Y-%m-%d %H:%M")
-
-        config = self.prompt_manager.get_template_config("extract", test_mode=self.config.test_mode)
-        template = config.get("template", "")
         strict_requirements_template = config.get("strict_requirements", "")
 
         custom_background = self._format_custom(self.config.custom_background)
@@ -191,7 +205,7 @@ class EventProcessor:
             )
         except KeyError:
             return self.prompt_manager.render(
-                "extract",
+                template_name,
                 time=time_str,
                 timezone=self.config.timezone,
                 custom_background=custom_background,
@@ -205,7 +219,7 @@ class EventProcessor:
         lines = text.strip().split("\n")
         return "\n" + "\n".join(f"    {line}" for line in lines)
 
-    def _build_messages(self, system_prompt: str, user_input: Dict) -> List[LLMMessage]:
+    def _build_messages(self, system_prompt: str, user_input: dict) -> list[LLMMessage]:
         """
         构建消息列表（Few-shot 格式）
 
@@ -216,7 +230,7 @@ class EventProcessor:
         4. user: 当前实际输入 JSON
         """
         # 获取示例
-        config = self.prompt_manager.get_template_config("extract", test_mode=self.config.test_mode)
+        _template_name, config = self._get_extract_prompt_config()
         examples = config.get("examples", {})
         example_input = examples.get("input", "")
         example_output = examples.get("output", "")
@@ -242,11 +256,11 @@ class EventProcessor:
 
     def _build_input(
         self,
-        items: List,
-        metadata: Dict,
+        items: list,
+        metadata: dict,
         source_type: str,
-        related_events: List[Dict],
-    ) -> Dict:
+        related_events: list[dict],
+    ) -> dict:
         """
         构建输入 JSON（新结构：data 只含 items，meta 含所有元数据）
 
@@ -295,9 +309,9 @@ class EventProcessor:
             },
         }
 
-    def _build_schema(self) -> Dict:
+    def _build_schema(self) -> dict:
         """构建输出 Schema"""
-        config = self.prompt_manager.get_template_config("extract", test_mode=self.config.test_mode)
+        _template_name, config = self._get_extract_prompt_config()
         output_schema = config.get("output_schema", {})
         definitions = config.get("definitions", {})
 
@@ -317,14 +331,12 @@ class EventProcessor:
 
         return schema
 
-    async def _call_llm_with_retry(self, messages: List[LLMMessage], schema: Dict) -> Dict:
+    async def _call_llm_with_retry(self, messages: list[LLMMessage], schema: dict) -> dict:
         """调用 LLM（带重试）"""
         try:
             logger.info("调用 LLM（带重试机制）")
 
-            result = await self.llm_client.chat_with_schema(
-                messages, response_schema=schema
-            )
+            result = await self.llm_client.chat_with_schema(messages, response_schema=schema)
 
             logger.info("LLM 调用成功")
             return result
@@ -333,7 +345,7 @@ class EventProcessor:
             logger.error(f"LLM 调用失败: {e}")
             raise ExtractError(f"LLM 调用失败: {e}") from e
 
-    def _validate_output(self, result: Dict):
+    def _validate_output(self, result: dict):
         """
         校验输出格式（增强验证）
 
@@ -350,7 +362,10 @@ class EventProcessor:
         if "items" not in result.get("data", {}):
             raise ValueError("输出 data 缺少 'items' 字段")
 
-        if "meta" not in result.get("data", {}):
+        if (
+            self.config.extract_prompt_strategy != ExtractPromptStrategy.COMPACT
+            and "meta" not in result.get("data", {})
+        ):
             raise ValueError("输出 data 缺少 'meta' 字段")
 
         # === 宽松验证：内容质量（记录警告，不中断） ===
@@ -362,7 +377,7 @@ class EventProcessor:
         empty_content_count = 0
         invalid_entity_types = set()
 
-        def validate_item(item: Dict, path: str = ""):
+        def validate_item(item: dict, path: str = ""):
             """递归验证事项（包括 children）"""
             nonlocal empty_refs_count, empty_title_count, empty_content_count
 
@@ -399,7 +414,13 @@ class EventProcessor:
 
         # 汇总警告
         if empty_refs_count > 0:
-            logger.warning(f"输出验证: {empty_refs_count} 个事项的 references 为空")
+            if self.config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT:
+                logger.debug(
+                    f"compact 策略: {empty_refs_count} 个事项的 references 为空（预期行为，"
+                    f"parser 将兜底使用全部输入片段）"
+                )
+            else:
+                logger.warning(f"输出验证: {empty_refs_count} 个事项的 references 为空")
         if empty_title_count > 0:
             logger.warning(f"输出验证: {empty_title_count} 个事项的 title 为空")
         if empty_content_count > 0:
@@ -410,7 +431,107 @@ class EventProcessor:
                 f"允许的类型: {sorted(valid_types)}"
             )
 
-    async def _recall_related_events(self, items: List, _source_type: str = None) -> List[Dict]:
+        # compact 专属契约检查
+        if self.config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT:
+            self._validate_compact_output(result)
+
+    def _validate_compact_output(self, result: dict):
+        """compact 策略专属输出校验。
+
+        检查：
+        - data 只能包含 items
+        - items 必须包含一个扁平事项
+        - event 只能包含 title/content/entities/is_valid
+        - entity 必须包含 type/name/description
+        """
+        allowed_event_fields = {"title", "content", "entities", "is_valid"}
+        allowed_entity_fields = {"type", "name", "description"}
+        errors: list[str] = []
+
+        data = result.get("data", {})
+        if isinstance(data, dict):
+            unexpected_data_fields = set(data) - {"items"}
+            for field in sorted(unexpected_data_fields):
+                errors.append(f"data 禁止字段 '{field}'")
+
+        def _check_event(event: dict, path: str):
+            unexpected_fields = set(event) - allowed_event_fields
+            for field in sorted(unexpected_fields):
+                errors.append(f"禁止字段 '{field}' 出现在 {path}")
+
+            for required_field in ("title", "content", "entities", "is_valid"):
+                if required_field not in event:
+                    errors.append(f"缺少必填字段 '{required_field}'，位置: {path}")
+
+            for text_field in ("title", "content"):
+                value = event.get(text_field)
+                if value is not None and (not isinstance(value, str) or not value.strip()):
+                    errors.append(f"字段 '{text_field}' 必须是非空字符串，位置: {path}")
+
+            if "is_valid" in event and not isinstance(event["is_valid"], bool):
+                errors.append(f"字段 'is_valid' 必须是布尔值，位置: {path}")
+
+            entities = event.get("entities", [])
+            if not isinstance(entities, list):
+                errors.append(f"字段 'entities' 必须是数组，位置: {path}")
+                entities = []
+            if event.get("is_valid") is True and not entities:
+                errors.append(f"有效事项的 entities 不得为空，位置: {path}")
+
+            for entity_index, entity in enumerate(entities):
+                entity_path = f"{path}.entities[{entity_index}]"
+                if not isinstance(entity, dict):
+                    errors.append(f"实体必须是对象，位置: {entity_path}")
+                    continue
+                unexpected_entity_fields = set(entity) - allowed_entity_fields
+                for field in sorted(unexpected_entity_fields):
+                    errors.append(f"实体禁止字段 '{field}' 出现在 {entity_path}")
+                for required_field in ("type", "name", "description"):
+                    if required_field not in entity:
+                        errors.append(
+                            f"实体缺少必填字段 '{required_field}'，位置: {entity_path}"
+                        )
+                    elif (
+                        not isinstance(entity[required_field], str)
+                        or not entity[required_field].strip()
+                    ):
+                        errors.append(
+                            f"实体字段 '{required_field}' 必须是非空字符串，位置: {entity_path}"
+                        )
+
+        items = data.get("items", []) if isinstance(data, dict) else []
+        if not isinstance(items, list):
+            errors.append("data.items 必须是数组")
+            items = []
+        elif len(items) != 1:
+            errors.append(f"data.items 必须恰好包含 1 个事项，实际: {len(items)}")
+
+        for item_index, item in enumerate(items):
+            if not isinstance(item, dict):
+                errors.append(f"事项必须是对象，位置: data.items[{item_index}]")
+                continue
+            item_title = item.get("title", "?")
+            _check_event(item, f"items.{item_title}")
+
+        if errors:
+            details = "; ".join(errors)
+            raise ValueError(f"compact 输出契约校验失败: {details}")
+
+    def _log_extract_result(self, result: dict) -> None:
+        """记录 LLM 提取结果（策略感知）"""
+        items = result.get("data", {}).get("items", [])
+        if self.config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT:
+            logger.info("LLM返回: strategy=compact, items=%s", len(items))
+            return
+
+        meta = result.get("data", {}).get("meta", {})
+        logger.info(
+            "LLM返回: reason=%s, confidence=%s",
+            meta.get("reason", ""),
+            meta.get("confidence", 0),
+        )
+
+    async def _recall_related_events(self, items: list, _source_type: str = None) -> list[dict]:
         """
         召回历史事项（用于分类和实体命名参考）
 
@@ -456,8 +577,9 @@ class EventProcessor:
             related_events = []
 
             async with self.session_factory() as session:
-                from pipeline.db.models import EventEntity
                 from sqlalchemy.orm import selectinload
+
+                from pipeline.db.models import EventEntity
 
                 stmt = (
                     select(SourceEvent)

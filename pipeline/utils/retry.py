@@ -5,10 +5,13 @@
 """
 
 import asyncio
-from typing import Callable, Optional, Type, Tuple
-from sqlalchemy.exc import OperationalError, IntegrityError
+from collections.abc import Callable
 
-from pipeline.exceptions import RetryableError, NetworkError, ResourceBusyError, ServiceUnavailableError
+from sqlalchemy.exc import IntegrityError, OperationalError
+
+from pipeline.exceptions import (
+    RetryableError,
+)
 
 
 def is_retryable_db_error(error: Exception) -> bool:
@@ -102,7 +105,7 @@ async def retry_async(
     base_delay: float = 0.1,
     max_delay: float = 10.0,
     exponential_base: float = 2.0,
-    retryable_exceptions: Optional[Tuple[Type[Exception], ...]] = None,
+    retryable_exceptions: tuple[type[Exception], ...] | None = None,
 ) -> any:
     """
     异步重试装饰器
@@ -140,7 +143,7 @@ async def retry_async(
                 raise
 
             # 计算延迟时间（指数退避）
-            delay = min(base_delay * (exponential_base ** attempt), max_delay)
+            delay = min(base_delay * (exponential_base**attempt), max_delay)
             await asyncio.sleep(delay)
 
     # 理论上不会到这里，但为了类型检查

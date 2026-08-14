@@ -9,9 +9,9 @@
 import asyncio
 import inspect
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Awaitable, Callable, Dict, List, Optional, Union
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
@@ -20,16 +20,18 @@ from pipeline.core.ai.base import BaseLLMClient
 from pipeline.core.prompt.manager import PromptManager
 from pipeline.db import (
     ArticleParseStatus,
-    SourceChunk,
-    EntityType as DBEntityType,
     EventEntity,
+    SourceChunk,
     SourceEvent,
     get_session_factory,
 )
+from pipeline.db import (
+    EntityType as DBEntityType,
+)
 from pipeline.exceptions import ExtractError
 from pipeline.modules.extract.config import ExtractConfig
+from pipeline.modules.extract.parser import ParseContext, ResultParser
 from pipeline.modules.extract.processor import EventProcessor
-from pipeline.modules.extract.parser import ResultParser, ParseContext
 from pipeline.modules.extract.saver import EventSaver
 from pipeline.utils import get_logger, get_utc_now
 
@@ -46,8 +48,8 @@ class EventExtractor:
     def __init__(
         self,
         prompt_manager: PromptManager,
-        model_config: Optional[Dict] = None,
-        on_progress: Optional[Callable[[int, int], Union[Awaitable[None], None]]] = None,
+        model_config: dict | None = None,
+        on_progress: Callable[[int, int], Awaitable[None] | None] | None = None,
     ):
         """
         初始化事项提取器
@@ -79,7 +81,7 @@ class EventExtractor:
 
         return self._llm_client
 
-    async def extract(self, config: ExtractConfig) -> List[SourceEvent]:
+    async def extract(self, config: ExtractConfig) -> list[SourceEvent]:
         """
         提取事项（统一入口 - 新架构）
 
@@ -109,7 +111,7 @@ class EventExtractor:
             f"开始批量提取: chunks={len(config.chunk_ids)}, " f"并发数={config.max_concurrency}"
         )
 
-        sync_date_value = datetime.now(timezone.utc).replace(tzinfo=None)
+        sync_date_value = datetime.now(UTC).replace(tzinfo=None)
 
         try:
             # 1. 加载所有chunks
@@ -183,7 +185,7 @@ class EventExtractor:
             raise ExtractError(f"提取失败: {e}") from e
         finally:
             # 确保资源清理
-            if self._saver is not None and hasattr(self._saver, '_es_client'):
+            if self._saver is not None and hasattr(self._saver, "_es_client"):
                 if self._saver._es_client is not None:
                     try:
                         await self._saver._es_client.client.close()
@@ -193,7 +195,7 @@ class EventExtractor:
                     except Exception as cleanup_err:
                         self.logger.warning(f"清理ES客户端失败: {cleanup_err}")
 
-    async def _load_chunks(self, chunk_ids: List[str]) -> List[SourceChunk]:
+    async def _load_chunks(self, chunk_ids: list[str]) -> list[SourceChunk]:
         """批量加载chunks（按rank排序）"""
         async with self.session_factory() as session:
             result = await session.execute(
@@ -210,8 +212,8 @@ class EventExtractor:
             return chunks
 
     async def _process_chunks_with_agents(
-        self, chunks: List[SourceChunk], config: ExtractConfig
-    ) -> List[SourceEvent]:
+        self, chunks: list[SourceChunk], config: ExtractConfig
+    ) -> list[SourceEvent]:
         """
         并发处理chunks（每个chunk一个Agent）
 
@@ -236,14 +238,13 @@ class EventExtractor:
         total = len(chunks)
         lock = asyncio.Lock()
 
-        async def process_single_chunk(chunk: SourceChunk, index: int) -> List[SourceEvent]:
+        async def process_single_chunk(chunk: SourceChunk, index: int) -> list[SourceEvent]:
             """处理单个chunk（带并发控制和进度统计）"""
             nonlocal completed, success_count, failed_count
 
             async with semaphore:  # 🔒 获取并发槽位（没有就等待）
                 is_success = False
                 events = []
-                error_msg = None
 
                 try:
                     self.logger.info(
@@ -256,10 +257,8 @@ class EventExtractor:
                     is_success = True
 
                 except Exception as e:
-                    error_msg = str(e)
                     self.logger.error(
-                        f"❌ [{index+1}/{total}] 失败: "
-                        f"chunk_id={chunk.id}, error={e}",
+                        f"❌ [{index+1}/{total}] 失败: " f"chunk_id={chunk.id}, error={e}",
                         exc_info=True,
                     )
 
@@ -271,7 +270,9 @@ class EventExtractor:
                     else:
                         failed_count += 1
                     progress = completed * 100 // total
-                    should_report = self._on_progress and (completed % 10 == 0 or completed == total)
+                    should_report = self._on_progress and (
+                        completed % 10 == 0 or completed == total
+                    )
                     snap_completed, snap_total = completed, total
 
                 if is_success:
@@ -281,8 +282,7 @@ class EventExtractor:
                     )
                 else:
                     self.logger.error(
-                        f"❌ [{index+1}/{total}] 失败 ({progress}%): "
-                        f"chunk_id={chunk.id}"
+                        f"❌ [{index+1}/{total}] 失败 ({progress}%): " f"chunk_id={chunk.id}"
                     )
 
                 if should_report:
@@ -316,8 +316,8 @@ class EventExtractor:
         return all_events
 
     async def _save_events(
-        self, events: List[SourceEvent], config: ExtractConfig
-    ) -> List[SourceEvent]:
+        self, events: list[SourceEvent], config: ExtractConfig
+    ) -> list[SourceEvent]:
         """
         保存事项（使用 EventSaver）
 
@@ -335,7 +335,7 @@ class EventExtractor:
 
     async def extract_from_chunk(
         self, chunk: SourceChunk, config: ExtractConfig
-    ) -> List[SourceEvent]:
+    ) -> list[SourceEvent]:
         """
         从chunk提取事项
 
@@ -506,7 +506,7 @@ class EventExtractor:
                 ),
             }
 
-    async def _load_entity_types_for_chunk(self, config: ExtractConfig) -> List[DBEntityType]:
+    async def _load_entity_types_for_chunk(self, config: ExtractConfig) -> list[DBEntityType]:
         """
         Load entity type definitions (always returns non-empty list)
 
@@ -518,7 +518,7 @@ class EventExtractor:
         Returns:
             List of DBEntityType objects
         """
-        entity_types: List[DBEntityType] = []
+        entity_types: list[DBEntityType] = []
 
         async with self.session_factory() as session:
             # 加载默认类型
@@ -596,7 +596,7 @@ class EventExtractor:
 
         # 按 type 去重，只保留首次出现的实体类型
         seen: set = set()
-        deduped: List[DBEntityType] = []
+        deduped: list[DBEntityType] = []
         for et in entity_types:
             if et.type not in seen:
                 seen.add(et.type)
@@ -605,13 +605,11 @@ class EventExtractor:
 
         # 记录最终加载的实体类型（用于调试）
         entity_type_names = [et.type for et in entity_types]
-        self.logger.info(
-            f"实体类型加载完成: 共 {len(entity_types)} 个类型 - {entity_type_names}"
-        )
+        self.logger.info(f"实体类型加载完成: 共 {len(entity_types)} 个类型 - {entity_type_names}")
 
         return entity_types
 
-    async def _reload_events_with_relations(self, event_ids: List[str]) -> List[SourceEvent]:
+    async def _reload_events_with_relations(self, event_ids: list[str]) -> list[SourceEvent]:
         """
         Reload events from database with relations preloaded
 
@@ -658,10 +656,10 @@ class EventExtractor:
 
     async def _update_source_status(
         self,
-        chunks: List[SourceChunk],
+        chunks: list[SourceChunk],
         status: str,
-        error: Optional[str] = None,
-        sync_date: Optional[datetime] = None,
+        error: str | None = None,
+        sync_date: datetime | None = None,
     ) -> None:
         """
         Update source status (Article)

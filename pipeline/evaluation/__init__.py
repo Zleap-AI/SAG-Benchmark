@@ -5,5 +5,6 @@ Evaluation 模块
 """
 
 from pipeline.evaluation.evaluator import Evaluator
+from pipeline.evaluation.qa_evaluator import QAEvaluator
 
-__all__ = ["Evaluator"]
+__all__ = ["Evaluator", "QAEvaluator"]

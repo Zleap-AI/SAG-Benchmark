@@ -2,36 +2,44 @@
 Evaluation utilities package
 """
 
+from pipeline.utils.text import normalize_text
+
+from .eval_utils import extract_sentences, normalize_answer
 from .load_utils import (
     DatasetLoader,
-    load_dataset,
     get_gold_answers,
+    load_dataset,
 )
 from .mlflow_tracker import (
-    MLflowTracker,
     MLflowConfig,
+    MLflowTracker,
     get_local_ip,
 )
 from .token_tracker import (
     LLMTokenTracker,
     enable_llm_tracking,
+    llm_tracking_scope,
+    llm_tracking_stage,
+    record_llm_usage,
 )
-from pipeline.utils.text import normalize_text
-from .eval_utils import extract_sentences
 
 __all__ = [
     # load_utils
-    'DatasetLoader',
-    'load_dataset',
-    'get_gold_answers',
+    "DatasetLoader",
+    "load_dataset",
+    "get_gold_answers",
     # mlflow_tracker
-    'MLflowTracker',
-    'MLflowConfig',
-    'get_local_ip',
+    "MLflowTracker",
+    "MLflowConfig",
+    "get_local_ip",
     # token_tracker
-    'LLMTokenTracker',
-    'enable_llm_tracking',
+    "LLMTokenTracker",
+    "enable_llm_tracking",
+    "llm_tracking_scope",
+    "llm_tracking_stage",
+    "record_llm_usage",
     # text_utils
-    'normalize_text',
-    'extract_sentences',
+    "normalize_text",
+    "extract_sentences",
+    "normalize_answer",
 ]

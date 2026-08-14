@@ -4,7 +4,7 @@
 提供SQLAlchemy Base类和数据库初始化工具
 """
 
-from typing import AsyncIterator, Optional
+from collections.abc import AsyncIterator
 
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import (
@@ -37,8 +37,8 @@ class Base(DeclarativeBase):
 
 
 # 全局引擎和会话工厂
-_engine: Optional[AsyncEngine] = None
-_session_factory: Optional[async_sessionmaker[AsyncSession]] = None
+_engine: AsyncEngine | None = None
+_session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
 def get_engine() -> AsyncEngine:
@@ -59,7 +59,7 @@ def get_engine() -> AsyncEngine:
             pool_pre_ping=True,
             pool_recycle=settings.db_pool_recycle,
             pool_timeout=60,
-            connect_args={"init_command": "SET time_zone='+00:00'"}  # UTC时区
+            connect_args={"init_command": "SET time_zone='+00:00'"},  # UTC时区
         )
         logger.info(
             "数据库引擎创建完成（UTC时区）",
@@ -127,9 +127,9 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 async def init_database() -> None:
     """
     初始化数据库（创建所有表）
-    
+
     自动根据所有已注册的模型创建表结构
-    
+
     Warning:
         这会删除并重新创建所有表，仅用于开发环境
 
@@ -138,7 +138,7 @@ async def init_database() -> None:
     """
     # 确保所有模型都已导入注册到 Base.metadata
     from pipeline.db import models  # noqa: F401
-    
+
     engine = get_engine()
 
     logger.info("开始创建数据库表...")

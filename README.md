@@ -10,12 +10,9 @@ English | [中文](README-CN.md)
 
 **Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
-https://github.com/user-attachments/assets/ac805e3c-ab52-4857-bef6-2865f3831b2f
-
-
 ## Benchmark Score Reproduction
 
-This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The main goal is to let readers run the quick-start commands below, reproduce the benchmark results reported in the paper, and compare retrieval and RAG methods across retrieval, QA performance, and LLM-as-a-Judge evaluations.
+This repository contains upload, retrieval, and evaluation scripts for SAG on HotpotQA, 2WikiMultiHopQA, and MuSiQue. The current quick-start workflow reproduces the SAG, BM25, and bge-large-en-v1.5 vector retrieval results, and supports the Triple indexing ablation through the atomic upload/search path.
 
 Default paper setup:
 
@@ -24,7 +21,7 @@ Default paper setup:
 | Embedding | `bge-large-en-v1.5` |
 | LLM | `qwen3.6-flash` |
 | Main paper metrics | Recall@5 / F1 |
-| Main scripts | `scripts/run_upload.py`, `scripts/run_search_benchmark.py` |
+| Main scripts | `scripts/run_upload.py`, `scripts/run_search_benchmark.py`, `scripts/run_qa_benchmark.py` |
 
 Main results:
 
@@ -37,7 +34,7 @@ Experiments on HotpotQA, 2WikiMultiHopQA, and MuSiQue show that SAG achieves the
 - Across the three datasets, SAG averages **90.07%/72.96%** in Recall@5 and F1, outperforming the strongest baseline for each metric by **6.79/4.33** percentage points, respectively.
 - On the most challenging MuSiQue dataset, SAG outperforms the strongest baseline for each metric by **11.52/7.01** percentage points in Recall@5 and F1, respectively.
 
-> **Note:** The current code can reproduce the SAG results but does not yet support running the other comparison methods. Support for these methods will be added once the relevant code is ready.
+> **Note:** The current CLI supports reproducing SAG2, BM25, and the bge-large-en-v1.5 vector retrieval results. Atomic indexing/search is available for the Triple indexing ablation.
 
 ## Method Figures
 
@@ -60,7 +57,7 @@ Requirements:
 - Python 3.11+
 - `uv`
 - Docker Compose
-- Available LLM, embedding, and rerank endpoints
+- Available LLM and embedding endpoints; a rerank endpoint is only needed for the final-selection reranker ablation
 
 ```bash
 uv sync
@@ -79,7 +76,7 @@ On Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 ```
 
-Edit `.env` and fill in the storage backend, LLM, embedding, and rerank settings. Do not commit real secrets.
+Edit `.env` and fill in the storage backend, LLM, and embedding settings. Standard SAG reproduction only needs these three groups of settings. Add the rerank settings only when running the final-selection reranker ablation described below.
 
 At minimum, check these `.env` values before running upload or search:
 
@@ -95,7 +92,11 @@ EMBEDDING_API_KEY=...
 EMBEDDING_BASE_URL=http://...
 EMBEDDING_MODEL_NAME=text-embedding-bge-large-en-v1.5
 EMBEDDING_DIMENSIONS=1024
+```
 
+Only add the following settings for the final-selection reranker ablation:
+
+```env
 RERANK_BASE_URL=http://...
 RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B
 RERANK_ENDPOINT=/rerank
@@ -257,6 +258,16 @@ To reproduce the **triplet (atomic event)** mode — where each event contains e
 uv run python scripts/run_upload.py --dataset sample --atomic
 ```
 
+Upload has three supported modes:
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Compact (default) | `uv run python scripts/run_upload.py --dataset musique` | Uses the compact extraction prompt and creates merged events. No extra flag is required. |
+| Atomic | `uv run python scripts/run_upload.py --dataset musique --atomic` | Uses the atomic-event template; each event is constrained to a subject-relation-object pair. |
+| No extraction (Vector-only) | `uv run python scripts/run_upload.py --dataset musique --no-extraction` | Loads and indexes the corpus without event/entity extraction; use this when you only want the pure embedding `vector` search path. |
+
+Choose one mode per upload. The default compact mode is the recommended path for SAG2 and for experiments that compare SAG2 with vector or BM25. Use `--no-extraction` only for a vector-only run when SAG is not part of the experiment; SAG2 requires extracted events, so do not use `--no-extraction` if you plan to run SAG2 as well.
+
 
 ### 5. Run Paper Reproduction Benchmarks
 
@@ -265,7 +276,7 @@ Quick validation:
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name test_hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 5 \
@@ -277,7 +288,7 @@ Main datasets:
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
@@ -285,7 +296,7 @@ uv run python scripts/run_search_benchmark.py \
 
 uv run python scripts/run_search_benchmark.py \
   --dataset-name 2wikimultihopqa \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
@@ -293,19 +304,51 @@ uv run python scripts/run_search_benchmark.py \
 
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --top-k 10 \
   --k-values "1,2,5,10" \
   --max-concurrency 10 \
   --bench-size 20
 ```
 
+To run the SAG2 event-candidate-pool variant, enable the scope and set its pool size (`k_pool`) with `--sag2-event-top-k`:
+
+```bash
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy sag2 \
+  --sag2-scope \
+  --sag2-event-top-k 500 \
+  --top-k 10
+```
+
+The candidate-pool variant is recorded as a separate search configuration at the same experiment level as the vector and atomic baselines. BM25 is also a first-class strategy:
+
+```bash
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy bm25 \
+  --top-k 10
+```
+
+To reproduce the bge-large-en-v1.5 pure-vector baseline, use `--no-extraction` during upload only when Vector is the sole method being run:
+
+```bash
+uv run python scripts/run_upload.py --dataset musique --no-extraction
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy vector \
+  --top-k 10
+```
+
+If the experiment compares Vector with SAG2, upload with the default Compact mode instead so the same source contains the events required by SAG2.
+
 To pin a specific uploaded source, pass the `source_config_id` generated during upload:
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --source-config-id musique-20260512_213908 \
   --top-k 10 \
   --k-values "1,2,5,10" \
@@ -317,7 +360,7 @@ Enable MLflow:
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy multi \
+  --strategy sag2 \
   --use-mlflow \
   --mlflow-url http://localhost:5000 \
   --mlflow-experiment sag-benchmark
@@ -337,6 +380,96 @@ Main output files:
 | `benchmark_results.json` | Recall, Precision, F1, and summary metrics |
 | `run.log` | Run log |
 
+### 6. Run QA on Retrieval Results
+
+`run_qa_benchmark.py` consumes the `search_results.json` produced by a retrieval run, asks the configured LLM to answer each question using the retrieved passages, and writes EM/F1 results to a new `qa_<timestamp>/` directory next to the input file.
+
+```bash
+uv run python scripts/run_qa_benchmark.py \
+  --dataset-name musique \
+  --input output/musique/sag2/20260730_172839/search_results.json \
+  --qa-top-k 5
+```
+
+`--qa-top-k` controls how many retrieved passages are placed in each QA prompt. The main output is `qa_results.json`; use `--output-dir` to choose a different output directory, or `--max-concurrency` and `--limit` to control runtime and scope.
+
+### 7. Reproduce SAG Ablation Results
+
+The following experiments correspond to Table 6 of the paper. Run them on MuSiQue with the same dataset, source configuration, embedding model, and `top-k` values, changing only the indicated component.
+
+#### Default SAG
+
+Use the default Compact upload and the `sag2` search strategy. The default final selection is `llm_rank`.
+
+```bash
+uv run python scripts/run_upload.py --dataset musique
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy sag2 \
+  --top-k 10 \
+  --k-values "1,2,5,10"
+```
+
+#### Indexing with Triple indexing
+
+Upload with the atomic prompt and select the `atomic` search strategy:
+
+```bash
+uv run python scripts/run_upload.py --dataset musique --atomic
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy atomic \
+  --top-k 10 \
+  --k-values "1,2,5,10"
+```
+
+#### Expansion without expansion (`L=0`)
+
+In `pipeline/modules/search/config.py`, temporarily change the SAG2 expansion switch from:
+
+```python
+enabled: bool = Field(default=True, description="是否启用扩展")
+```
+
+to:
+
+```python
+enabled: bool = Field(default=False, description="是否启用扩展")
+```
+
+Then upload with the default Compact mode and run `--strategy sag2`. Restore `default=True` after the ablation so normal SAG2 runs keep one-hop expansion.
+
+#### Final selection with Qwen3-Reranker-8B
+
+In `pipeline/modules/search/config.py`, temporarily change `SAG2RerankConfig.strategy` from the default LLM selection:
+
+```python
+strategy: Literal["rerank", "llm_rank", "rrf"] = Field(
+    default="llm_rank", description="排序策略"
+)
+```
+
+to:
+
+```python
+strategy: Literal["rerank", "llm_rank", "rrf"] = Field(
+    default="rerank", description="排序策略"
+)
+```
+
+Configure `RERANK_BASE_URL`, `RERANK_MODEL_NAME=Qwen/Qwen3-Reranker-8B`, and `RERANK_ENDPOINT` in `.env`, then run the default Compact upload and `--strategy sag2`. Restore `default="llm_rank"` after the experiment.
+
+#### Paper Ablation Results on MuSiQue
+
+| Stage | Configuration | R@1 | R@2 | R@5 | R@10 |
+|------|------|------:|------:|------:|------:|
+| Default SAG (Ours) | Default configuration | **36.82** | **63.62** | **80.36** | **83.37** |
+| Indexing | Triple indexing | 35.66 | 61.83 | 77.61 | 81.54 |
+| Expansion | w/o Expansion (`L=0`) | 35.70 | 57.75 | 69.41 | 74.76 |
+| Final selection | Qwen3-Reranker-8B | 32.12 | 48.97 | 67.11 | 76.51 |
+
+The default row uses hyperedge indexing, one-hop expansion (`L=1`), and Qwen3.6-Flash final selection. Keep all non-ablated settings fixed when comparing rows.
+
 ## Datasets
 
 | Name | Description |
@@ -353,12 +486,11 @@ Dataset files are under `pipeline/evaluation/dataset/`.
 
 | Strategy | Description |
 |------|------|
-| `multi` | Multi-route retrieval with NER, entity vector recall, multi-hop expansion, and merged ranking |
-| `multi1` | Fixed 1-hop expansion plus dynamic expansion until the candidate budget is reached |
-| `multi_es` | Multi-route implementation with `--mode fast/precise` |
-| `hopllm` | Coarse retrieval followed by seed-based hop expansion |
+| `sag2` | SAG2 graph recall, expansion, and LLM reranking |
+| `sag2` + `--sag2-scope` | SAG2 event-candidate-pool variant; `--sag2-event-top-k` sets `k_pool` |
 | `atomic` | Entity-first atomic retrieval with step-by-step hop expansion |
 | `vector` | Pure vector retrieval baseline |
+| `bm25` | Elasticsearch BM25 keyword retrieval baseline |
 
 See [docs/search.md](docs/search.md) for full arguments.
 
@@ -369,7 +501,7 @@ See [docs/search.md](docs/search.md) for full arguments.
 ```bash
 uv run python scripts/run_search.py \
   --dataset-name test_hotpotqa \
-  --strategy multi \
+  --strategy sag2 \
   --output-dir output/manual-search
 ```
 
@@ -379,18 +511,6 @@ uv run python scripts/run_search.py \
 uv run python scripts/run_benchmark.py \
   --results output/<dataset>/<strategy>/<timestamp>/search_results.json \
   --dataset musique
-```
-
-### Compare Two Retrieval Outputs
-
-```bash
-uv run python scripts/compare_recall_methods.py \
-  --predictions \
-    output/test_hotpotqa/multi/run_a/search_results.json \
-    output/test_hotpotqa/vector/run_b/search_results.json \
-  --dataset-name test_hotpotqa \
-  --k-values 1,2,5,10 \
-  --verbose
 ```
 
 ## Repository Layout
@@ -417,9 +537,9 @@ SAG-Benchmark/
 │   ├── init_elasticsearch.py
 │   ├── run_upload.py
 │   ├── run_search_benchmark.py
+│   ├── run_qa_benchmark.py
 │   ├── run_search.py
-│   ├── run_benchmark.py
-│   └── compare_recall_methods.py
+│   └── run_benchmark.py
 ├── docs/
 ├── docker-compose.yml
 ├── .env.example
@@ -435,3 +555,4 @@ SAG-Benchmark/
 - When `--source-config-id` is omitted, `run_search_benchmark.py` looks up the latest uploaded source based on `LLM_MODEL` in `.env`.
 - Full dataset upload and benchmark runs call external model services. Check quota, concurrency, and timeout settings before running.
 - Stop local services with `docker compose down`. To delete local database volumes, use `docker compose down -v`; this removes uploaded data.
+https://github.com/user-attachments/assets/ac805e3c-ab52-4857-bef6-2865f3831b2f

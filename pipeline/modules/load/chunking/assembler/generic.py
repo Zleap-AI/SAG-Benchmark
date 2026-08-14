@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import List
-
 from pipeline.modules.load.chunking.base import BaseSourceChunkAssembler
 from pipeline.modules.load.chunking.tokenizer import TokenizerTokenEstimator
 from pipeline.modules.load.chunking.types import ChunkDraft, InputDocument, SectionDraft
@@ -27,11 +25,11 @@ class PolicyBasedSourceChunkAssembler(BaseSourceChunkAssembler):
     def assemble_chunks(
         self,
         doc: InputDocument,
-        sections: List[SectionDraft],
-    ) -> List[ChunkDraft]:
+        sections: list[SectionDraft],
+    ) -> list[ChunkDraft]:
         _ = doc
-        chunks: List[ChunkDraft] = []
-        current: List[SectionDraft] = []
+        chunks: list[ChunkDraft] = []
+        current: list[SectionDraft] = []
         current_tokens = 0
 
         for section in sections:
@@ -74,7 +72,7 @@ class PolicyBasedSourceChunkAssembler(BaseSourceChunkAssembler):
             chunk.rank = idx
         return chunks
 
-    def _split_large_section(self, section: SectionDraft) -> List[SectionDraft]:
+    def _split_large_section(self, section: SectionDraft) -> list[SectionDraft]:
         """大 section 按 token 上限切分为多个子 section。"""
         content = section.content.strip()
         if not content:
@@ -82,8 +80,8 @@ class PolicyBasedSourceChunkAssembler(BaseSourceChunkAssembler):
 
         # 简单按段落切分
         paragraphs = content.split("\n\n")
-        units: List[SectionDraft] = []
-        current_parts: List[str] = []
+        units: list[SectionDraft] = []
+        current_parts: list[str] = []
         current_tokens = 0
 
         for para in paragraphs:
@@ -117,7 +115,7 @@ class PolicyBasedSourceChunkAssembler(BaseSourceChunkAssembler):
             metadata=original.metadata.copy(),
         )
 
-    def _build_chunk(self, sections: List[SectionDraft]) -> ChunkDraft:
+    def _build_chunk(self, sections: list[SectionDraft]) -> ChunkDraft:
         if not sections:
             raise ValueError("Cannot build chunk from empty sections")
 

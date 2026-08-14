@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM模型定义
 
-所有数据库表的定义 
+所有数据库表的定义
 """
 
 # pylint: disable=not-callable
@@ -10,12 +10,13 @@ SQLAlchemy ORM模型定义
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import (
     CHAR,
     Column,
     JSON,
+    VARBINARY,
     BigInteger,
     Boolean,
     DateTime,
@@ -24,11 +25,10 @@ from sqlalchemy import (
     Index,
     Integer,
     Numeric,
-    VARBINARY,
-    or_,
     String,
     Text,
     func,
+    or_,
     text,
 )
 from sqlalchemy.dialects.mysql import LONGTEXT, MEDIUMTEXT, VARCHAR
@@ -39,7 +39,7 @@ from pipeline.db.base import Base
 
 
 class OceanBaseVector(UserDefinedType):
-    """OceanBase VECTOR(n) column type, enabled only for OceanBase full mode."""
+    """OceanBase ``VECTOR(n)`` type used only by the OceanBase profile."""
 
     cache_ok = True
 
@@ -60,34 +60,33 @@ class SourceConfig(Base):
 
     # 信息源基本信息
     name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(255))
+    description: Mapped[str | None] = mapped_column(String(255))
 
-
-    target_config: Mapped[Optional[dict]] = mapped_column(JSON)
+    target_config: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
-    updated_time: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+    updated_time: Mapped[datetime | None] = mapped_column(DateTime, onupdate=func.now())
 
     # 关系
-    articles: Mapped[List["Article"]] = relationship(
+    articles: Mapped[list["Article"]] = relationship(
         "Article",
         back_populates="source",
         cascade="all, delete-orphan",
     )
-    source_events: Mapped[List["SourceEvent"]] = relationship(
+    source_events: Mapped[list["SourceEvent"]] = relationship(
         "SourceEvent",
         back_populates="source",
         cascade="all, delete-orphan",
     )
-    entity_types: Mapped[List["EntityType"]] = relationship(
+    entity_types: Mapped[list["EntityType"]] = relationship(
         "EntityType",
         back_populates="source",
         cascade="all, delete-orphan",
     )
-    entities: Mapped[List["Entity"]] = relationship(
+    entities: Mapped[list["Entity"]] = relationship(
         "Entity",
         back_populates="source",
         cascade="all, delete-orphan",
@@ -115,32 +114,30 @@ class KBDocument(Base):
     file_size: Mapped[int] = mapped_column(Integer, nullable=False, comment="文件大小")
     file_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="文件类型")
     knowledge_base_id: Mapped[str] = mapped_column(String(191), nullable=False, comment="知识库ID")
-    uploader_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, comment="上传者ID")
-    source_id: Mapped[Optional[str]] = mapped_column(
+    uploader_id: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="上传者ID")
+    source_id: Mapped[str | None] = mapped_column(
         String(191),
         nullable=True,
         comment="外部来源ID",
     )
-    parse_status: Mapped[Optional[str]] = mapped_column(
+    parse_status: Mapped[str | None] = mapped_column(
         String(36), nullable=True, comment="文档解析状态VAR36"
     )
-    parse_task_id: Mapped[Optional[str]] = mapped_column(
+    parse_task_id: Mapped[str | None] = mapped_column(
         String(191), nullable=True, comment="解析任务ID"
     )
-    source_file_url: Mapped[Optional[str]] = mapped_column(
+    source_file_url: Mapped[str | None] = mapped_column(
         String(2000), nullable=True, comment="源文件地址"
     )
-    pdf_url: Mapped[Optional[str]] = mapped_column(
-        String(2000), nullable=True, comment="pdf file url"
-    )
-    md_file_url: Mapped[Optional[str]] = mapped_column(
+    pdf_url: Mapped[str | None] = mapped_column(String(2000), nullable=True, comment="pdf file url")
+    md_file_url: Mapped[str | None] = mapped_column(
         String(2000), nullable=True, comment="markdown file url"
     )
-    parse_result_url: Mapped[Optional[str]] = mapped_column(
+    parse_result_url: Mapped[str | None] = mapped_column(
         String(2000), nullable=True, comment="解析结果地址"
     )
-    document_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True, comment="元数据")
-    copied_from: Mapped[Optional[str]] = mapped_column(
+    document_metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True, comment="元数据")
+    copied_from: Mapped[str | None] = mapped_column(
         String(191), nullable=True, comment="复制来源记录ID，记录此记录是从哪个document复制而来"
     )
     created_time: Mapped[datetime] = mapped_column(
@@ -186,15 +183,13 @@ class Article(Base):
 
     # 基本信息
     title: Mapped[str] = mapped_column(String(500), nullable=False)
-    source_id: Mapped[Optional[str]] = mapped_column(
-        VARCHAR(100), nullable=True, comment="来源文章ID"
-    )
-    summary: Mapped[Optional[str]] = mapped_column(Text)
-    content: Mapped[Optional[str]] = mapped_column(LONGTEXT)
+    source_id: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True, comment="来源文章ID")
+    summary: Mapped[str | None] = mapped_column(Text)
+    content: Mapped[str | None] = mapped_column(LONGTEXT)
 
     # 分类和标签
-    category: Mapped[Optional[str]] = mapped_column(String(50), index=True)
-    tags: Mapped[Optional[dict]] = mapped_column(JSON)  # List[str]
+    category: Mapped[str | None] = mapped_column(String(50), index=True)
+    tags: Mapped[dict | None] = mapped_column(JSON)  # List[str]
 
     # 状态：PENDING, COMPLETED, FAILED, PROCESSING
     status: Mapped[str] = mapped_column(String(20), default="PENDING", nullable=False)
@@ -202,22 +197,22 @@ class Article(Base):
         VARCHAR(66), default=ArticleParseStatus.PENDING, nullable=False, comment="解析状态"
     )
 
-    sync_date: Mapped[Optional[datetime]] = mapped_column(
+    sync_date: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, comment="事项同步完成时间"
     )
 
     # 处理错误信息（失败时记录）
-    error: Mapped[Optional[str]] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(Text)
 
     # 扩展数据：{"url": "", "headings": []}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.now(), nullable=False
     )
-    updated_time: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
-    sync_date: Mapped[Optional[datetime]] = mapped_column(
+    updated_time: Mapped[datetime | None] = mapped_column(DateTime, onupdate=func.now())
+    sync_date: Mapped[datetime | None] = mapped_column(
         DateTime, nullable=True, comment="同步时间（提取事项）"
     )
 
@@ -226,17 +221,17 @@ class Article(Base):
         "SourceConfig",
         back_populates="articles",
     )
-    sections: Mapped[List["ArticleSection"]] = relationship(
+    sections: Mapped[list["ArticleSection"]] = relationship(
         "ArticleSection",
         back_populates="article",
         cascade="all, delete-orphan",
     )
-    source_events: Mapped[List["SourceEvent"]] = relationship(
+    source_events: Mapped[list["SourceEvent"]] = relationship(
         "SourceEvent",
         back_populates="article",
         cascade="all, delete-orphan",
     )
-    entity_types: Mapped[List["EntityType"]] = relationship(
+    entity_types: Mapped[list["EntityType"]] = relationship(
         "EntityType",
         back_populates="article",
         cascade="all, delete-orphan",
@@ -275,22 +270,22 @@ class ArticleSection(Base):
     render_group_index: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, comment="渲染分组索引"
     )
-    type: Mapped[Optional[str]] = mapped_column(
+    type: Mapped[str | None] = mapped_column(
         String(50), nullable=True, comment="片段类型：TEXT/IMAGE/CODE/TABLE等"
     )
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
     heading: Mapped[str] = mapped_column(String(500), nullable=False)
     content: Mapped[str] = mapped_column(LONGTEXT, nullable=False, comment="处理后的内容（纯文本）")
-    raw_content: Mapped[Optional[str]] = mapped_column(
+    raw_content: Mapped[str | None] = mapped_column(
         LONGTEXT, nullable=True, comment="原始内容（可能包含markdown/html）"
     )
-    image_url: Mapped[Optional[str]] = mapped_column(
+    image_url: Mapped[str | None] = mapped_column(
         String(500), nullable=True, comment="图片URL（仅图片类型）"
     )
     length: Mapped[int] = mapped_column(Integer, nullable=False, default=0, comment="内容长度")
 
     # 扩展数据：{"type": "TEXT|IMAGE|CODE", "length": 0}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
@@ -335,7 +330,7 @@ class EntityType(Base):
     )
 
     # 信息源配置ID：NULL表示系统默认类型（外键）
-    source_config_id: Mapped[Optional[str]] = mapped_column(
+    source_config_id: Mapped[str | None] = mapped_column(
         CHAR(36),
         ForeignKey("source_config.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=True,
@@ -343,7 +338,7 @@ class EntityType(Base):
     )
 
     # 文档ID：仅 scope=article 时有值（外键）
-    article_id: Mapped[Optional[str]] = mapped_column(
+    article_id: Mapped[str | None] = mapped_column(
         CHAR(36),
         ForeignKey("article.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=True,
@@ -358,7 +353,7 @@ class EntityType(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # 类型描述
-    description: Mapped[Optional[str]] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
 
     # 默认权重（0.00-9.99）
     weight: Mapped[Decimal] = mapped_column(Numeric(3, 2), default=Decimal("1.00"), nullable=False)
@@ -375,13 +370,13 @@ class EntityType(Base):
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # 值格式模板（如 "{number}{unit}"）
-    value_format: Mapped[Optional[str]] = mapped_column(String(100))
+    value_format: Mapped[str | None] = mapped_column(String(100))
 
     # 值约束（JSON 格式，存储枚举列表、数值范围等）
-    value_constraints: Mapped[Optional[dict]] = mapped_column(JSON)
+    value_constraints: Mapped[dict | None] = mapped_column(JSON)
 
     # 扩展数据：{"extraction_prompt": "", "validation_rule": {}}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
@@ -400,7 +395,7 @@ class EntityType(Base):
         "Article",
         back_populates="entity_types",
     )
-    entities: Mapped[List["Entity"]] = relationship(
+    entities: Mapped[list["Entity"]] = relationship(
         "Entity",
         back_populates="entity_type",
     )
@@ -454,39 +449,39 @@ class Entity(Base):
     normalized_name: Mapped[str] = mapped_column(String(500), nullable=False, index=True)
 
     # 描述
-    description: Mapped[Optional[str]] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
 
     # ========== 类型化值字段（用于统计分析） ==========
 
     # 值类型标识（int/float/datetime/bool/enum/text）
-    value_type: Mapped[Optional[str]] = mapped_column(String(20), index=True)
+    value_type: Mapped[str | None] = mapped_column(String(20), index=True)
 
     # 原始提取文本（保留原始值，如 "199元"）
-    value_raw: Mapped[Optional[str]] = mapped_column(Text)
+    value_raw: Mapped[str | None] = mapped_column(Text)
 
     # 整数值字段
-    int_value: Mapped[Optional[int]] = mapped_column(BigInteger, index=True)
+    int_value: Mapped[int | None] = mapped_column(BigInteger, index=True)
 
     # 浮点数值字段（使用 DECIMAL 保证精度）
-    float_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(20, 4), index=True)
+    float_value: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), index=True)
 
     # 日期时间值字段
-    datetime_value: Mapped[Optional[datetime]] = mapped_column(DateTime, index=True)
+    datetime_value: Mapped[datetime | None] = mapped_column(DateTime, index=True)
 
     # 布尔值字段
-    bool_value: Mapped[Optional[bool]] = mapped_column(Boolean)
+    bool_value: Mapped[bool | None] = mapped_column(Boolean)
 
     # 枚举值字段
-    enum_value: Mapped[Optional[str]] = mapped_column(String(100), index=True)
+    enum_value: Mapped[str | None] = mapped_column(String(100), index=True)
 
     # 单位字段（如 "元", "美元", "公斤"）
-    value_unit: Mapped[Optional[str]] = mapped_column(String(50))
+    value_unit: Mapped[str | None] = mapped_column(String(50))
 
     # 解析置信度（0-1）
-    value_confidence: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 4))
+    value_confidence: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
 
     # 扩展数据：{"synonyms": [], "weight": 1.0, "confidence": 1.0}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
@@ -506,7 +501,7 @@ class Entity(Base):
         back_populates="entities",
     )
     # 多对多关系：通过 event_entity 关联表
-    event_associations: Mapped[List["EventEntity"]] = relationship(
+    event_associations: Mapped[list["EventEntity"]] = relationship(
         "EventEntity",
         back_populates="entity",
         cascade="all, delete-orphan",
@@ -563,10 +558,10 @@ class EventEntity(Base):
     weight: Mapped[Decimal] = mapped_column(Numeric(3, 2), default=Decimal("1.00"))
 
     # 该实体在此事项中的描述/角色（如："某公司CEO"、"天使投资人"）
-    description: Mapped[Optional[str]] = mapped_column(Text)
+    description: Mapped[str | None] = mapped_column(Text)
 
     # 扩展数据：{"confidence": 0.95, "context": ""}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
@@ -659,7 +654,7 @@ class SourceEvent(Base):
     )
 
     # 文章ID：UUID（外键）
-    article_id: Mapped[Optional[str]] = mapped_column(
+    article_id: Mapped[str | None] = mapped_column(
         CHAR(36),
         ForeignKey("article.id", ondelete="RESTRICT", onupdate="CASCADE"),
         nullable=True,
@@ -672,15 +667,15 @@ class SourceEvent(Base):
     content: Mapped[str] = mapped_column(LONGTEXT, nullable=False)
 
     # 事项分类（如：技术、产品、市场、研究、管理等）
-    category: Mapped[Optional[str]] = mapped_column(String(50), default="")
+    category: Mapped[str | None] = mapped_column(String(50), default="")
 
     # 关键词列表
-    keywords: Mapped[Optional[dict]] = mapped_column(JSON, comment="关键词列表")
+    keywords: Mapped[dict | None] = mapped_column(JSON, comment="关键词列表")
 
     # 业务字段（兼容主系统）
-    type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    priority: Mapped[Optional[str]] = mapped_column(String(50), default="")
-    status: Mapped[Optional[str]] = mapped_column(String(50), default="")
+    type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    priority: Mapped[str | None] = mapped_column(String(50), default="")
+    status: Mapped[str | None] = mapped_column(String(50), default="")
 
     # 排序序号
     rank: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -689,7 +684,7 @@ class SourceEvent(Base):
     level: Mapped[int] = mapped_column(
         Integer, default=0, nullable=False, comment="层级深度（0=顶层）"
     )
-    parent_id: Mapped[Optional[str]] = mapped_column(
+    parent_id: Mapped[str | None] = mapped_column(
         CHAR(36),
         ForeignKey("source_event.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=True,
@@ -698,17 +693,17 @@ class SourceEvent(Base):
     )
 
     # 时间范围
-    start_time: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    end_time: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    start_time: Mapped[datetime | None] = mapped_column(DateTime)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime)
 
     # 原始片段引用
-    references: Mapped[Optional[dict]] = mapped_column(JSON)
+    references: Mapped[dict | None] = mapped_column(JSON)
 
     # 来源片段ID：UUID（指向 SourceChunk）
-    chunk_id: Mapped[Optional[str]] = mapped_column(CHAR(36), index=True)
+    chunk_id: Mapped[str | None] = mapped_column(CHAR(36), index=True)
 
     # 扩展数据：{"keywords": [], "category": "", "priority": "", "status": ""}
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    extra_data: Mapped[dict | None] = mapped_column(JSON)
 
     # 时间戳
     created_time: Mapped[datetime] = mapped_column(
@@ -728,7 +723,7 @@ class SourceEvent(Base):
         back_populates="source_events",
     )
     # 多对多关系：通过 event_entity 关联表
-    event_associations: Mapped[List["EventEntity"]] = relationship(
+    event_associations: Mapped[list["EventEntity"]] = relationship(
         "EventEntity",
         back_populates="event",
         cascade="all, delete-orphan",
@@ -739,11 +734,16 @@ class SourceEvent(Base):
         remote_side="SourceEvent.id",
         back_populates="children",
     )
-    children: Mapped[List["SourceEvent"]] = relationship(
+    children: Mapped[list["SourceEvent"]] = relationship(
         "SourceEvent",
         back_populates="parent",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def entities(self) -> list["Entity"]:
+        """通过关联表访问实体列表"""
+        return [assoc.entity for assoc in self.event_associations]
 
     # 索引
     # 注意：MySQL 不支持在有外键动作的列上使用 CHECK 约束，数据完整性由应用层保证
@@ -767,7 +767,6 @@ class SourceEvent(Base):
     @classmethod
     def not_deleted(cls):
         return or_(cls.status.is_(None), cls.status != "DELETED")
-
 
 
 class SourceChunk(Base):
@@ -797,7 +796,7 @@ class SourceChunk(Base):
     source_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
 
     # 外键字段（级联删除）
-    article_id: Mapped[Optional[str]] = mapped_column(
+    article_id: Mapped[str | None] = mapped_column(
         CHAR(36),
         ForeignKey("article.id", ondelete="CASCADE", onupdate="CASCADE"),
         nullable=True,
@@ -805,11 +804,11 @@ class SourceChunk(Base):
     )
 
     # 可选字段（无默认值但可为空）
-    content: Mapped[Optional[str]] = mapped_column(LONGTEXT, nullable=True)
-    extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    references: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    heading: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    raw_content: Mapped[Optional[str]] = mapped_column(LONGTEXT, nullable=True)
+    content: Mapped[str | None] = mapped_column(LONGTEXT, nullable=True)
+    extra_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    references: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    heading: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    raw_content: Mapped[str | None] = mapped_column(LONGTEXT, nullable=True)
 
     # 有默认值的字段
     rank: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -841,8 +840,7 @@ class SourceChunk(Base):
 def _should_map_oceanbase_database_columns() -> bool:
     from pipeline.core.config import get_settings
 
-    settings = get_settings()
-    return settings.effective_database_backend == "oceanbase"
+    return get_settings().effective_database_backend == "oceanbase"
 
 
 def _should_map_oceanbase_vector_columns() -> bool:
@@ -855,15 +853,18 @@ def _should_map_oceanbase_vector_columns() -> bool:
 def _oceanbase_vector_dimensions() -> int:
     from pipeline.core.config import get_settings
 
-    settings = get_settings()
-    return settings.embedding_dimensions or 1024
+    return get_settings().embedding_dimensions or 1024
 
 
 def _attach_oceanbase_database_columns() -> None:
     if not _should_map_oceanbase_database_columns():
         return
 
-    SourceEvent.entities = Column(  # type: ignore[attr-defined]
+    # Keep ``SourceEvent.entities`` as the existing relationship convenience
+    # property.  The JSON column receives a distinct ORM attribute so MySQL
+    # and OceanBase expose the same Python relationship API.
+    SourceEvent.entity_ids_json = Column(  # type: ignore[attr-defined]
+        "entities",
         JSON,
         nullable=True,
         comment="event entity id list",
@@ -874,38 +875,24 @@ def _attach_oceanbase_vector_columns() -> None:
     if not _should_map_oceanbase_vector_columns():
         return
 
-    dims = _oceanbase_vector_dimensions()
-    vector_type = OceanBaseVector(dims)
-
+    dimensions = _oceanbase_vector_dimensions()
     SourceChunk.heading_vector = Column(  # type: ignore[attr-defined]
-        OceanBaseVector(dims),
-        nullable=True,
-        comment="heading embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="heading embedding vector"
     )
     SourceChunk.content_vector = Column(  # type: ignore[attr-defined]
-        OceanBaseVector(dims),
-        nullable=True,
-        comment="content embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="content embedding vector"
     )
     SourceEvent.title_vector = Column(  # type: ignore[attr-defined]
-        OceanBaseVector(dims),
-        nullable=True,
-        comment="event title embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="event title embedding vector"
     )
     SourceEvent.content_vector = Column(  # type: ignore[attr-defined]
-        OceanBaseVector(dims),
-        nullable=True,
-        comment="event content embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="event content embedding vector"
     )
     Entity.vector = Column(  # type: ignore[attr-defined]
-        vector_type,
-        nullable=True,
-        comment="entity name embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="entity name embedding vector"
     )
     EventEntity.vector = Column(  # type: ignore[attr-defined]
-        OceanBaseVector(dims),
-        nullable=True,
-        comment="event-entity relation embedding vector",
+        OceanBaseVector(dimensions), nullable=True, comment="event-entity relation embedding vector"
     )
 
 

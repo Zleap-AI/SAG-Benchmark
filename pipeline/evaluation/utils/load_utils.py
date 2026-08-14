@@ -6,8 +6,8 @@
 
 import json
 import shutil
-from typing import List, Dict, Any, Optional, Tuple, Set
 from pathlib import Path
+from typing import Any
 
 from pipeline.utils import get_logger
 
@@ -22,9 +22,9 @@ class DatasetLoader:
     支持的数据集：musique, hotpotqa, 2wikimultihopqa, sample
     """
 
-    SUPPORTED_DATASETS = ['musique', 'hotpotqa', '2wikimultihopqa', 'sample', 'test_hotpotqa']
+    SUPPORTED_DATASETS = ["musique", "hotpotqa", "2wikimultihopqa", "sample", "test_hotpotqa"]
 
-    def __init__(self, dataset_name: str, dataset_dir: Optional[str] = None):
+    def __init__(self, dataset_name: str, dataset_dir: str | None = None):
         """
         初始化数据集加载器
 
@@ -59,9 +59,11 @@ class DatasetLoader:
         self._gold_answers = None
         self._gold_docs = None
 
-        logger.info(f"Initialized DatasetLoader for '{dataset_name}' with directory: {self.dataset_dir}")
+        logger.info(
+            f"Initialized DatasetLoader for '{dataset_name}' with directory: {self.dataset_dir}"
+        )
 
-    def load_corpus(self, force_reload: bool = False) -> List[Dict[str, str]]:
+    def load_corpus(self, force_reload: bool = False) -> list[dict[str, str]]:
         """
         加载corpus数据
 
@@ -79,13 +81,13 @@ class DatasetLoader:
 
         logger.info(f"Loading corpus from {self.corpus_path}")
 
-        with open(self.corpus_path, "r", encoding="utf-8") as f:
+        with open(self.corpus_path, encoding="utf-8") as f:
             self._corpus = json.load(f)
 
         logger.info(f"Loaded {len(self._corpus)} documents from corpus")
         return self._corpus
 
-    def load_samples(self, force_reload: bool = False) -> List[Dict[str, Any]]:
+    def load_samples(self, force_reload: bool = False) -> list[dict[str, Any]]:
         """
         加载问题样本数据
 
@@ -103,13 +105,13 @@ class DatasetLoader:
 
         logger.info(f"Loading samples from {self.samples_path}")
 
-        with open(self.samples_path, "r", encoding="utf-8") as f:
+        with open(self.samples_path, encoding="utf-8") as f:
             self._samples = json.load(f)
 
         logger.info(f"Loaded {len(self._samples)} samples")
         return self._samples
 
-    def get_docs(self, force_reload: bool = False) -> List[str]:
+    def get_docs(self, force_reload: bool = False) -> list[str]:
         """
         获取格式化的文档列表（title + text）
 
@@ -127,7 +129,7 @@ class DatasetLoader:
 
         return self._docs
 
-    def get_questions(self, force_reload: bool = False) -> List[str]:
+    def get_questions(self, force_reload: bool = False) -> list[str]:
         """
         获取问题列表
 
@@ -141,11 +143,11 @@ class DatasetLoader:
             return self._questions
 
         samples = self.load_samples(force_reload)
-        self._questions = [s['question'] for s in samples]
+        self._questions = [s["question"] for s in samples]
 
         return self._questions
 
-    def get_gold_answers(self, force_reload: bool = False) -> List[Set[str]]:
+    def get_gold_answers(self, force_reload: bool = False) -> list[set[str]]:
         """
         提取gold answers（参考 HippoRAG 实现）
 
@@ -165,17 +167,17 @@ class DatasetLoader:
             gold_ans = None
 
             # 尝试不同的答案字段
-            if 'answer' in sample or 'gold_ans' in sample:
-                gold_ans = sample['answer'] if 'answer' in sample else sample['gold_ans']
-            elif 'reference' in sample:
-                gold_ans = sample['reference']
-            elif 'obj' in sample:
+            if "answer" in sample or "gold_ans" in sample:
+                gold_ans = sample["answer"] if "answer" in sample else sample["gold_ans"]
+            elif "reference" in sample:
+                gold_ans = sample["reference"]
+            elif "obj" in sample:
                 # 合并多个可能的答案字段
                 gold_ans = set(
-                    [sample['obj']] +
-                    [sample.get('possible_answers', '')] +
-                    [sample.get('o_wiki_title', '')] +
-                    [sample.get('o_aliases', '')]
+                    [sample["obj"]]
+                    + [sample.get("possible_answers", "")]
+                    + [sample.get("o_wiki_title", "")]
+                    + [sample.get("o_aliases", "")]
                 )
                 gold_ans = list(gold_ans)
 
@@ -194,8 +196,8 @@ class DatasetLoader:
             gold_ans_set = set(gold_ans)
 
             # 添加答案别名
-            if 'answer_aliases' in sample:
-                gold_ans_set.update(sample['answer_aliases'])
+            if "answer_aliases" in sample:
+                gold_ans_set.update(sample["answer_aliases"])
 
             gold_answers.append(gold_ans_set)
 
@@ -204,7 +206,7 @@ class DatasetLoader:
 
         return gold_answers
 
-    def get_gold_docs(self, force_reload: bool = False) -> Optional[List[List[str]]]:
+    def get_gold_docs(self, force_reload: bool = False) -> list[list[str]] | None:
         """
         提取gold documents（兼容所有数据集格式）
 
@@ -216,7 +218,9 @@ class DatasetLoader:
         """
         return self.get_gold_docs_for_recall(force_reload=force_reload)
 
-    def get_gold_docs_for_recall(self, force_reload: bool = True, limit: Optional[int] = None) -> Optional[List[List[str]]]:
+    def get_gold_docs_for_recall(
+        self, force_reload: bool = True, limit: int | None = None
+    ) -> list[list[str]] | None:
         """
         获取用于召回率评估的gold docs（带标题和内容）
 
@@ -241,18 +245,27 @@ class DatasetLoader:
                 docs = []
 
                 # hotpotqa, 2wikimultihopqa: supporting_facts + context
-                if self.dataset_name in ["hotpotqa", "2wikimultihopqa", "test_sample", "test_hotpotqa"]:
-                    gold_title = set([item[0] for item in sample['supporting_facts']])
-                    for item in sample['context']:
+                if self.dataset_name in [
+                    "hotpotqa",
+                    "2wikimultihopqa",
+                    "test_sample",
+                    "test_hotpotqa",
+                ]:
+                    gold_title = {item[0] for item in sample["supporting_facts"]}
+                    for item in sample["context"]:
                         if item[0] in gold_title:
-                            content = ''.join(item[1]) if (self.dataset_name in ['hotpotqa', 'test_hotpotqa']) else ' '.join(item[1])
+                            content = (
+                                "".join(item[1])
+                                if (self.dataset_name in ["hotpotqa", "test_hotpotqa"])
+                                else " ".join(item[1])
+                            )
                             docs.append(f"{item[0]}\n{content}")
 
                 # musique: paragraphs
                 elif self.dataset_name == "musique":
-                    for item in sample['paragraphs']:
-                        if item.get('is_supporting', False):
-                            content = item.get('paragraph_text', '')
+                    for item in sample["paragraphs"]:
+                        if item.get("is_supporting", False):
+                            content = item.get("paragraph_text", "")
                             docs.append(f"{item['title']}\n{content}")
 
                 gold_docs_list.append(docs)
@@ -263,7 +276,7 @@ class DatasetLoader:
             logger.error(f"Failed to extract gold docs for recall: {e}")
             return None
 
-    def load_all(self, force_reload: bool = False) -> Dict[str, Any]:
+    def load_all(self, force_reload: bool = False) -> dict[str, Any]:
         """
         加载所有数据
 
@@ -279,21 +292,21 @@ class DatasetLoader:
         # 提取 paragraphs（如果存在）
         all_paragraphs = []
         for sample in samples:
-            all_paragraphs.append(sample.get('paragraphs', []))
+            all_paragraphs.append(sample.get("paragraphs", []))
 
         return {
-            'corpus': self.load_corpus(force_reload),
-            'samples': samples,
-            'docs': self.get_docs(force_reload),
-            'questions': questions,
-            'answers': self.get_gold_answers(force_reload),  # 添加 answers 字段
-            'paragraphs': all_paragraphs,  # 添加 paragraphs 字段
-            'gold_answers': self.get_gold_answers(force_reload),
-            'gold_docs': self.get_gold_docs(force_reload),
-            'total_questions': len(questions),  # 添加总问题数
+            "corpus": self.load_corpus(force_reload),
+            "samples": samples,
+            "docs": self.get_docs(force_reload),
+            "questions": questions,
+            "answers": self.get_gold_answers(force_reload),  # 添加 answers 字段
+            "paragraphs": all_paragraphs,  # 添加 paragraphs 字段
+            "gold_answers": self.get_gold_answers(force_reload),
+            "gold_docs": self.get_gold_docs(force_reload),
+            "total_questions": len(questions),  # 添加总问题数
         }
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取数据集统计信息
 
@@ -307,29 +320,28 @@ class DatasetLoader:
         gold_docs = self.get_gold_docs()
 
         stats = {
-            'dataset_name': self.dataset_name,
-            'num_corpus_docs': len(corpus),
-            'num_samples': len(samples),
-            'num_questions': len(questions),
-            'num_gold_answers': len(gold_answers),
-            'has_gold_docs': gold_docs is not None,
+            "dataset_name": self.dataset_name,
+            "num_corpus_docs": len(corpus),
+            "num_samples": len(samples),
+            "num_questions": len(questions),
+            "num_gold_answers": len(gold_answers),
+            "has_gold_docs": gold_docs is not None,
         }
 
         if gold_docs is not None:
-            stats['num_gold_docs'] = len(gold_docs)
-            stats['avg_supporting_docs_per_question'] = (
-                sum(len(docs) for docs in gold_docs) / len(gold_docs)
-                if gold_docs else 0
+            stats["num_gold_docs"] = len(gold_docs)
+            stats["avg_supporting_docs_per_question"] = (
+                sum(len(docs) for docs in gold_docs) / len(gold_docs) if gold_docs else 0
             )
 
         return stats
 
     def save_as_markdown(
         self,
-        output_dir: Optional[str] = None,
+        output_dir: str | None = None,
         chunks_per_file: int = 500,
-        force_regenerate: bool = False
-    ) -> Dict[str, Any]:
+        force_regenerate: bool = False,
+    ) -> dict[str, Any]:
         """
         将数据集的 **corpus**（所有文档）保存为 markdown 格式
 
@@ -366,7 +378,7 @@ class DatasetLoader:
         if output_path.exists():
             logger.info(f"Removing old output directory: {output_path}")
             shutil.rmtree(output_path)
-            logger.info(f"Old directory removed successfully")
+            logger.info("Old directory removed successfully")
 
         # 创建新的输出目录
         output_path.mkdir(parents=True, exist_ok=True)
@@ -380,14 +392,10 @@ class DatasetLoader:
         chunk_count = 0
 
         for doc_idx, doc in enumerate(corpus):
-            title = doc.get('title', f"Document {doc_idx}")
-            text = doc.get('text', '')
+            title = doc.get("title", f"Document {doc_idx}")
+            text = doc.get("text", "")
 
-            all_chunks.append({
-                'title': title,
-                'text': text,
-                'doc_idx': doc_idx
-            })
+            all_chunks.append({"title": title, "text": text, "doc_idx": doc_idx})
             chunk_count += 1
 
         logger.info(f"Collected {chunk_count} chunks from corpus")
@@ -395,25 +403,25 @@ class DatasetLoader:
         # 将 chunks 分块并保存为 markdown 文件
         file_count = 0
         for i in range(0, len(all_chunks), chunks_per_file):
-            chunk_batch = all_chunks[i:i + chunks_per_file]
+            chunk_batch = all_chunks[i : i + chunks_per_file]
             file_count += 1
 
             # 构造 markdown 内容（只包含标题和文本）
             markdown_content = []
 
-            for chunk_idx, chunk in enumerate(chunk_batch):
+            for _chunk_idx, chunk in enumerate(chunk_batch):
                 # 添加标题
                 markdown_content.append(f"# {chunk['title']}")
                 # 添加文本内容
-                markdown_content.append(chunk['text'])
+                markdown_content.append(chunk["text"])
                 markdown_content.append("")
                 markdown_content.append("")
 
             # 保存文件
             output_file = output_path / f"{self.dataset_name}_part{file_count}.md"
 
-            with open(output_file, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(markdown_content))
+            with open(output_file, "w", encoding="utf-8") as f:
+                f.write("\n".join(markdown_content))
 
             logger.info(f"Saved markdown file: {output_file} ({len(chunk_batch)} chunks)")
 
@@ -421,32 +429,30 @@ class DatasetLoader:
 
         # 收集统计信息
         stats = {
-            'total_chunks': chunk_count,
-            'num_files': file_count,
-            'chunks_per_file': chunks_per_file,
-            'last_file_chunks': None
+            "total_chunks": chunk_count,
+            "num_files": file_count,
+            "chunks_per_file": chunks_per_file,
+            "last_file_chunks": None,
         }
 
         if file_count > 0:
             # 检查最后一个文件的实际 chunk 数量
-            files = sorted(output_path.glob("*.md"), key=lambda p: int(p.stem.split('_part')[-1]))
+            files = sorted(output_path.glob("*.md"), key=lambda p: int(p.stem.split("_part")[-1]))
             if files:
                 last_file = files[-1]
-                with open(last_file, 'r', encoding='utf-8') as f:
-                    last_chunks = sum(1 for line in f if line.strip().startswith('#') and line.strip() != '#')
-                stats['last_file_chunks'] = last_chunks
+                with open(last_file, encoding="utf-8") as f:
+                    last_chunks = sum(
+                        1 for line in f if line.strip().startswith("#") and line.strip() != "#"
+                    )
+                stats["last_file_chunks"] = last_chunks
 
         # 返回输出目录和统计信息
-        return {
-            'output_dir': output_path,
-            'stats': stats
-        }
+        return {"output_dir": output_path, "stats": stats}
 
 
 def load_dataset(
-    dataset_name: str,
-    dataset_dir: Optional[str] = None
-) -> Tuple[List[str], List[str], List[Set[str]], Optional[List[List[str]]]]:
+    dataset_name: str, dataset_dir: str | None = None
+) -> tuple[list[str], list[str], list[set[str]], list[list[str]] | None]:
     """
     便捷函数：加载数据集并返回常用数据
 
@@ -464,14 +470,15 @@ def load_dataset(
     gold_answers = loader.get_gold_answers()
     gold_docs = loader.get_gold_docs()
 
-    logger.info(f"Loaded dataset '{dataset_name}': "
-                f"{len(docs)} docs, {len(questions)} questions")
+    logger.info(
+        f"Loaded dataset '{dataset_name}': " f"{len(docs)} docs, {len(questions)} questions"
+    )
 
     return docs, questions, gold_answers, gold_docs
 
 
 # 为了兼容性，提供独立的辅助函数
-def get_gold_answers(samples: List[Dict[str, Any]]) -> List[Set[str]]:
+def get_gold_answers(samples: list[dict[str, Any]]) -> list[set[str]]:
     """
     从样本列表中提取gold answers（独立函数）
 
@@ -486,16 +493,16 @@ def get_gold_answers(samples: List[Dict[str, Any]]) -> List[Set[str]]:
     for sample_idx, sample in enumerate(samples):
         gold_ans = None
 
-        if 'answer' in sample or 'gold_ans' in sample:
-            gold_ans = sample['answer'] if 'answer' in sample else sample['gold_ans']
-        elif 'reference' in sample:
-            gold_ans = sample['reference']
-        elif 'obj' in sample:
+        if "answer" in sample or "gold_ans" in sample:
+            gold_ans = sample["answer"] if "answer" in sample else sample["gold_ans"]
+        elif "reference" in sample:
+            gold_ans = sample["reference"]
+        elif "obj" in sample:
             gold_ans = set(
-                [sample['obj']] +
-                [sample.get('possible_answers', '')] +
-                [sample.get('o_wiki_title', '')] +
-                [sample.get('o_aliases', '')]
+                [sample["obj"]]
+                + [sample.get("possible_answers", "")]
+                + [sample.get("o_wiki_title", "")]
+                + [sample.get("o_aliases", "")]
             )
             gold_ans = list(gold_ans)
 
@@ -511,8 +518,8 @@ def get_gold_answers(samples: List[Dict[str, Any]]) -> List[Set[str]]:
 
         gold_ans_set = set(gold_ans)
 
-        if 'answer_aliases' in sample:
-            gold_ans_set.update(sample['answer_aliases'])
+        if "answer_aliases" in sample:
+            gold_ans_set.update(sample["answer_aliases"])
 
         gold_answers.append(gold_ans_set)
 

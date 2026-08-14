@@ -23,10 +23,9 @@
 """
 
 import asyncio
-import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import select
 
@@ -41,25 +40,17 @@ logger = get_logger("search.multi_es")
 
 PRECISE_ENTITY_EVENT_TOP_K = 40
 
-
-def _preview_query(query: str, limit: int = 240) -> str:
-    text = " ".join((query or "").split())
-    if len(text) <= limit:
-        return text
-    return f"{text[:limit]}..."
-
 # ── LLM 过滤提示词（本地版本：去掉 thought_process，只要求返回 ID 列表）──
 
 _RERANK_SYSTEM_PROMPT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly {top_k} relationships most useful for answering this multi-hop question.
 
-Return JSON with only "useful_relations" (list of {top_k} index numbers, most useful first). \
-Do not include reason, thought_process, explanations, or relation text."""
+Return JSON with "useful_relations" (list of {top_k} index numbers, most useful first)."""
 
 _RERANK_EXAMPLE_1_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
+Return JSON with "useful_relations" (list of 5 index numbers, most useful first).
 
 Question:
 When did Lothair Ii's mother die?
@@ -79,7 +70,7 @@ _RERANK_EXAMPLE_1_OUTPUT_LOCAL = """{"useful_relations": ["42", "41", "43", "60"
 _RERANK_EXAMPLE_2_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
+Return JSON with "thought_process" and "useful_relations" (list of 5 relation lines, most useful first).
 
 Question:
 What country is the composer of "Erta Eterna" from?
@@ -97,7 +88,7 @@ _RERANK_EXAMPLE_2_OUTPUT_LOCAL = """{"useful_relations": ["12", "15", "30", "22"
 _RERANK_EXAMPLE_3_INPUT_LOCAL = """I will provide you with a set of relationship descriptions from a knowledge graph. \
 Select exactly 5 relationships most useful for answering this multi-hop question.
 
-Return JSON with only "useful_relations" (list of 5 index numbers, most useful first).
+Return JSON with "thought_process" and "useful_relations" (list of 5 relation lines, most useful first).
 
 Question:
 Who is the director of the film that won the award also won by "The Hurt Locker"?
@@ -109,7 +100,7 @@ Relationship descriptions:
 [15] moonlight directed by barry jenkins
 [20] la la land won golden globe best musical
 [25] barry jenkins born in miami
-"""  
+"""
 _RERANK_EXAMPLE_3_OUTPUT_LOCAL = """{"useful_relations": ["5", "12", "15", "8", "25"]}"""
 
 _RERANK_TEMPLATE_LOCAL = """Question:
@@ -139,15 +130,14 @@ class MultiSearcherES:
     - event_entity_vectors 索引提供 entity→event 反向查询
     """
 
-    def __init__(self, config: Optional[MultiConfig] = None):
+    def __init__(self, config: MultiConfig | None = None):
         self._llm_client = None
         self._embedding_client = None
-        storage = get_storage_facade()
-        self._search_store = storage.search
+        self._search_store = get_storage_facade().search
 
     # ── 延迟初始化 ──────────────────────────────────────────────
 
-    def _resolve_search_mode(self, config: Optional[Any]) -> str:
+    def _resolve_search_mode(self, config: Any | None) -> str:
         """
         解析 multi_vector 的搜索模式。
 
@@ -163,7 +153,7 @@ class MultiSearcherES:
             return mode
         raise ValueError("multi_vector mode 仅支持 fast 或 precise")
 
-    def _resolve_ranking_strategy(self, config: Optional[Any]) -> str:
+    def _resolve_ranking_strategy(self, config: Any | None) -> str:
         mode = self._resolve_search_mode(config)
         if mode == "fast":
             return "fast"
@@ -177,9 +167,9 @@ class MultiSearcherES:
     async def _search_entities_by_text(
         self,
         query: str,
-        source_config_ids: List[str],
+        source_config_ids: list[str],
         size: int,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         return await self._search_store.search_entities_by_text(
             query=query,
             source_config_ids=source_config_ids,
@@ -189,11 +179,11 @@ class MultiSearcherES:
     async def _get_event_ids_by_entity_ids(
         self,
         *,
-        entity_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-        exclude_event_ids: Optional[List[str]] = None,
+        entity_ids: list[str],
+        source_config_ids: list[str] | None = None,
+        exclude_event_ids: list[str] | None = None,
         size: int,
-    ) -> List[str]:
+    ) -> list[str]:
         return await self._search_store.get_event_ids_by_entity_ids(
             entity_ids=entity_ids,
             source_config_ids=source_config_ids,
@@ -203,9 +193,9 @@ class MultiSearcherES:
 
     async def _fetch_events_by_ids(
         self,
-        event_ids: List[str],
-        source_includes: List[str],
-    ) -> List[Dict[str, Any]]:
+        event_ids: list[str],
+        source_includes: list[str],
+    ) -> list[dict[str, Any]]:
         return await self._search_store.get_events_by_ids(
             event_ids,
             source_includes=source_includes,
@@ -214,11 +204,11 @@ class MultiSearcherES:
     async def _search_events_by_vector(
         self,
         *,
-        query_vector: List[float],
+        query_vector: list[float],
         k: int,
-        source_config_ids: Optional[List[str]] = None,
-        event_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        source_config_ids: list[str] | None = None,
+        event_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         return await self._search_store.search_events_by_vector(
             query_vector=query_vector,
             k=k,
@@ -230,10 +220,10 @@ class MultiSearcherES:
     async def _search_chunks_by_vector(
         self,
         *,
-        query_vector: List[float],
+        query_vector: list[float],
         k: int,
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        source_config_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         return await self._search_store.search_chunks_by_vector(
             query_vector=query_vector,
             k=k,
@@ -245,7 +235,7 @@ class MultiSearcherES:
             self._embedding_client = await get_embedding_client(scenario="general")
         return self._embedding_client
 
-    async def warmup(self, config: Optional[MultiConfig] = None) -> None:
+    async def warmup(self, config: MultiConfig | None = None) -> None:
         config = config or MultiConfig()
         await self._get_embedding_client()
         mode = self._resolve_search_mode(config)
@@ -259,12 +249,12 @@ class MultiSearcherES:
     async def step1_retrieve_entities_bm25(
         self,
         query: str,
-        source_config_ids: List[str],
+        source_config_ids: list[str],
         *,
         entity_top_k: int,
         state: MultiSearchState,
-        timings: Optional[Dict[str, float]] = None,
-    ) -> List[str]:
+        timings: dict[str, float] | None = None,
+    ) -> list[str]:
         """
         Step1: 用完整 query 在 entity_vectors.name 上做 BM25 实体召回。
 
@@ -280,9 +270,9 @@ class MultiSearcherES:
         if timings is not None:
             timings["step1_entity_bm25_es_search"] = time.perf_counter() - t_es
 
-        entity_ids: List[str] = []
+        entity_ids: list[str] = []
         seen: set = set()
-        details_for_log: List[str] = []
+        details_for_log: list[str] = []
 
         for rank, hit in enumerate(hits, start=1):
             eid = hit.get("entity_id", "")
@@ -296,17 +286,13 @@ class MultiSearcherES:
                 state.entity_ids.add(eid)
                 kept = 1
 
-            details_for_log.append(
-                f"{rank}:{eid} name={name!r} score={score:.4f} kept={kept}"
-            )
+            details_for_log.append(f"{rank}:{eid} name={name!r} score={score:.4f} kept={kept}")
 
         logger.info(
-            f"[entity.bm25] query={_preview_query(query)!r}, input=1, "
-            f"candidates={len(hits)}, output={len(entity_ids)}, top_k={entity_top_k}"
+            f"[entity.bm25] input=1, candidates={len(hits)}, output={len(entity_ids)}, "
+            f"top_k={entity_top_k}"
         )
-        logger.info(
-            f"[entity.bm25.entities] details={'; '.join(details_for_log)}"
-        )
+        logger.info(f"[entity.bm25.entities] details={'; '.join(details_for_log)}")
         return entity_ids
 
     # ── Step3: 双通道召回 (ES-First) ────────────────────────────
@@ -314,14 +300,14 @@ class MultiSearcherES:
     async def step3_retrieve_events(
         self,
         query: str,
-        source_config_ids: List[str],
+        source_config_ids: list[str],
         *,
-        query_vector: List[float],
+        query_vector: list[float],
         multi_top_k: int,
-        entity_event_top_k: Optional[int] = None,
+        entity_event_top_k: int | None = None,
         similarity_threshold: float,
-        entity_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        entity_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Step3: 双通道召回 + 去重合并
 
@@ -344,13 +330,13 @@ class MultiSearcherES:
         threshold = similarity_threshold
         entity_event_top_k = entity_event_top_k or multi_top_k
 
-        merged: Dict[str, float] = {}
+        merged: dict[str, float] = {}
 
         if query_vector is None:
             raise RuntimeError("Step3 需要传入 query_vector，请在 search() 中批量生成后复用")
 
         channel_tasks = []
-        entity_event_task_index: Optional[int] = None
+        entity_event_task_index: int | None = None
 
         # ── 通道1: entity → event（ES event_entity_vectors）──
         if entity_ids:
@@ -417,13 +403,13 @@ class MultiSearcherES:
 
     @staticmethod
     def _merge_fast_event_channels(
-        event1: List[Dict[str, Any]],
-        event2: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+        event1: list[dict[str, Any]],
+        event2: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """合并 event1/entity 通道和 event2/query 通道，保留最高向量分和通道来源。"""
-        merged: Dict[str, Dict[str, Any]] = {}
+        merged: dict[str, dict[str, Any]] = {}
 
-        def add_events(events: List[Dict[str, Any]], channel: str) -> None:
+        def add_events(events: list[dict[str, Any]], channel: str) -> None:
             for item in events:
                 eid = item.get("event_id")
                 if not eid:
@@ -458,22 +444,24 @@ class MultiSearcherES:
 
     @staticmethod
     def _score_fast_events_with_entity_boost(
-        events: List[Dict[str, Any]],
-        seed_entity_ids: List[str],
-        event_entities: Dict[str, List[str]],
+        events: list[dict[str, Any]],
+        seed_entity_ids: list[str],
+        event_entities: dict[str, list[str]],
         config: MultiConfig,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """只用于 expand 前 seed 事项选择：向量分 + 是否命中 seed entity + 双通道奖励。"""
         if not events:
             return []
 
-        vector_scores = [float(item.get("vector_score", item.get("score", 0.0)) or 0.0) for item in events]
+        vector_scores = [
+            float(item.get("vector_score", item.get("score", 0.0)) or 0.0) for item in events
+        ]
         min_score = min(vector_scores)
         max_score = max(vector_scores)
         score_range = max_score - min_score
         seed_entity_set = set(seed_entity_ids)
 
-        scored: List[Dict[str, Any]] = []
+        scored: list[dict[str, Any]] = []
         for item in events:
             eid = item["event_id"]
             raw_vector_score = float(item.get("vector_score", item.get("score", 0.0)) or 0.0)
@@ -506,16 +494,16 @@ class MultiSearcherES:
 
     @staticmethod
     def _merge_fast_and_expanded_for_final_rank(
-        seed_items: List[Dict[str, Any]],
-        expanded_items: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+        seed_items: list[dict[str, Any]],
+        expanded_items: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """
         合并第一跳 seed 事项和扩展事项，并按 query-content 相似度统一排序。
 
         fast 第一跳的 seed_score 只负责挑选第一跳事项；最终展示顺序只看
         final_similarity_score，避免实体增强分影响最后的 chunk 顺序。
         """
-        final_items: List[Dict[str, Any]] = []
+        final_items: list[dict[str, Any]] = []
         seen_event_ids: set = set()
         for source_name, source_items in (
             ("seed", seed_items),
@@ -544,13 +532,13 @@ class MultiSearcherES:
     async def step3_fast_recall(
         self,
         query: str,
-        source_config_ids: List[str],
+        source_config_ids: list[str],
         *,
-        entity_ids: List[str],
-        query_vector: List[float],
+        entity_ids: list[str],
+        query_vector: list[float],
         config: MultiConfig,
-        timings: Dict[str, float],
-    ) -> Tuple[List[Dict[str, Any]], Dict[str, List[Dict[str, Any]]]]:
+        timings: dict[str, float],
+    ) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
         """
         fast Step3:
         1. key -> entity topN
@@ -586,7 +574,7 @@ class MultiSearcherES:
             k=config.fast_query_event_k * 3,
             source_config_ids=source_config_ids,
         )
-        event2: List[Dict[str, Any]] = []
+        event2: list[dict[str, Any]] = []
         for hit in event2_hits:
             if len(event2) >= config.fast_query_event_k:
                 break
@@ -639,10 +627,10 @@ class MultiSearcherES:
 
     async def step4_fetch_events(
         self,
-        event_ids: List[str],
-        source_includes: List[str],
+        event_ids: list[str],
+        source_includes: list[str],
         log_label: str = "事项",
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Step4: 按需从 ES event_vectors 查询事项字段。
 
@@ -671,18 +659,14 @@ class MultiSearcherES:
             source_includes=includes,
         )
 
-        event_map: Dict[str, Dict[str, Any]] = {}
+        event_map: dict[str, dict[str, Any]] = {}
         event_entity_relations = 0
 
         for event in events:
             eid = event.get("event_id", "")
             if not eid:
                 continue
-            item = {
-                field: event.get(field)
-                for field in includes
-                if field != "event_id"
-            }
+            item = {field: event.get(field) for field in includes if field != "event_id"}
             entity_ids = item.get("entity_ids")
             if isinstance(entity_ids, list):
                 event_entity_relations += len(entity_ids)
@@ -702,9 +686,9 @@ class MultiSearcherES:
 
     def get_new_entity_ids(
         self,
-        event_entities: Dict[str, List[str]],
+        event_entities: dict[str, list[str]],
         state: MultiSearchState,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         从 event_entities 中找出当前搜索尚未访问过的实体 ID
 
@@ -716,7 +700,7 @@ class MultiSearcherES:
         Returns:
             新的实体 ID 列表（去重）
         """
-        new_ids: List[str] = []
+        new_ids: list[str] = []
         seen_ids = set()
         total = 0
         for entity_ids in event_entities.values():
@@ -738,14 +722,14 @@ class MultiSearcherES:
 
     async def step5_expand(
         self,
-        event_entities: Dict[str, List[str]],
+        event_entities: dict[str, list[str]],
         *,
         max_hops: int,
         max_expand_events_per_hop: int,
         state: MultiSearchState,
-        source_config_ids: Optional[List[str]] = None,
-        timings: Optional[Dict[str, float]] = None,
-    ) -> List[str]:
+        source_config_ids: list[str] | None = None,
+        timings: dict[str, float] | None = None,
+    ) -> list[str]:
         """
         Step5: 多跳扩展
 
@@ -768,7 +752,7 @@ class MultiSearcherES:
         Returns:
             expanded_event_ids: 所有扩展轮次召回的新事项 ID
         """
-        expanded_event_ids: List[str] = []
+        expanded_event_ids: list[str] = []
 
         # hop=0: 初始化 relation_set（entity_set 已由 step2 填充）
         state.relation_ids.update(event_entities.keys())
@@ -788,8 +772,7 @@ class MultiSearcherES:
             new_entity_ids = self.get_new_entity_ids(prev_hop_entities, state)
             if timings is not None:
                 timings["step5_get_new_entities"] = (
-                    timings.get("step5_get_new_entities", 0.0)
-                    + time.perf_counter() - t_step
+                    timings.get("step5_get_new_entities", 0.0) + time.perf_counter() - t_step
                 )
 
             if not new_entity_ids:
@@ -804,8 +787,7 @@ class MultiSearcherES:
             state.entity_ids.update(new_entity_ids)
             if timings is not None:
                 timings["step5_update_entities"] = (
-                    timings.get("step5_update_entities", 0.0)
-                    + time.perf_counter() - t_step
+                    timings.get("step5_update_entities", 0.0) + time.perf_counter() - t_step
                 )
 
             logger.info(
@@ -825,8 +807,7 @@ class MultiSearcherES:
             )
             if timings is not None:
                 timings["step5_entity_to_event"] = (
-                    timings.get("step5_entity_to_event", 0.0)
-                    + time.perf_counter() - t_step
+                    timings.get("step5_entity_to_event", 0.0) + time.perf_counter() - t_step
                 )
 
             new_event_ids = all_new_event_ids
@@ -847,8 +828,7 @@ class MultiSearcherES:
                 state.relation_ids.update(new_event_ids)
                 if timings is not None:
                     timings["step5_update_state"] = (
-                        timings.get("step5_update_state", 0.0)
-                        + time.perf_counter() - t_step
+                        timings.get("step5_update_state", 0.0) + time.perf_counter() - t_step
                     )
 
                 logger.info(
@@ -874,8 +854,7 @@ class MultiSearcherES:
             }
             if timings is not None:
                 timings["step5_fetch_event_entities"] = (
-                    timings.get("step5_fetch_event_entities", 0.0)
-                    + time.perf_counter() - t_step
+                    timings.get("step5_fetch_event_entities", 0.0) + time.perf_counter() - t_step
                 )
 
             # 5. 新 event_ids 加入 relation_set
@@ -886,8 +865,7 @@ class MultiSearcherES:
             prev_hop_entities = hop_entities
             if timings is not None:
                 timings["step5_update_state"] = (
-                    timings.get("step5_update_state", 0.0)
-                    + time.perf_counter() - t_step
+                    timings.get("step5_update_state", 0.0) + time.perf_counter() - t_step
                 )
 
             logger.info(
@@ -904,12 +882,12 @@ class MultiSearcherES:
     async def step6_coarse_rank(
         self,
         query: str,
-        event_ids: List[str],
+        event_ids: list[str],
         *,
-        query_vector: List[float],
+        query_vector: list[float],
         max_events: int,
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        source_config_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Step6: 粗排序
 
@@ -951,35 +929,27 @@ class MultiSearcherES:
         return scored
 
     # ── Step7: LLM 精选 ─────────────────────────────────────────
-    # （与 multi.py 完全一致）
+    # LLM 精选阶段：只返回关系 ID，避免把推理过程写入结果。
 
     def _parse_llm_filter_response(
         self,
-        useful_relations: List[str],
+        useful_relations: list[str],
         valid_ids: set,
-    ) -> List[str]:
-        """解析 LLM 返回的 useful_relations，去重 + 校验。
-
-        接受纯 index 字符串（"12"）或带方括号的整串（"[12]"）；正则用 $ 锚定
-        整串，拒绝任何带尾随文本/杂质的残留格式（如 "[12] relation text"、
-        "12: reason ..."、"12abc"），避免把"以数字开头的关系文本"误判为合法 index。
-        """
-        selected: List[str] = []
+    ) -> list[str]:
+        """解析 LLM 返回的 useful_relations（纯 index 字符串列表），去重 + 校验"""
+        selected: list[str] = []
         for rel_id in useful_relations:
-            match = re.match(r"^\[?(\d+)\]?$", str(rel_id).strip())
-            if not match:
-                continue
-            cid = match.group(1)
-            if cid in valid_ids and cid not in selected:
-                selected.append(cid)
+            rel_id = str(rel_id).strip()
+            if rel_id in valid_ids and rel_id not in selected:
+                selected.append(rel_id)
         return selected
 
     async def step7_llm_filter(
         self,
         query: str,
-        items: List[Dict[str, Any]],
+        items: list[dict[str, Any]],
         top_k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Step7: LLM 精选最相关的多元事项
 
@@ -1000,8 +970,8 @@ class MultiSearcherES:
         top_k = min(top_k, len(items))
 
         # 1. 构建 idx → event_id 映射 + 格式化 relation 文本
-        idx_to_event_id: Dict[str, str] = {}
-        relation_lines: List[str] = []
+        idx_to_event_id: dict[str, str] = {}
+        relation_lines: list[str] = []
 
         for i, item in enumerate(items):
             idx = str(i)
@@ -1044,16 +1014,10 @@ class MultiSearcherES:
                 "properties": {
                     "useful_relations": {
                         "type": "array",
-                        "items": {
-                            "anyOf": [
-                                {"type": "string"},
-                                {"type": "integer"},
-                            ]
-                        },
+                        "items": {"type": "string"},
                     },
                 },
                 "required": ["useful_relations"],
-                "additionalProperties": False,
             },
         )
 
@@ -1081,8 +1045,8 @@ class MultiSearcherES:
 
     async def step8_fetch_chunks(
         self,
-        event_ids: List[str],
-    ) -> Dict[str, Dict[str, str]]:
+        event_ids: list[str],
+    ) -> dict[str, dict[str, str]]:
         """
         Step8: 根据 event_id 查找关联的 chunk (MySQL)
 
@@ -1100,14 +1064,12 @@ class MultiSearcherES:
             return {}
 
         session_factory = get_session_factory()
-        event_chunk_map: Dict[str, str] = {}
-        result_map: Dict[str, Dict[str, str]] = {}
+        event_chunk_map: dict[str, str] = {}
+        result_map: dict[str, dict[str, str]] = {}
 
         async with session_factory() as session:
             # 1. 查 event → chunk_id
-            stmt = select(SourceEvent.id, SourceEvent.chunk_id).where(
-                SourceEvent.id.in_(event_ids)
-            )
+            stmt = select(SourceEvent.id, SourceEvent.chunk_id).where(SourceEvent.id.in_(event_ids))
             result = await session.execute(stmt)
             chunk_ids: set = set()
             for row in result.fetchall():
@@ -1122,7 +1084,7 @@ class MultiSearcherES:
             # 2. 查 chunk 详情
             chunk_stmt = select(SourceChunk).where(SourceChunk.id.in_(chunk_ids))
             result = await session.execute(chunk_stmt)
-            chunk_map: Dict[str, Dict[str, str]] = {}
+            chunk_map: dict[str, dict[str, str]] = {}
             for chunk in result.scalars().all():
                 chunk_map[chunk.id] = {
                     "chunk_id": chunk.id,
@@ -1147,15 +1109,15 @@ class MultiSearcherES:
     async def search_fast(
         self,
         query: str,
-        source_config_ids: List[str],
+        source_config_ids: list[str],
         *,
-        entity_ids: List[str],
-        query_vector: List[float],
+        entity_ids: list[str],
+        query_vector: list[float],
         config: MultiConfig,
         state: MultiSearchState,
-        timings: Dict[str, float],
+        timings: dict[str, float],
         t_total: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         fast 专用流程：
         key->entity(5) -> entity-filtered event1(20 by query-content score)
@@ -1210,7 +1172,7 @@ class MultiSearcherES:
         )
         timings["step5_fast_expand"] = time.perf_counter() - t0
 
-        expanded_items: List[Dict[str, Any]] = []
+        expanded_items: list[dict[str, Any]] = []
         if expanded_event_ids and config.fast_expand_answer_k > 0:
             t0 = time.perf_counter()
             expanded_items = await self.step6_coarse_rank(
@@ -1230,8 +1192,7 @@ class MultiSearcherES:
         timings["step6_fast_final_rank"] = time.perf_counter() - t0
         rank_input_count = len(seed_items) + len(expanded_items)
         output_scores = [
-            float(item.get("final_similarity_score", 0.0) or 0.0)
-            for item in final_items
+            float(item.get("final_similarity_score", 0.0) or 0.0) for item in final_items
         ]
         min_output_score = min(output_scores) if output_scores else 0.0
         max_output_score = max(output_scores) if output_scores else 0.0
@@ -1245,7 +1206,7 @@ class MultiSearcherES:
         chunk_map = await self.step8_fetch_chunks(filtered_event_ids)
         timings["step8_chunks"] = time.perf_counter() - t0
 
-        deduped: List[Dict[str, Any]] = []
+        deduped: list[dict[str, Any]] = []
         seen_chunk_ids: set = set()
         for item in final_items:
             item["chunk"] = chunk_map.get(item["event_id"])
@@ -1276,9 +1237,9 @@ class MultiSearcherES:
     async def search(
         self,
         query: str,
-        source_config_ids: List[str],
-        config: Optional[MultiConfig] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        config: MultiConfig | None = None,
+    ) -> dict[str, Any]:
         """
         搜索多元事项
 
@@ -1302,20 +1263,15 @@ class MultiSearcherES:
         """
         config = config or MultiConfig()
         state = MultiSearchState()
-        timings: Dict[str, float] = {}
+        timings: dict[str, float] = {}
         t_total = time.perf_counter()
         ranking_strategy = self._resolve_ranking_strategy(config)
         precise_entity_event_top_k = (
-            PRECISE_ENTITY_EVENT_TOP_K
-            if ranking_strategy == "coarse_llm"
-            else None
+            PRECISE_ENTITY_EVENT_TOP_K if ranking_strategy == "coarse_llm" else None
         )
 
         logger.info(
-            f"[multi_vector.start] query={_preview_query(query)!r}, "
-            f"search_backend={self._search_store.backend_name}, "
-            f"source_config_ids={source_config_ids}, "
-            f"mode={config.mode}, ranking={ranking_strategy}, "
+            f"[multi_es.start] mode={config.mode}, ranking={ranking_strategy}, "
             f"entity_top_k={config.entity_top_k}, multi_top_k={config.multi_top_k}, "
             f"entity_event_top_k={precise_entity_event_top_k or config.fast_entity_event_candidate_k}"
         )
@@ -1335,7 +1291,9 @@ class MultiSearcherES:
         t0 = time.perf_counter()
         embedding_client = self._embedding_client
         if embedding_client is None:
-            raise RuntimeError("Embedding client not initialized; call await searcher.warmup(config) first")
+            raise RuntimeError(
+                "Embedding client not initialized; call await searcher.warmup(config) first"
+            )
         query_vector = (await embedding_client.batch_generate([query]))[0]
         timings["step2_embedding"] = time.perf_counter() - t0
 
@@ -1411,10 +1369,7 @@ class MultiSearcherES:
             max_events=config.max_events,
         )
         timings["step6_coarse_rank"] = time.perf_counter() - t0
-        candidate_scores = [
-            float(item.get("score", 0.0) or 0.0)
-            for item in candidate_items
-        ]
+        candidate_scores = [float(item.get("score", 0.0) or 0.0) for item in candidate_items]
         min_candidate_score = min(candidate_scores) if candidate_scores else 0.0
         max_candidate_score = max(candidate_scores) if candidate_scores else 0.0
         logger.info(
@@ -1437,11 +1392,13 @@ class MultiSearcherES:
         for item in candidate_items:
             eid = item["event_id"]
             detail = event_contents.get(eid, {})
-            candidates.append({
-                "event_id": eid,
-                "content": detail.get("content") or "",
-                "score": item["score"],
-            })
+            candidates.append(
+                {
+                    "event_id": eid,
+                    "content": detail.get("content") or "",
+                    "score": item["score"],
+                }
+            )
 
         t0 = time.perf_counter()
         items = await self.step7_llm_filter(
@@ -1460,7 +1417,7 @@ class MultiSearcherES:
         for item in items:
             item["chunk"] = chunk_map.get(item["event_id"])
 
-        deduped: List[Dict[str, Any]] = []
+        deduped: list[dict[str, Any]] = []
         seen_chunk_ids: set = set()
         for item in items:
             chunk = item.get("chunk")
@@ -1492,10 +1449,10 @@ class MultiSearcherES:
     async def search_for_sections(
         self,
         query: str,
-        source_config_ids: List[str],
-        query_vector: Optional[List[float]] = None,
-        config: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        query_vector: list[float] | None = None,
+        config: Any | None = None,
+    ) -> dict[str, Any]:
         """
         多元事项检索，返回段落列表。
 
@@ -1528,16 +1485,18 @@ class MultiSearcherES:
             if chunk_id in seen_chunk_ids:
                 continue
             seen_chunk_ids.add(chunk_id)
-            sections.append({
-                "chunk_id": chunk_id,
-                "source_id": chunk["source_id"],
-                "source_config_id": chunk["source_config_id"],
-                "heading": chunk["heading"],
-                "content": chunk["content"],
-                "rank": chunk.get("rank", i),
-                "score": item["score"],
-                "weight": item["score"],
-            })
+            sections.append(
+                {
+                    "chunk_id": chunk_id,
+                    "source_id": chunk["source_id"],
+                    "source_config_id": chunk["source_config_id"],
+                    "heading": chunk["heading"],
+                    "content": chunk["content"],
+                    "rank": chunk.get("rank", i),
+                    "score": item["score"],
+                    "weight": item["score"],
+                }
+            )
 
         # Native 补充：去重后不足 max_sections 时，用 query→chunk 填充。
         target = multi_config.max_sections
@@ -1580,10 +1539,10 @@ class MultiSearcherES:
     async def search_chunks(
         self,
         query: str,
-        source_config_ids: List[str],
-        config: Optional[MultiConfig] = None,
-        query_vector: Optional[List[float]] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        config: MultiConfig | None = None,
+        query_vector: list[float] | None = None,
+    ) -> dict[str, Any]:
         """
         Query→Chunk 直接向量检索
 
@@ -1602,7 +1561,9 @@ class MultiSearcherES:
         start_time = time.perf_counter()
 
         if query_vector is None:
-            raise RuntimeError("search_chunks 需要传入 query_vector，请复用 search() 中批量生成的 query 向量")
+            raise RuntimeError(
+                "search_chunks 需要传入 query_vector，请复用 search() 中批量生成的 query 向量"
+            )
 
         es_results = await self._search_chunks_by_vector(
             query_vector=query_vector,
@@ -1613,25 +1574,23 @@ class MultiSearcherES:
         sections = []
         for result in es_results:
             score = result.get("_score", 0.0)
-            sections.append({
-                "chunk_id": result.get("chunk_id"),
-                "source_id": result.get("source_id"),
-                "source_config_id": result.get("source_config_id"),
-                "heading": result.get("heading"),
-                "content": result.get("content"),
-                "rank": result.get("rank"),
-                "score": score,
-                "weight": score,
-            })
+            sections.append(
+                {
+                    "chunk_id": result.get("chunk_id"),
+                    "source_id": result.get("source_id"),
+                    "source_config_id": result.get("source_config_id"),
+                    "heading": result.get("heading"),
+                    "content": result.get("content"),
+                    "rank": result.get("rank"),
+                    "score": score,
+                    "weight": score,
+                }
+            )
 
-        sections = sorted(sections, key=lambda x: x["score"], reverse=True)[
-            : config.max_sections
-        ]
+        sections = sorted(sections, key=lambda x: x["score"], reverse=True)[: config.max_sections]
         total_time = time.perf_counter() - start_time
 
-        logger.info(
-            f"[query.chunk] returned={len(sections)}, total_time={total_time:.3f}s"
-        )
+        logger.info(f"[query.chunk] returned={len(sections)}, total_time={total_time:.3f}s")
 
         return {
             "sections": sections,

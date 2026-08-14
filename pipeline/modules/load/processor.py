@@ -4,8 +4,6 @@
 负责生成向量
 """
 
-from typing import List, Optional
-
 from pipeline.utils import estimate_tokens, get_logger
 
 logger = get_logger("modules.load.processor")
@@ -17,7 +15,7 @@ class DocumentProcessor:
     def __init__(
         self,
         llm_client=None,
-        embedding_model_name: Optional[str] = None,
+        embedding_model_name: str | None = None,
     ) -> None:
         """
         初始化文档处理器
@@ -39,7 +37,7 @@ class DocumentProcessor:
             },
         )
 
-    async def generate_embedding(self, text: str) -> List[float]:
+    async def generate_embedding(self, text: str) -> list[float]:
         """
         生成文本向量
 
@@ -54,6 +52,7 @@ class DocumentProcessor:
         """
         try:
             import time
+
             from pipeline.core.ai.factory import get_embedding_client
             from pipeline.exceptions import AIError
             from pipeline.utils import is_retryable_error
@@ -67,7 +66,7 @@ class DocumentProcessor:
             logger.debug(f"生成向量，文本长度: {len(text)}字符")
 
             api_start = time.perf_counter()
-            embedding_client = await get_embedding_client(scenario='general')
+            embedding_client = await get_embedding_client(scenario="general")
             embedding = await embedding_client.generate(truncated_text)
             api_time = time.perf_counter() - api_start
 
@@ -93,6 +92,64 @@ class DocumentProcessor:
             else:
                 logger.error(f"向量生成失败（不可重试）: {e}")
                 raise AIError(f"向量生成失败（永久性错误）: {e}") from e
+
+    async def generate_embeddings_batch(self, texts: list[str]) -> list[list[float]]:
+        """
+        批量生成文本向量（单次 API 调用）
+
+        与 generate_embedding() 语义相同，但将多个文本合并为一次 API 请求，
+        显著减少网络往返次数。返回顺序与输入顺序一致。
+
+        Args:
+            texts: 文本列表
+
+        Returns:
+            向量列表，顺序与输入一致
+
+        Raises:
+            AIError: 向量生成失败
+        """
+        if not texts:
+            return []
+
+        try:
+            import time
+
+            from pipeline.core.ai.factory import get_embedding_client
+            from pipeline.exceptions import AIError
+            from pipeline.utils import is_retryable_error
+
+            total_start = time.perf_counter()
+
+            truncated_texts = [self._truncate_content(t, max_tokens=8000) for t in texts]
+
+            api_start = time.perf_counter()
+            embedding_client = await get_embedding_client(scenario="general")
+            embeddings = await embedding_client.batch_generate(truncated_texts)
+            api_time = time.perf_counter() - api_start
+
+            total_time = time.perf_counter() - total_start
+
+            logger.info(
+                f"批量向量生成耗时统计 - "
+                f"批次大小: {len(texts)}, "
+                f"总耗时: {total_time:.3f}s, "
+                f"API调用: {api_time:.3f}s, "
+                f"向量维度: {len(embeddings[0]) if embeddings else 0}"
+            )
+
+            return embeddings
+
+        except Exception as e:
+            from pipeline.exceptions import AIError
+            from pipeline.utils import is_retryable_error
+
+            if is_retryable_error(e):
+                logger.warning(f"批量向量生成失败（可重试）: {e}")
+                raise AIError(f"批量向量生成失败（临时性错误）: {e}") from e
+            else:
+                logger.error(f"批量向量生成失败（不可重试）: {e}")
+                raise AIError(f"批量向量生成失败（永久性错误）: {e}") from e
 
     def _truncate_content(self, content: str, max_tokens: int) -> str:
         """

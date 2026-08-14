@@ -3,9 +3,8 @@
 
 一次性完成所有数据库初始化工作：
   1. 创建/确认 10 个必需的表
-  2. 按 STORAGE_PROFILE 执行后端专属初始化
-  3. 插入默认实体类型（Upsert）
-  4. 验证表结构与数据完整性
+  2. 插入默认实体类型（Upsert）
+  3. 验证表结构与数据完整性
 
 10 个必需的表及关系：
   source_config                                   # 信息源配置（根表）
@@ -30,6 +29,7 @@ source_config_id 通过 evaluation/source/{model}/{dataset}/{timestamp}/source_i
 
 import argparse
 import asyncio
+import logging
 import sys
 from pathlib import Path
 
@@ -42,6 +42,9 @@ from pipeline.core.config.settings import get_settings
 from pipeline.db import EntityType, get_session_factory
 from pipeline.db.base import Base, get_engine
 from pipeline.models.entity import DEFAULT_ENTITY_TYPES
+from pipeline.utils import get_logger
+
+logger = get_logger("scripts.init_database")
 
 # 10 个必需的表（与 drop_unused_tables.py 保持一致）
 REQUIRED_TABLES = {
@@ -60,29 +63,31 @@ REQUIRED_TABLES = {
 
 # ─────────────────────────── 输出辅助 ───────────────────────────
 
+
 def print_header(text_: str) -> None:
-    print("\n" + "=" * 70)
-    print(f"  {text_}")
-    print("=" * 70)
+    logger.info("\n" + "=" * 70)
+    logger.info(f"  {text_}")
+    logger.info("=" * 70)
 
 
 def print_success(text_: str) -> None:
-    print(f"  [OK] {text_}")
+    logger.info(f"  ✓ {text_}")
 
 
 def print_info(text_: str) -> None:
-    print(f"  - {text_}")
+    logger.info(f"  • {text_}")
 
 
 def print_warning(text_: str) -> None:
-    print(f"  [WARN] {text_}")
+    logger.warning(f"  ⚠️  {text_}")
 
 
 def print_error(text_: str) -> None:
-    print(f"  [ERR] {text_}")
+    logger.error(f"  ✗ {text_}")
 
 
 # ─────────────────────────── 命令行参数 ───────────────────────────
+
 
 def _read_root_password_from_compose() -> str:
     """
@@ -106,12 +111,13 @@ def _read_root_password_from_compose() -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="pipeline 数据库初始化")
     parser.add_argument(
-        "--fix-grants", action="store_true",
+        "--fix-grants",
+        action="store_true",
         help="使用 MySQL root 账号自动修复用户授权（解决 Access Denied / 172.x 访问被拒问题）",
     )
     parser.add_argument(
         "--mysql-root-password",
-        default=None,   # None 表示"未显式传入"，后续自动从 docker-compose.yml 读取
+        default=None,  # None 表示"未显式传入"，后续自动从 docker-compose.yml 读取
         metavar="PASSWORD",
         help=(
             "MySQL root 密码（用于 --fix-grants）。"
@@ -122,6 +128,7 @@ def parse_args() -> argparse.Namespace:
 
 
 # ─────────────────────────── Step 0（可选）：修复 MySQL 授权 ───────────────────────────
+
 
 async def fix_mysql_grants(root_password: str) -> None:
     """
@@ -135,16 +142,16 @@ async def fix_mysql_grants(root_password: str) -> None:
     - 用 aiomysql 原生连接（autocommit=True），每条 DDL 立即生效
     - 查询 information_schema.processlist 获取 root 连接的实际来源 IP，
       自动推断需要授权的网段（取前两段，如 172.31 → '172.31.%.%'）
-    - 清理历史遗留的错误 host='%%' 记录（aiomysql cursor 把 % 转义成 %% 导致）
+    - 清理错误 host='%%' 记录（aiomysql cursor 把 % 转义成 %% 导致）
     """
     print_header("Step 0 / 3  修复 MySQL 用户授权")
 
     import aiomysql
 
     settings = get_settings()
-    db   = settings.mysql_database
+    db = settings.mysql_database
     user = settings.mysql_user
-    pwd  = settings.mysql_password
+    pwd = settings.mysql_password
 
     try:
         conn = await aiomysql.connect(
@@ -152,16 +159,13 @@ async def fix_mysql_grants(root_password: str) -> None:
             port=settings.mysql_port,
             user="root",
             password=root_password,
-            autocommit=True,   # 每条 DDL 立即提交，无事务时序问题
+            autocommit=True,  # 每条 DDL 立即提交，无事务时序问题
         )
         try:
             async with conn.cursor() as cur:
-                # ── 0. 清理历史遗留的错误 host='%%' 记录 ──────────────────
-                # 之前脚本用 aiomysql cursor 的 f-string 写了 '%%'，
-                # aiomysql 不做转义，结果真的创建了 host='%%' 的用户，需删除。
+                # ── 0. 清理错误 host='%%' 记录 ──────────────────
                 await cur.execute(
-                    f"SELECT COUNT(*) FROM mysql.user "
-                    f"WHERE user='{user}' AND host='%%'"
+                    f"SELECT COUNT(*) FROM mysql.user " f"WHERE user='{user}' AND host='%%'"
                 )
                 row = await cur.fetchone()
                 if row and row[0] > 0:
@@ -208,21 +212,16 @@ async def fix_mysql_grants(root_password: str) -> None:
                 # ── 4. 为每个 host 创建用户并授权 ────────────────────────
                 for host in hosts:
                     await cur.execute(
-                        f"CREATE USER IF NOT EXISTS '{user}'@'{host}' "
-                        f"IDENTIFIED BY '{pwd}'"
+                        f"CREATE USER IF NOT EXISTS '{user}'@'{host}' " f"IDENTIFIED BY '{pwd}'"
                     )
-                    await cur.execute(
-                        f"GRANT ALL PRIVILEGES ON `{db}`.* TO '{user}'@'{host}'"
-                    )
+                    await cur.execute(f"GRANT ALL PRIVILEGES ON `{db}`.* TO '{user}'@'{host}'")
 
                 await cur.execute("FLUSH PRIVILEGES")
 
         finally:
             conn.close()
 
-        print_success(
-            f"已授权：{user}@{hosts} → 数据库 {db}.*"
-        )
+        print_success(f"已授权：{user}@{hosts} → 数据库 {db}.*")
     except Exception as grant_err:
         err_str = str(grant_err)
         if "1045" in err_str or "Access denied" in err_str:
@@ -235,9 +234,11 @@ async def fix_mysql_grants(root_password: str) -> None:
 
 # ─────────────────────────── Step 1：建表 ───────────────────────────
 
+
 def get_project_tables() -> set[str]:
     """返回 ORM 中已注册的表名集合"""
     from pipeline.db import models  # noqa: F401  触发 ORM 注册
+
     tables = set()
     for table_name in Base.metadata.tables.keys():
         tables.add(table_name.split(".")[-1] if "." in table_name else table_name)
@@ -248,7 +249,7 @@ async def create_tables() -> None:
     """
     幂等建表：仅创建不存在的表，不删除任何数据。
     """
-    print_header("Step 1 / 4  创建表结构")
+    print_header("Step 1 / 3  创建表结构")
 
     from pipeline.db import models  # noqa: F401
 
@@ -257,7 +258,7 @@ async def create_tables() -> None:
 
     # 验证 ORM 定义与期望一致
     missing_in_orm = REQUIRED_TABLES - orm_tables
-    extra_in_orm   = orm_tables - REQUIRED_TABLES
+    extra_in_orm = orm_tables - REQUIRED_TABLES
     if missing_in_orm:
         print_warning(f"ORM 缺少以下必需表定义：{missing_in_orm}")
     if extra_in_orm:
@@ -268,7 +269,7 @@ async def create_tables() -> None:
         # checkfirst=True：表已存在则跳过，不会丢数据
         await conn.run_sync(Base.metadata.create_all, checkfirst=True)
 
-    print_success(f"建表完成（已存在的表自动跳过）")
+    print_success("建表完成（已存在的表自动跳过）")
 
     # 检查数据库实际表列表
     async with engine.connect() as conn:
@@ -313,18 +314,14 @@ async def _column_exists(table_name: str, column_name: str) -> bool:
 
 
 async def ensure_compat_columns() -> None:
-    """Add additive compatibility columns for existing OceanBase deployments."""
-    print_header("Step 2 / 4  Ensure compatibility columns")
-
+    """Add only the compatibility columns required by an existing OceanBase schema."""
     settings = get_settings()
     if settings.effective_database_backend != "oceanbase":
-        print_info("database_backend is MySQL; skip OceanBase-only source_event.entities")
+        print_info("MySQL profile: skip OceanBase compatibility columns")
         return
-
     if await _column_exists("source_event", "entities"):
         print_info("source_event.entities already exists")
         return
-
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.execute(
@@ -337,15 +334,13 @@ async def ensure_compat_columns() -> None:
 
 
 async def initialize_profile_specific_storage() -> None:
-    """Run backend-specific initialization inferred from STORAGE_PROFILE."""
+    """Initialize only the backend selected by STORAGE_PROFILE."""
     settings = get_settings()
-    print_header("Step 3 / 4  按存储方案执行专属初始化")
     print_info(
         "storage_profile="
         f"{settings.storage_profile}, database_backend={settings.effective_database_backend}, "
         f"vector_backend={settings.effective_vector_backend}"
     )
-
     if (
         settings.effective_database_backend == "oceanbase"
         and settings.effective_vector_backend == "oceanbase"
@@ -353,16 +348,12 @@ async def initialize_profile_specific_storage() -> None:
         from scripts.init_oceanbase_vectors import initialize_oceanbase_vectors
 
         await initialize_oceanbase_vectors()
-        return
-
-    if settings.effective_vector_backend == "elasticsearch":
-        print_info("向量/搜索后端为 Elasticsearch，跳过 OceanBase 向量列和向量索引初始化")
-        return
-
-    print_info("当前存储方案没有额外数据库初始化步骤")
+    elif settings.effective_vector_backend == "elasticsearch":
+        print_info("Elasticsearch profile: skip OceanBase vector columns and indexes")
 
 
 # ─────────────────────────── Step 2：插入默认实体类型 ───────────────────────────
+
 
 async def insert_default_entity_types() -> None:
     """
@@ -371,7 +362,7 @@ async def insert_default_entity_types() -> None:
     - 存在：比对字段，有变化则更新（保留原 ID，不破坏外键）
     - 不存在：插入新记录
     """
-    print_header("Step 4 / 4  同步默认实体类型")
+    print_header("Step 2 / 3  同步默认实体类型")
 
     factory = get_session_factory()
     async with factory() as session:
@@ -388,17 +379,17 @@ async def insert_default_entity_types() -> None:
 
             if existing:
                 needs_update = (
-                    existing.name                != type_def.name
-                    or existing.description      != type_def.description
-                    or existing.weight           != type_def.weight
+                    existing.name != type_def.name
+                    or existing.description != type_def.description
+                    or existing.weight != type_def.weight
                     or existing.similarity_threshold != type_def.similarity_threshold
                 )
                 if needs_update:
-                    existing.name                 = type_def.name
-                    existing.description          = type_def.description
-                    existing.weight               = type_def.weight
+                    existing.name = type_def.name
+                    existing.description = type_def.description
+                    existing.weight = type_def.weight
                     existing.similarity_threshold = type_def.similarity_threshold
-                    existing.is_active            = type_def.is_active
+                    existing.is_active = type_def.is_active
                     print_success(f"{type_def.type} ({type_def.name}): 已更新")
                     updated += 1
                 else:
@@ -406,34 +397,40 @@ async def insert_default_entity_types() -> None:
                     unchanged += 1
                 continue
 
-            session.add(EntityType(
-                id                   = type_def.id,
-                source_config_id     = type_def.source_config_id,
-                type                 = type_def.type,
-                name                 = type_def.name,
-                is_default           = type_def.is_default,
-                description          = type_def.description,
-                weight               = type_def.weight,
-                similarity_threshold = type_def.similarity_threshold,
-                extra_data           = None,
-                is_active            = type_def.is_active,
-            ))
+            session.add(
+                EntityType(
+                    id=type_def.id,
+                    source_config_id=type_def.source_config_id,
+                    type=type_def.type,
+                    name=type_def.name,
+                    is_default=type_def.is_default,
+                    description=type_def.description,
+                    weight=type_def.weight,
+                    similarity_threshold=type_def.similarity_threshold,
+                    extra_data=None,
+                    is_active=type_def.is_active,
+                )
+            )
             print_success(f"{type_def.type} ({type_def.name}): 插入成功")
             inserted += 1
 
         await session.commit()
 
     print_header("同步总结")
-    if inserted:   print_success(f"新插入: {inserted} 个")
-    if updated:    print_success(f"已更新: {updated} 个")
-    if unchanged:  print_info(f"无变化: {unchanged} 个")
+    if inserted:
+        print_success(f"新插入: {inserted} 个")
+    if updated:
+        print_success(f"已更新: {updated} 个")
+    if unchanged:
+        print_info(f"无变化: {unchanged} 个")
 
 
 # ─────────────────────────── Step 3：验证 ───────────────────────────
 
+
 async def verify_database() -> None:
     """验证数据库最终状态：表存在性 + 实体类型数量。"""
-    print_header("Final check  验证数据库")
+    print_header("Step 3 / 3  验证数据库")
 
     engine = get_engine()
     async with engine.connect() as conn:
@@ -441,7 +438,7 @@ async def verify_database() -> None:
         actual_tables = {row[0] for row in result}
 
     missing = REQUIRED_TABLES - actual_tables
-    extra   = actual_tables   - REQUIRED_TABLES
+    extra = actual_tables - REQUIRED_TABLES
 
     print_info(f"数据库现有 {len(actual_tables)} 个表")
     if missing:
@@ -449,12 +446,12 @@ async def verify_database() -> None:
     if extra:
         print_warning(f"存在额外表（非本项目必需）：{extra}")
     if not missing:
-        print_success(f"10 个必需表全部就绪")
+        print_success("10 个必需表全部就绪")
 
     # 实体类型
     factory = get_session_factory()
     async with factory() as session:
-        result     = await session.execute(select(EntityType))
+        result = await session.execute(select(EntityType))
         entity_types = result.scalars().all()
 
     if entity_types:
@@ -470,7 +467,13 @@ async def verify_database() -> None:
 
 # ─────────────────────────── 主流程 ───────────────────────────
 
+
 async def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     args = parse_args()
     try:
         print_header("pipeline 数据库初始化")
@@ -490,6 +493,7 @@ async def main() -> None:
             # 授权完成后重置应用 engine 单例，确保 Step 1 的连接池在权限
             # 完全生效后重新建立，避免使用授权前缓存的旧连接
             from pipeline.db.base import reset_engine
+
             reset_engine()
 
         await create_tables()
@@ -500,11 +504,12 @@ async def main() -> None:
 
         print_header("初始化完成")
         print_success("所有步骤执行成功！")
-        print("=" * 70 + "\n")
+        logger.info("=" * 70 + "\n")
 
     except Exception as e:
         print_error(f"初始化失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -1,10 +1,6 @@
-from typing import List, Tuple, Dict, Any
-import numpy as np
-
-
-from .base import BaseMetric
 from pipeline.utils import get_logger
 
+from .base import BaseMetric
 
 logger = get_logger("evaluation.metrics.retrieval_eval")
 
@@ -16,7 +12,12 @@ class RetrievalRecall(BaseMetric):
     def __init__(self):
         super().__init__()
 
-    def calculate_metric_scores(self, gold_docs: List[List[str]], retrieved_docs: List[List[str]], k_list: List[int] = [1, 5, 10, 20]) -> Tuple[Dict[str, float], List[Dict[str, float]]]:
+    def calculate_metric_scores(
+        self,
+        gold_docs: list[list[str]],
+        retrieved_docs: list[list[str]],
+        k_list: list[int] = None,
+    ) -> tuple[dict[str, float], list[dict[str, float]]]:
         """
         Calculates Recall@k for each example and pools results for all queries.
 
@@ -26,10 +27,12 @@ class RetrievalRecall(BaseMetric):
             k_list (List[int]): List of k values to calculate Recall@k for.
 
         Returns:
-            Tuple[Dict[str, float], List[Dict[str, float]]]: 
+            Tuple[Dict[str, float], List[Dict[str, float]]]:
                 - A pooled dictionary with the averaged Recall@k across all examples.
                 - A list of dictionaries with Recall@k for each example.
         """
+        if k_list is None:
+            k_list = [1, 5, 10, 20]
         k_list = sorted(set(k_list))
 
         example_eval_results = []
@@ -48,8 +51,9 @@ class RetrievalRecall(BaseMetric):
                 relevant_retrieved = set(top_k_docs) & set(example_gold_docs)
                 # Compute recall
                 if example_gold_docs:  # Avoid division by zero
-                    example_eval_result[f"Recall@{k}"] = len(
-                        relevant_retrieved) / len(set(example_gold_docs))
+                    example_eval_result[f"Recall@{k}"] = len(relevant_retrieved) / len(
+                        set(example_gold_docs)
+                    )
                 else:
                     example_eval_result[f"Recall@{k}"] = 0.0
 
@@ -66,6 +70,5 @@ class RetrievalRecall(BaseMetric):
             pooled_eval_results[f"Recall@{k}"] /= num_examples
 
         # round off to 4 decimal places for pooled results
-        pooled_eval_results = {k: round(v, 4)
-                               for k, v in pooled_eval_results.items()}
+        pooled_eval_results = {k: round(v, 4) for k, v in pooled_eval_results.items()}
         return pooled_eval_results, example_eval_results

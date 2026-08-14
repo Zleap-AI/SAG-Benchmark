@@ -7,9 +7,7 @@
 
 import asyncio
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 from pipeline.exceptions import LoadError
 from pipeline.modules.load.chunking import (
@@ -43,7 +41,7 @@ class MarkdownParser:
         self,
         max_tokens: int = 1000,
         model_type: str = "generic",
-        section_max_tokens: Optional[int] = None,
+        section_max_tokens: int | None = None,
         chunk_mode: str = "standard",
     ) -> None:
         """
@@ -62,8 +60,8 @@ class MarkdownParser:
         self.chunk_mode = chunk_mode
         self.token_estimator = TokenEstimator(model_type)
         self.section_max_tokens = section_max_tokens or max(128, min(512, max_tokens // 4))
-        self._last_chunking_result: Optional[ChunkingResult] = None
-        heading_strict = (chunk_mode == "heading_strict")
+        self._last_chunking_result: ChunkingResult | None = None
+        heading_strict = chunk_mode == "heading_strict"
         self.chunking_pipeline = RAGChunkingPipeline(
             input_normalizer=MarkdownInputNormalizer(),
             block_parser=MarkdownBlockParser(),
@@ -79,7 +77,7 @@ class MarkdownParser:
         )
 
         # 标题正则表达式
-        self.heading_pattern = re.compile(r'^(#{1,6})\s+(.+)$', re.MULTILINE)
+        self.heading_pattern = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 
         logger.info(
             "文档解析器初始化完成",
@@ -88,7 +86,7 @@ class MarkdownParser:
                 "model_type": model_type,
                 "section_max_tokens": self.section_max_tokens,
                 "chunk_mode": chunk_mode,
-            }
+            },
         )
 
     def parse_file(self, file_path: Path) -> tuple[str, int]:
@@ -127,10 +125,8 @@ class MarkdownParser:
                 raise LoadError(f"文件不存在: {file_path}")
 
             file_suffix = file_path.suffix.lower()
-            if file_suffix not in {'.md', '.markdown'}:
-                raise LoadError(
-                    f"不支持的文件格式: {file_path.suffix}，仅支持 .md / .markdown"
-                )
+            if file_suffix not in {".md", ".markdown"}:
+                raise LoadError(f"不支持的文件格式: {file_path.suffix}，仅支持 .md / .markdown")
 
             content = file_path.read_text(encoding="utf-8")
 
@@ -155,7 +151,7 @@ class MarkdownParser:
     def parse_content_with_plan(
         self,
         content: str,
-        source_path: Optional[Path] = None,
+        source_path: Path | None = None,
     ) -> ChunkingResult:
         """
         同步包装：返回包含 SectionDraft + SourceChunk 的双层切片结果
@@ -170,7 +166,7 @@ class MarkdownParser:
     async def parse_content_with_plan_async(
         self,
         content: str,
-        source_path: Optional[Path] = None,
+        source_path: Path | None = None,
     ) -> ChunkingResult:
         """返回包含 SectionDraft + SourceChunk 的双层切片结果（异步）"""
         if self.chunk_mode == "heading_strict":
@@ -183,15 +179,15 @@ class MarkdownParser:
     def _parse_content_heading_strict(
         self,
         content: str,
-        source_path: Optional[Path] = None,
+        source_path: Path | None = None,
     ) -> ChunkingResult:
         """
         旧版 heading_strict 切片：按标题边界切分，每个标题块整体作为一个 chunk，
         不对内容做句子级切分，保留原始空格连接的文本格式。
         """
         sections = self._extract_sections_heading_strict(content)
-        source_chunks: List[ChunkDraft] = []
-        section_drafts: List[SectionDraft] = []
+        source_chunks: list[ChunkDraft] = []
+        section_drafts: list[SectionDraft] = []
 
         for idx, section in enumerate(sections):
             headings = section["headings"]
@@ -261,7 +257,7 @@ class MarkdownParser:
             source_chunks=source_chunks,
         )
 
-    def _extract_sections_heading_strict(self, content: str) -> List[Dict]:
+    def _extract_sections_heading_strict(self, content: str) -> list[dict]:
         """
         Heading 严格模式下按标题切分章节（旧版 legacy 实现）。
 
@@ -274,7 +270,7 @@ class MarkdownParser:
         """
         lines = content.split("\n")
         sections = []
-        current_section: Dict = {"headings": [], "content_lines": []}
+        current_section: dict = {"headings": [], "content_lines": []}
 
         for line in lines:
             heading_match = self.heading_pattern.match(line)
@@ -296,7 +292,7 @@ class MarkdownParser:
         logger.debug(f"[Heading严格模式] 提取到 {len(sections)} 个章节")
         return sections
 
-    def get_last_chunking_result(self) -> Optional[ChunkingResult]:
+    def get_last_chunking_result(self) -> ChunkingResult | None:
         """获取最近一次 parse 的双层切片结果"""
         return self._last_chunking_result
 
@@ -320,6 +316,6 @@ class MarkdownParser:
             return normalize_heading_text(match.group(2))
         return "Untitled"
 
-    def _normalize_heading(self, heading: Optional[str]) -> str:
+    def _normalize_heading(self, heading: str | None) -> str:
         """规范化标题，避免原始 Markdown 标题行过长触发模型校验失败。"""
         return normalize_heading_text(heading)

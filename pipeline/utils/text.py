@@ -5,7 +5,6 @@
 import hashlib
 import re
 import unicodedata
-from typing import List, Optional
 
 
 def normalize_text(text: str) -> str:
@@ -103,7 +102,7 @@ def normalize_entity_name(name: str) -> str:
     return normalized
 
 
-def extract_markdown_headings(content: str) -> List[str]:
+def extract_markdown_headings(content: str) -> list[str]:
     """
     提取Markdown标题
 
@@ -162,7 +161,7 @@ def truncate_text(
 
 
 def normalize_heading_text(
-    text: Optional[str],
+    text: str | None,
     max_length: int = 500,
     suffix: str = "...",
 ) -> str:
@@ -194,7 +193,7 @@ def normalize_heading_text(
     return normalized[: max_length - len(suffix)].rstrip() + suffix
 
 
-def split_text_by_paragraphs(text: str) -> List[str]:
+def split_text_by_paragraphs(text: str) -> list[str]:
     """
     按段落分割文本
 

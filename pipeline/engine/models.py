@@ -5,7 +5,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +20,7 @@ class TaskLog(BaseModel):
     stage: TaskStage
     level: LogLevel
     message: str
-    extra: Optional[Dict[str, Any]] = None
+    extra: dict[str, Any] | None = None
 
     def __init__(self, **data):
         if "timestamp" not in data:
@@ -37,11 +37,11 @@ class StageResult(BaseModel):
 
     stage: TaskStage
     status: str  # success/failed/skipped
-    data_ids: List[str] = Field(default_factory=list, description="数据ID列表")
-    data_full: List[Dict[str, Any]] = Field(default_factory=list, description="完整数据列表")
-    stats: Dict[str, Any] = Field(default_factory=dict, description="统计信息")
-    error: Optional[str] = None
-    duration: Optional[float] = None
+    data_ids: list[str] = Field(default_factory=list, description="数据ID列表")
+    data_full: list[dict[str, Any]] = Field(default_factory=list, description="完整数据列表")
+    stats: dict[str, Any] = Field(default_factory=dict, description="统计信息")
+    error: str | None = None
+    duration: float | None = None
 
 
 class TaskResult(BaseModel):
@@ -55,25 +55,25 @@ class TaskResult(BaseModel):
     status: TaskStatus
 
     # 数据标识
-    source_config_id: Optional[str] = None
-    article_id: Optional[str] = None
+    source_config_id: str | None = None
+    article_id: str | None = None
 
     # 各阶段结果
-    load_result: Optional[StageResult] = None
-    extract_result: Optional[StageResult] = None
-    search_result: Optional[StageResult] = None
+    load_result: StageResult | None = None
+    extract_result: StageResult | None = None
+    search_result: StageResult | None = None
 
     # 统计信息
-    stats: Dict[str, Any] = Field(default_factory=dict)
+    stats: dict[str, Any] = Field(default_factory=dict)
 
     # 日志
-    logs: List[TaskLog] = Field(default_factory=list)
-    error: Optional[str] = None
+    logs: list[TaskLog] = Field(default_factory=list)
+    error: str | None = None
 
     # 时间信息
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    duration: Optional[float] = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    duration: float | None = None
 
     def to_dict(self, output_config: OutputConfig) -> dict:
         """转换为字典"""
@@ -144,4 +144,3 @@ class TaskResult(BaseModel):
     def is_success(self) -> bool:
         """任务是否成功"""
         return self.status == TaskStatus.COMPLETED
-

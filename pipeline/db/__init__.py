@@ -4,7 +4,14 @@
 提供SQLAlchemy ORM模型和数据库操作
 """
 
-from pipeline.db.base import Base, get_engine, get_session_factory, init_database, close_database, reset_engine
+from pipeline.db.base import (
+    Base,
+    close_database,
+    get_engine,
+    get_session_factory,
+    init_database,
+    reset_engine,
+)
 from pipeline.db.models import (
     Article,
     ArticleParseStatus,

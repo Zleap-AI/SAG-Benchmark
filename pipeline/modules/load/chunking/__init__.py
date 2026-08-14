@@ -2,6 +2,10 @@
 Load 模块切片框架导出
 """
 
+from pipeline.modules.load.chunking.assembler import (
+    MarkdownSourceChunkAssembler,
+    PolicyBasedSourceChunkAssembler,
+)
 from pipeline.modules.load.chunking.base import (
     BaseArticleSectionBuilder,
     BaseBlockParser,
@@ -12,10 +16,6 @@ from pipeline.modules.load.chunking.chunker import (
     BaseBlockChunker,
     MarkdownArticleSectionBuilder,
     MarkdownTextChunker,
-)
-from pipeline.modules.load.chunking.assembler import (
-    MarkdownSourceChunkAssembler,
-    PolicyBasedSourceChunkAssembler,
 )
 from pipeline.modules.load.chunking.parser import (
     MarkdownBlockParser,

@@ -1,62 +1,56 @@
-# 搜索模块（Search Module）
+# Search module
 
-## 📁 目录结构
+This project uses SAG2Searcher as its primary graph-retrieval strategy.
+The SAG2 implementation is split into three algorithm stages, an orchestrator,
+and a dedicated runtime dependency layer. It does not import another strategy.
 
-```
+## Directory structure
+
+~~~
 search/
-├── __init__.py          # 导出接口
-├── config.py            # 配置文件
-├── searcher.py          # 统一搜索入口（SAGSearcher）
-├── vector.py            # VECTOR 策略：纯向量检索
-├── atomic.py            # ATOMIC 策略：原子三元组事项检索
-├── multi.py             # MULTI / MULTI1 / HOPLLM 策略（按 strategy 参数切换）
-├── multi_vector.py      # MULTI_ES 策略：multi.py 的 ES-First 版本
-└── step5_strategies.py  # Step5 多跳扩展策略（Multi / Multi1 / HopLLM）
-```
+|-- searcher.py          # Unified strategy entry point
+|-- sag2/
+|   |-- orchestrator.py  # Request lifecycle, stage composition, result assembly
+|   |-- recall.py        # Query rewrite, scope construction, two-route recall
+|   |-- expand.py        # Event/entity graph expansion
+|   |-- rerank.py        # LLM rank, rerank model, RRF, and fallbacks
+|   |-- runtime.py       # LLM, embedding, prompt, storage, and client adapters
+|   |-- candidate_scope.py # Optional request-scoped event/entity universe
+|   |-- contracts.py     # Typed request, state, and stage result contracts
+|   |-- routes.py        # Route edge recording
+|   |-- timing.py        # Request-local timing and event statistics
+|   |-- evidence.py      # Evidence coverage diagnostics
+|   `-- utils.py         # Stateless SAG2 helpers
+|-- config.py            # Shared search configuration and SAG2 sub-configs
+|-- atomic.py            # ATOMIC compatibility strategy
+|-- multi_vector.py      # MULTI_ES compatibility strategy, isolated from SAG2
+|-- vector.py            # VECTOR strategy
+`-- bm25.py              # BM25 strategy
+~~~
 
-> 说明：`MULTI1` / `HOPLLM` 并非独立文件，而是 `multi.py` 中通过 `MultiConfig(strategy=...)`
-> 选择的策略分支，其扩跳差异实现于 `step5_strategies.py`。
+## SAG2 dependency boundary
 
+SAG2Runtime owns lazy initialization of the LLM client, document processor,
+PromptProvider, storage ports, rerank client, and token counter. Recall,
+Expand, and Rerank stages own their respective algorithms. SAG2Searcher only
+composes the stages, performs final route/chunk hydration, and assembles the
+response diagnostics.
 
-## 🔄 搜索策略
+When `sag2_scope.enabled` is true, `sag2/candidate_scope.py` builds the bounded
+event/entity candidate universe. The same runtime, expansion, reranking, and
+final chunk-hydration boundaries are used in both scoped and global modes.
 
-| 策略 | 说明 |
-|------|------|
-| `VECTOR` | 纯向量检索段落，跳过实体召回，仅支持 PARAGRAPH 返回类型 |
-| `ATOMIC` | 原子三元组事项检索 + LLM 精选 |
-| `MULTI` | 多元事项检索（多实体 + 固定跳数扩展 + LLM 精选） |
-| `MULTI1` | 双阶段扩跳：固定1跳 eventset + 动态扩跳 eventset1，合并后一次 LLM 精选 |
-| `HOPLLM` | 双阶段多跳：阶段A粗排后以粗排结果为种子进行阶段B扩跳 |
-| `MULTI_ES` | `MULTI` 的 ES-First 版本（`multi_vector.py`），用 Elasticsearch 替换部分 MySQL JOIN |
+The compatibility MULTI_ES implementation remains an independent route. It
+is not imported by SAG2Searcher and is not used as a base class.
 
-## 💻 使用示例
+## Active strategies
 
-```python
-from pipeline.modules.search import SAGSearcher, SearchConfig, RerankStrategy
-from pipeline.core.prompt.manager import PromptManager
+| Strategy | Implementation |
+|---|---|
+| SAG2 | `sag2/orchestrator.py` + `sag2/{recall,expand,rerank}.py` |
+| MULTI_ES | multi_vector.py retained compatibility route (not actively maintained) |
+| ATOMIC | atomic.py |
+| VECTOR | vector.py |
+| BM25 | bm25.py |
 
-searcher = SAGSearcher(prompt_manager=PromptManager())
-
-config = SearchConfig(
-    query="人工智能的最新进展",
-    source_config_ids=["source_123"],
-)
-
-result = await searcher.search(config)
-print(f"找到 {len(result['sections'])} 个段落")
-```
-
-## 📊 返回结果
-
-```python
-{
-    "sections": [...],   # 段落列表
-    "clues": [...],      # 线索列表
-    "stats": {...},      # 统计信息（含耗时）
-    "query": {
-        "original": "...",
-        "current": "...",
-        "rewritten": False
-    }
-}
-```
+Use `strategy=sag2` for the current primary graph search path.

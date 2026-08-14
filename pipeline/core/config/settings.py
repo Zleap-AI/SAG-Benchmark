@@ -4,37 +4,42 @@
 使用pydantic-settings管理配置，支持从环境变量和.env文件读取
 """
 
+import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_ENV_FILE = PROJECT_ROOT / ".env"
 
-def _find_project_root() -> Path:
-    """查找项目根目录（包含.env文件的目录）"""
-    current = Path(__file__).resolve()
 
-    # 向上查找包含 .env 的目录
-    for parent in [current.parent] + list(current.parents):
-        env_file = parent / ".env"
-        if env_file.exists():
-            return parent
+def resolve_env_file() -> Path:
+    """Resolve dotenv deterministically, with an explicit process-level override."""
+    override = os.getenv("SAG_ENV_FILE")
+    if not override:
+        return DEFAULT_ENV_FILE
 
-    # 如果找不到，返回当前文件所在的项目根目录（假设在 pipeline/core/config/）
-    return current.parent.parent.parent
+    path = Path(override).expanduser()
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    resolved = path.resolve()
+    if not resolved.is_file():
+        raise FileNotFoundError(f"SAG_ENV_FILE does not point to a file: {resolved}")
+    return resolved
 
 
 # LLM 可靠性常量（统一默认值，避免多处硬编码）
-DEFAULT_LLM_MAX_RETRIES = 5
+DEFAULT_LLM_MAX_RETRIES = 2
 
 
 class Settings(BaseSettings):
     """应用配置"""
 
     model_config = SettingsConfigDict(
-        env_file=str(_find_project_root() / ".env"),
+        env_file=str(DEFAULT_ENV_FILE),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -94,10 +99,10 @@ class Settings(BaseSettings):
     # Elasticsearch配置
     # ======================
     es_host: str = Field(default="localhost", description="ES主机")
-    es_port: int = Field(default=9200, description="ES端口")
+    es_port: int = Field(default=9201, description="ES端口")
     es_scheme: str = Field(default="http", description="ES协议(http/https)")
-    es_username: Optional[str] = Field(default="elastic", description="ES用户名")
-    es_password: Optional[str] = Field(
+    es_username: str | None = Field(default="elastic", description="ES用户名")
+    es_password: str | None = Field(
         default=None, description="ES密码", validation_alias="ELASTIC_PASSWORD"
     )
 
@@ -106,7 +111,7 @@ class Settings(BaseSettings):
     # ======================
     llm_api_key: str = Field(default="", description="LLM API密钥")
     llm_model: str = Field(default="sophnet/Qwen3-30B-A3B-Thinking-2507", description="LLM模型")
-    llm_base_url: Optional[str] = Field(
+    llm_base_url: str | None = Field(
         default=None, description="LLM API基础URL（留空使用OpenAI官方）"
     )
     llm_data_inspection: bool = Field(
@@ -118,16 +123,42 @@ class Settings(BaseSettings):
         default=False, description="是否启用模型的思考模式（enable_thinking）"
     )
 
-    # LLM 行为参数：默认值仅在此处定义；全局配置 = 环境变量（若有）否则用此处默认值；可被数据库配置覆盖
+    # #baseline
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="LLM温度参数")
     llm_max_tokens: int = Field(default=30000, ge=1, description="LLM最大输出token数")
-    llm_top_p: float = Field(default=1.0, ge=0.0, le=1.0, description="LLM top_p参数")
+    llm_top_p: float = Field(default=1.0, gt=0.0, le=1.0, description="LLM top_p参数（vLLM要求>0）")
     llm_frequency_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="频率惩罚")
     llm_presence_penalty: float = Field(default=0.0, ge=-2.0, le=2.0, description="存在惩罚")
+    llm_top_k: int = Field(default=-1, ge=-1, description="LLM top_k参数，-1表示禁用")
+    llm_min_p: float = Field(default=0.0, ge=0.0, le=1.0, description="LLM min_p参数")
+    llm_repetition_penalty: float = Field(
+        default=1.0, ge=0.0, le=2.0, description="重复惩罚，1.0表示关闭"
+    )
+
 
     # LLM 可靠性参数
     llm_timeout: int = Field(default=300, ge=1, description="LLM超时时间(秒)")
-    llm_max_retries: int = Field(default=DEFAULT_LLM_MAX_RETRIES, ge=0, description="LLM最大重试次数")
+    llm_max_retries: int = Field(
+        default=DEFAULT_LLM_MAX_RETRIES, ge=0, description="LLM最大重试次数"
+    )
+
+    # ======================
+    # Judge LLM 配置（独立于主 LLM，避免评测模型漂移）
+    # ======================
+    judge_llm_api_key: str = Field(default="", description="Judge LLM API密钥")
+    judge_llm_model: str = Field(default="", description="Judge LLM模型")
+    judge_llm_base_url: str | None = Field(default=None, description="Judge LLM API基础URL")
+    judge_llm_max_async: int = Field(default=4, ge=1, description="Judge LLM最大并发数")
+    judge_llm_timeout: int = Field(default=300, ge=1, description="Judge LLM超时时间(秒)")
+    judge_llm_max_retries: int = Field(
+        default=DEFAULT_LLM_MAX_RETRIES, ge=0, description="Judge LLM最大重试次数"
+    )
+    judge_llm_enable_thinking: bool = Field(default=False, description="Judge LLM思考模式开关")
+    judge_llm_max_tokens: int = Field(default=8000, ge=1, description="Judge LLM最大输出token数")
+    judge_allow_fallback: bool = Field(
+        default=False,
+        description="Judge LLM 配置缺失时是否允许 fallback 到主 LLM",
+    )
 
     # 数据库配置开关
     use_db_config: bool = Field(default=True, description="是否使用数据库配置")
@@ -141,11 +172,45 @@ class Settings(BaseSettings):
     embedding_model_name: str = Field(
         default="Qwen/Qwen3-Embedding-0.6B", description="Embedding模型"
     )
-    embedding_dimensions: Optional[int] = Field(
+    embedding_dimensions: int | None = Field(
         default=None,
-        description="Embedding维度（可选，留空则使用模型默认维度。text-embedding-3-small默认1536，text-embedding-3-large默认3072）",
+        validation_alias=AliasChoices(
+            "EMBEDDING_DIM",  # .env 现行写法（优先）
+            "EMBEDDING_DIMENSIONS",  # 历史/OpenAI 风格写法，向后兼容
+        ),
+        description=(
+            "Embedding 期望维度。仅作为 probe 结果的校验基准与离线 fallback；"
+            "真实维度以 EmbeddingDimResolver 的 probe 结果为准。"
+        ),
     )
-    embedding_base_url: Optional[str] = Field(
+    embedding_request_dimensions: int | None = Field(
+        default=None,
+        validation_alias=AliasChoices("EMBEDDING_REQUEST_DIMENSIONS"),
+        description=(
+            "透传给 embeddings.create(dimensions=…) 的值（matryoshka 模型专用）。"
+            "留空则不传该参数。注意 bge-large-en-v1.5 不支持该参数，传了会 400。"
+        ),
+    )
+    embedding_dim_strict: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("EMBEDDING_DIM_STRICT"),
+        description="True 时 probe 结果与 EMBEDDING_DIM 不一致直接报错，False 时以 probe 为准并告警",
+    )
+    embedding_dim_probe_timeout: int = Field(
+        default=30,
+        ge=1,
+        validation_alias=AliasChoices("EMBEDDING_DIM_PROBE_TIMEOUT"),
+        description="维度 probe 请求超时（秒）",
+    )
+    es_index_legacy_unsuffixed: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("ES_INDEX_LEGACY_UNSUFFIXED"),
+        description=(
+            "True（默认）时 1024 维继续使用无后缀索引名（兼容现存数据）；"
+            "False 时所有维度统一带 _<dim> 后缀"
+        ),
+    )
+    embedding_base_url: str | None = Field(
         default=None, description="Embedding API基础URL（留空使用llm_base_url）"
     )
 
@@ -155,13 +220,12 @@ class Settings(BaseSettings):
     # ======================
     # Rerank Configuration
     # ======================
-    rerank_api_key: Optional[str] = Field(
-        default=None, description="Rerank API key; fallback to embedding_api_key/llm_api_key when empty"
+    rerank_api_key: str | None = Field(
+        default=None,
+        description="Rerank API key; fallback to embedding_api_key/llm_api_key when empty",
     )
-    rerank_model_name: Optional[str] = Field(
-        default=None, description="Rerank model name"
-    )
-    rerank_base_url: Optional[str] = Field(
+    rerank_model_name: str | None = Field(default=None, description="Rerank model name")
+    rerank_base_url: str | None = Field(
         default=None, description="Rerank API base URL; fallback to embedding_base_url when empty"
     )
     rerank_endpoint: Optional[str] = Field(
@@ -178,9 +242,7 @@ class Settings(BaseSettings):
     # ======================
     # 应用配置
     # ======================
-    server_type: str = Field(
-        default="LOCAL", description="服务环境类型（SAAS/LOCAL）"
-    )
+    server_type: str = Field(default="LOCAL", description="服务环境类型（SAAS/LOCAL）")
     benchmark: bool = Field(default=False, description="Benchmark模式，跳过LLM调用")
     debug: bool = Field(default=False, description="调试模式")
     log_level: str = Field(default="INFO", description="日志级别")
@@ -190,15 +252,9 @@ class Settings(BaseSettings):
     # MLflow 配置
     # ======================
     mlflow_port: int = Field(default=5000, description="MLflow Docker容器端口")
-    mlflow_url: Optional[str] = Field(
+    mlflow_url: str | None = Field(
         default="http://localhost:5000", description="MLflow Tracking Server地址"
     )
-
-    # 实体权重配置
-    # entity_weights: str = Field(
-    #     default="time:0.9,location:1.0,person:1.1,topic:1.5,action:1.2,tags:1.0",
-    #     description="实体类型权重",
-    # )
 
     # ======================
     # 性能配置
@@ -212,7 +268,6 @@ class Settings(BaseSettings):
     cache_llm_ttl: int = Field(default=604800, description="LLM缓存TTL(秒)")
     cache_search_ttl: int = Field(default=3600, description="搜索缓存TTL(秒)")
 
-    
     @property
     def mysql_url(self) -> str:
         """MySQL连接URL"""
@@ -279,28 +334,6 @@ class Settings(BaseSettings):
     def es_url(self) -> str:
         """Elasticsearch连接URL（兼容旧版本）"""
         return self.elasticsearch_url
-
-    @property
-    def amqp_url(self) -> str:
-        """AMQP 连接 URL（RabbitMQ）"""
-        from urllib.parse import quote_plus
-
-        user = quote_plus(self.rabbitmq_username)
-        pwd = quote_plus(self.rabbitmq_password)
-        return f"amqp://{user}:{pwd}@{self.rabbitmq_host}:{self.rabbitmq_port}/{self.rabbitmq_vhost}"
-
-    # @property
-    # def entity_weights_dict(self) -> Dict[str, float]:
-    #     """实体权重字典"""
-    #     result = {}
-    #     for pair in self.entity_weights.split(","):
-    #         if ":" in pair:
-    #             key, value = pair.split(":")
-    #             try:
-    #                 result[key.strip()] = float(value.strip())
-    #             except ValueError:
-    #                 continue
-    #     return result
 
     @field_validator("log_level")
     @classmethod
@@ -409,7 +442,7 @@ class Settings(BaseSettings):
         return normalized
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """获取配置单例"""
-    return Settings()
+    return Settings(_env_file=resolve_env_file())  # type: ignore[call-arg]

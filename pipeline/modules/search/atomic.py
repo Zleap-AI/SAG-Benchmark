@@ -23,7 +23,7 @@
 import time
 from contextvars import ContextVar
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import select
 
@@ -51,7 +51,7 @@ class _SearchState:
     relation_ids: set = field(default_factory=set)
 
 
-_atomic_search_state_var: ContextVar[Optional[_SearchState]] = ContextVar(
+_atomic_search_state_var: ContextVar[_SearchState | None] = ContextVar(
     "atomic_search_state",
     default=None,
 )
@@ -154,7 +154,7 @@ class AtomicSearcher:
     检索原子化三元组事项（每个事项恰好包含 2 个实体）。
     """
 
-    def __init__(self, token_counter: Optional[TokenCounter] = None):
+    def __init__(self, token_counter: TokenCounter | None = None):
         self._llm_client = None
         self._processor = None
         storage = get_storage_facade()
@@ -196,7 +196,7 @@ class AtomicSearcher:
             self._processor = DocumentProcessor(llm_client=llm_client)
         return self._processor
 
-    async def step1_extract_entities(self, query: str) -> List[str]:
+    async def step1_extract_entities(self, query: str) -> list[str]:
         """
         Step1: 从 query 中提取命名实体
 
@@ -249,11 +249,11 @@ class AtomicSearcher:
 
     async def step2_retrieve_entities(
         self,
-        query_entities: List[str],
-        source_config_ids: List[str],
-        entity_top_k: Optional[int] = None,
-        key_similarity_threshold: Optional[float] = None,
-    ) -> Tuple[List[str], List[str], List[float]]:
+        query_entities: list[str],
+        source_config_ids: list[str],
+        entity_top_k: int | None = None,
+        key_similarity_threshold: float | None = None,
+    ) -> tuple[list[str], list[str], list[float]]:
         """
         Step2: 根据 query 提取的实体名称，从 ES 向量检索相似实体
 
@@ -273,16 +273,20 @@ class AtomicSearcher:
 
         config = AtomicConfig()
         top_k = entity_top_k or config.entity_top_k
-        threshold = key_similarity_threshold if key_similarity_threshold is not None else config.key_similarity_threshold
+        threshold = (
+            key_similarity_threshold
+            if key_similarity_threshold is not None
+            else config.key_similarity_threshold
+        )
 
         processor = await self._get_processor()
         # 批量生成 query 实体的向量
         embeddings = [await processor.generate_embedding(name) for name in query_entities]
 
         # 逐个实体做 kNN 搜索，聚合去重
-        entity_ids: List[str] = []
-        entity_names: List[str] = []
-        scores: List[float] = []
+        entity_ids: list[str] = []
+        entity_names: list[str] = []
+        scores: list[float] = []
         seen: set = set()
 
         for vec in embeddings:
@@ -313,11 +317,11 @@ class AtomicSearcher:
     async def step3_retrieve_events(
         self,
         query: str,
-        source_config_ids: List[str],
-        entity_ids: Optional[List[str]] = None,
+        source_config_ids: list[str],
+        entity_ids: list[str] | None = None,
         atomic_top_k: int = 20,
-        similarity_threshold: Optional[float] = None,
-    ) -> List[Dict[str, Any]]:
+        similarity_threshold: float | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Step3: 双通道召回 + 去重合并
 
@@ -337,22 +341,22 @@ class AtomicSearcher:
             [{"event_id": str, "score": float}, ...]
         """
         config = AtomicConfig()
-        threshold = similarity_threshold if similarity_threshold is not None else config.similarity_threshold
+        threshold = (
+            similarity_threshold
+            if similarity_threshold is not None
+            else config.similarity_threshold
+        )
 
-        merged: Dict[str, float] = {}
+        merged: dict[str, float] = {}
 
         # --- 通道1: entity → event（DB 查询，不限数量）---
         if entity_ids:
             session_factory = get_session_factory()
 
             async with session_factory() as session:
-                stmt = select(EventEntity.event_id).where(
-                    EventEntity.entity_id.in_(entity_ids)
-                )
+                stmt = select(EventEntity.event_id).where(EventEntity.entity_id.in_(entity_ids))
                 if source_config_ids:
-                    stmt = stmt.join(
-                        SourceEvent, SourceEvent.id == EventEntity.event_id
-                    ).where(
+                    stmt = stmt.join(SourceEvent, SourceEvent.id == EventEntity.event_id).where(
                         SourceEvent.source_config_id.in_(source_config_ids)
                     )
                 result = await session.execute(stmt)
@@ -403,8 +407,8 @@ class AtomicSearcher:
 
     async def step4_fetch_event_details(
         self,
-        event_ids: List[str],
-    ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[str]]]:
+        event_ids: list[str],
+    ) -> tuple[dict[str, dict[str, str]], dict[str, list[str]]]:
         """
         Step4: 查询事项详情和关联实体（只查不更新 Set）
 
@@ -420,13 +424,11 @@ class AtomicSearcher:
             return {}, {}
 
         session_factory = get_session_factory()
-        event_details: Dict[str, Dict[str, str]] = {}
-        event_entities: Dict[str, List[str]] = {}
+        event_details: dict[str, dict[str, str]] = {}
+        event_entities: dict[str, list[str]] = {}
 
         async with session_factory() as session:
-            events_stmt = select(SourceEvent).where(
-                SourceEvent.id.in_(event_ids)
-            )
+            events_stmt = select(SourceEvent).where(SourceEvent.id.in_(event_ids))
             result = await session.execute(events_stmt)
             for event in result.scalars().all():
                 event_details[event.id] = {
@@ -453,7 +455,7 @@ class AtomicSearcher:
         )
         return event_details, event_entities
 
-    def get_new_entity_ids(self, event_entities: Dict[str, List[str]]) -> List[str]:
+    def get_new_entity_ids(self, event_entities: dict[str, list[str]]) -> list[str]:
         """
         从 event_entities 中找出未在 self._entity_ids 中出现过的实体 ID
 
@@ -478,10 +480,10 @@ class AtomicSearcher:
 
     async def step5_expand(
         self,
-        event_entities: Dict[str, List[str]],
-        source_config_ids: Optional[List[str]] = None,
-        max_hops: Optional[int] = None,
-    ) -> Tuple[Dict[str, Dict[str, str]], Dict[str, List[str]]]:
+        event_entities: dict[str, list[str]],
+        source_config_ids: list[str] | None = None,
+        max_hops: int | None = None,
+    ) -> tuple[dict[str, dict[str, str]], dict[str, list[str]]]:
         """
         Step5: 多跳扩展
 
@@ -502,8 +504,8 @@ class AtomicSearcher:
         config = AtomicConfig()
         max_hops = max_hops if max_hops is not None else config.max_hops
 
-        all_details: Dict[str, Dict[str, str]] = {}
-        all_entities: Dict[str, List[str]] = {}
+        all_details: dict[str, dict[str, str]] = {}
+        all_entities: dict[str, list[str]] = {}
 
         # hop=0: 初始化 relation_set（entity_set 已由 step2 填充）
         self._relation_ids.update(event_entities.keys())
@@ -537,16 +539,16 @@ class AtomicSearcher:
             )
 
             # 3. 新 keys → DB 查新 relations（不在 relation_set 中）
-            new_event_ids: List[str] = []
+            new_event_ids: list[str] = []
             session_factory = get_session_factory()
             async with session_factory() as session:
-                stmt = select(EventEntity.event_id).where(
-                    EventEntity.entity_id.in_(new_entity_ids)
-                ).distinct()
+                stmt = (
+                    select(EventEntity.event_id)
+                    .where(EventEntity.entity_id.in_(new_entity_ids))
+                    .distinct()
+                )
                 if source_config_ids:
-                    stmt = stmt.join(
-                        SourceEvent, SourceEvent.id == EventEntity.event_id
-                    ).where(
+                    stmt = stmt.join(SourceEvent, SourceEvent.id == EventEntity.event_id).where(
                         SourceEvent.source_config_id.in_(source_config_ids)
                     )
                 result = await session.execute(stmt)
@@ -581,14 +583,13 @@ class AtomicSearcher:
 
         return all_details, all_entities
 
-
     async def step6_coarse_rank(
         self,
         query: str,
-        event_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-        max_events: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+        event_ids: list[str],
+        source_config_ids: list[str] | None = None,
+        max_events: int | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Step6: 粗排序
 
@@ -639,11 +640,11 @@ class AtomicSearcher:
     @staticmethod
     def _correct_rerank_line(
         predict_line: str,
-        relation_texts: List[str],
-        relation_ids: List[str],
-    ) -> Optional[str]:
+        relation_texts: list[str],
+        relation_ids: list[str],
+    ) -> str | None:
         """LLM 返回的 id 无效时，用文本内容匹配纠错"""
-        text = predict_line[predict_line.find("]") + 1:].strip()
+        text = predict_line[predict_line.find("]") + 1 :].strip()
         for line_text, id_ in zip(relation_texts, relation_ids):
             if line_text.strip() == text:
                 return id_
@@ -651,17 +652,17 @@ class AtomicSearcher:
 
     def _parse_rerank_response(
         self,
-        useful_relations: List[str],
+        useful_relations: list[str],
         valid_ids: set,
-        relation_ids: List[str],
-        relation_texts: List[str],
-    ) -> List[str]:
+        relation_ids: list[str],
+        relation_texts: list[str],
+    ) -> list[str]:
         """解析 LLM 返回的 useful_relations，提取 [id] 并纠错"""
-        selected: List[str] = []
+        selected: list[str] = []
         for line in useful_relations:
             if "[" not in line or "]" not in line:
                 continue
-            rel_id = line[line.find("[") + 1: line.find("]")].strip()
+            rel_id = line[line.find("[") + 1 : line.find("]")].strip()
             if rel_id in valid_ids and rel_id not in selected:
                 selected.append(rel_id)
             elif rel_id not in valid_ids:
@@ -673,9 +674,9 @@ class AtomicSearcher:
     async def step7_llm_rerank(
         self,
         query: str,
-        items: List[Dict[str, Any]],
+        items: list[dict[str, Any]],
         top_k: int = 5,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Step7: LLM 精选最相关的原子事项
 
@@ -696,9 +697,9 @@ class AtomicSearcher:
         top_k = min(top_k, len(items))
 
         # 1. 构建 idx → event_id 映射 + 格式化 relation 文本
-        idx_to_event_id: Dict[str, str] = {}
-        relation_lines: List[str] = []
-        relation_texts: List[str] = []
+        idx_to_event_id: dict[str, str] = {}
+        relation_lines: list[str] = []
+        relation_texts: list[str] = []
 
         for i, item in enumerate(items):
             idx = str(i)
@@ -762,7 +763,10 @@ class AtomicSearcher:
         # 4. 解析 + 纠错
         useful_relations = response.get("useful_relations", [])
         selected_indices = self._parse_rerank_response(
-            useful_relations, valid_ids, list(idx_to_event_id.keys()), relation_texts,
+            useful_relations,
+            valid_ids,
+            list(idx_to_event_id.keys()),
+            relation_texts,
         )
 
         # 5. 映射回原始数据
@@ -781,8 +785,8 @@ class AtomicSearcher:
 
     async def step8_fetch_chunks(
         self,
-        event_ids: List[str],
-    ) -> Dict[str, Dict[str, str]]:
+        event_ids: list[str],
+    ) -> dict[str, dict[str, str]]:
         """
         Step8: 根据 event_id 查找关联的 chunk
 
@@ -798,14 +802,12 @@ class AtomicSearcher:
             return {}
 
         session_factory = get_session_factory()
-        event_chunk_map: Dict[str, str] = {}
-        result_map: Dict[str, Dict[str, str]] = {}
+        event_chunk_map: dict[str, str] = {}
+        result_map: dict[str, dict[str, str]] = {}
 
         async with session_factory() as session:
             # 1. 查 event → chunk_id
-            stmt = select(SourceEvent.id, SourceEvent.chunk_id).where(
-                SourceEvent.id.in_(event_ids)
-            )
+            stmt = select(SourceEvent.id, SourceEvent.chunk_id).where(SourceEvent.id.in_(event_ids))
             result = await session.execute(stmt)
             chunk_ids: set = set()
             for row in result.fetchall():
@@ -818,11 +820,9 @@ class AtomicSearcher:
                 return {}
 
             # 2. 查 chunk 详情
-            chunk_stmt = select(SourceChunk).where(
-                SourceChunk.id.in_(chunk_ids)
-            )
+            chunk_stmt = select(SourceChunk).where(SourceChunk.id.in_(chunk_ids))
             result = await session.execute(chunk_stmt)
-            chunk_map: Dict[str, Dict[str, str]] = {}
+            chunk_map: dict[str, dict[str, str]] = {}
             for chunk in result.scalars().all():
                 chunk_map[chunk.id] = {
                     "chunk_id": chunk.id,
@@ -847,9 +847,9 @@ class AtomicSearcher:
     async def search(
         self,
         query: str,
-        source_config_ids: List[str],
-        config: Optional[AtomicConfig] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        config: AtomicConfig | None = None,
+    ) -> dict[str, Any]:
         """
         搜索原子事项
 
@@ -934,12 +934,14 @@ class AtomicSearcher:
         for item in ranked:
             eid = item["event_id"]
             detail = all_details.get(eid, {})
-            candidates.append({
-                "event_id": eid,
-                "title": detail.get("title", ""),
-                "content": detail.get("content", ""),
-                "score": item["score"],
-            })
+            candidates.append(
+                {
+                    "event_id": eid,
+                    "title": detail.get("title", ""),
+                    "content": detail.get("content", ""),
+                    "score": item["score"],
+                }
+            )
 
         # Step7: LLM 精选
         items = await self.step7_llm_rerank(
@@ -964,10 +966,10 @@ class AtomicSearcher:
     async def search_for_rerank(
         self,
         query: str,
-        source_config_ids: List[str],
-        query_vector: Optional[List[float]] = None,
-        config: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        query_vector: list[float] | None = None,
+        config: Any | None = None,
+    ) -> dict[str, Any]:
         """
         原子事项检索（rerank 兼容接口）
 
@@ -997,16 +999,18 @@ class AtomicSearcher:
             if chunk_id in seen_chunk_ids:
                 continue
             seen_chunk_ids.add(chunk_id)
-            sections.append({
-                "chunk_id": chunk_id,
-                "source_id": chunk["source_id"],
-                "source_config_id": chunk["source_config_id"],
-                "heading": chunk["heading"],
-                "content": chunk["content"],
-                "rank": chunk.get("rank", i),
-                "score": item["score"],
-                "weight": item["score"],
-            })
+            sections.append(
+                {
+                    "chunk_id": chunk_id,
+                    "source_id": chunk["source_id"],
+                    "source_config_id": chunk["source_config_id"],
+                    "heading": chunk["heading"],
+                    "content": chunk["content"],
+                    "rank": chunk.get("rank", i),
+                    "score": item["score"],
+                    "weight": item["score"],
+                }
+            )
 
         # Native 补充：去重后不足 max_sections 时，用 query→chunk 填充
         target = atomic_config.max_sections
@@ -1039,9 +1043,9 @@ class AtomicSearcher:
     async def search_chunks(
         self,
         query: str,
-        source_config_ids: List[str],
-        config: Optional[AtomicConfig] = None,
-    ) -> Dict[str, Any]:
+        source_config_ids: list[str],
+        config: AtomicConfig | None = None,
+    ) -> dict[str, Any]:
         """
         Query→Chunk 直接向量检索
 
@@ -1064,25 +1068,27 @@ class AtomicSearcher:
 
         es_results = await self._search_store.search_chunks_by_vector(
             query_vector=query_vector,
-            k=config.max_sections*2,
+            k=config.max_sections * 2,
             source_config_ids=source_config_ids,
         )
 
         sections = []
         for result in es_results:
             score = result.get("_score", 0.0)
-            sections.append({
-                "chunk_id": result.get("chunk_id"),
-                "source_id": result.get("source_id"),
-                "source_config_id": result.get("source_config_id"),
-                "heading": result.get("heading"),
-                "content": result.get("content"),
-                "rank": result.get("rank"),
-                "score": score,
-                "weight": score,
-            })
+            sections.append(
+                {
+                    "chunk_id": result.get("chunk_id"),
+                    "source_id": result.get("source_id"),
+                    "source_config_id": result.get("source_config_id"),
+                    "heading": result.get("heading"),
+                    "content": result.get("content"),
+                    "rank": result.get("rank"),
+                    "score": score,
+                    "weight": score,
+                }
+            )
 
-        sections = sorted(sections, key=lambda x: x["score"], reverse=True)[:config.max_sections]
+        sections = sorted(sections, key=lambda x: x["score"], reverse=True)[: config.max_sections]
         total_time = time.perf_counter() - start_time
 
         logger.info(
