@@ -10,6 +10,8 @@
 
 **论文链接：** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
+https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
+
 文档与资源：[变更日志](CHANGELOG.md) | [v2.0.0 发布说明](docs/releases/v2.0.0.md) | [贡献指南](CONTRIBUTING.md) | [安全政策](SECURITY.md) | [支持渠道](SUPPORT.md)
 
 ## Benchmark 分数复现

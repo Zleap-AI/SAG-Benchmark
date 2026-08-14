@@ -10,6 +10,8 @@ English | [中文](README-CN.md)
 
 **Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
 
+https://github.com/user-attachments/assets/ac805e3c-ab52-4857-bef6-2865f3831b2f
+
 
 ## Benchmark Score Reproduction
 
