@@ -8,7 +8,7 @@
 
 [English](README.md) | 中文
 
-**论文链接：** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
+**论文链接：** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
 
 https://github.com/user-attachments/assets/a080ad1a-5c08-4213-acfa-a226e3c0f68a
 
