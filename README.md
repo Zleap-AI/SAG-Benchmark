@@ -8,7 +8,7 @@
 
 English | [中文](README-CN.md)
 
-**Paper:** [https://arxiv.org/abs/2608.12129](https://arxiv.org/abs/2608.12129)
+**Paper:** [https://arxiv.org/abs/2606.15971](https://arxiv.org/abs/2606.15971)
 
 ## Benchmark Score Reproduction
 
