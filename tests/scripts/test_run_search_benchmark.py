@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from pipeline.modules.search.sag2 import SAG2_EVENT_STATS_KEYS, SAG2_TIMING_STAGE_ORDER
 from pipeline.evaluation.utils.step_timing import compute_step_timings
+from pipeline.modules.search.sag2 import SAG2_EVENT_STATS_KEYS, SAG2_TIMING_STAGE_ORDER
 from scripts.run_search_benchmark import _emit_progress, _log_and_report_step_timings
 
 
@@ -91,8 +91,7 @@ async def test_progress_logs_core_metrics_before_ordered_supplementary_metrics()
     assert "supp_03_token_cum_total_sum" in tracker.supplementary
     assert tracker.supplementary["supp_04_token_batch_total_sum"] == 15.0
     assert not any(
-        key.startswith(("supp_03_event", "supp_04_event"))
-        for key in tracker.supplementary
+        key.startswith(("supp_03_event", "supp_04_event")) for key in tracker.supplementary
     )
 
 

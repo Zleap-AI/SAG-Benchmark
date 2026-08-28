@@ -26,7 +26,7 @@ logger = get_logger("scripts.run_search_only")
 
 def get_dataset_path_for_name(dataset_name: str) -> str:
     """根据数据集名称获取默认数据集路径"""
-    return str(project_root / "pipeline" / "evaluation" / "dataset" / f"{dataset_name}.json")
+    return str(project_root / "dataset" / f"{dataset_name}.json")
 
 
 async def main():
