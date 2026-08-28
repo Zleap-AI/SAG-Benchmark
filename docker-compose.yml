@@ -49,7 +49,7 @@ services:
       - sag2_network
 
   mlflow:
-    image: ghcr.nju.edu.cn/mlflow/mlflow:latest
+    image: ghcr.nju.edu.cn/mlflow/mlflow:v3.7.0
     container_name: sag2_mlflow
     environment:
       - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db

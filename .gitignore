@@ -90,22 +90,91 @@ pipeline/evaluation/recall_results/
 pipeline/evaluation/expand_results/
 evaluation/hotpotqa_evaluation/data/
 
+# ==================== Unified Judge artifacts (three-layer mirror) ====================
+/evaluation/
+
 # ==================== Generated test fixtures ====================
 tests/load/md/
 tests/extract/test_result.json
+
+# Web
+web/package-lock.json
+
+# Scripts
+start.sh
+run.sh
 
 # ==================== Local development tools ====================
 .codegraph/
 .claude/
 
-# ==================== Optional external projects and local worktrees ====================
-# External benchmark projects are maintained separately from this repository.
-external/
-# Local experimental worktree; not part of the source distribution.
-test/
+# ==================== External Projects ====================
+# External benchmark projects（hyperrag / hypergraphrag / lightrag / graphrag / hipporag2）：
+# 源码与配置文件纳入版本控制，仅忽略运行产物与下载数据集。
+# 规则参照各源项目仓库的 .gitignore：
+#   graphrag (microsoft/graphrag): caches/, output/lancedb, ragtest/
+#   hipporag2 (OSU-NLP-Group/HippoRAG): outputs/, data/, nohup_out/
+#   hypergraphrag (LHRLAB/HyperGraphRAG): datasets/, output*, evaluation/{contexts,datasets,expr,results}/
+#   hyperrag (iMoonLab/Hyper-RAG): caches/, datasets/, output*
+#   lightrag (HKUDS/LightRAG): inputs/, rag_storage/, examples/input|output/
+
+# 独立 venv
+external/*/.venv/
+
+# Caches / outputs（保留 .gitkeep 占位）
+external/*/caches/*
+!external/*/caches/.gitkeep
+external/*/outputs/*
+!external/*/outputs/.gitkeep
+external/*/output/
+external/*/llm_cache/
+
+# 方法目录中的下载数据集；公开基准数据统一放在仓库根 dataset/
+external/*/dataset/
+external/*/datasets/*
+
+# 仓库根 dataset/ 只保留 sample 与 test_hotpotqa；完整基准数据集体积大且
+# 含第三方版权文本，不从 git 分发，按 dataset/README.md 从 HippoRAG 2 数据发布下载。
+/dataset/*
+!/dataset/README.md
+!/dataset/sample.json
+!/dataset/sample_corpus.json
+!/dataset/test_hotpotqa.json
+!/dataset/test_hotpotqa_corpus.json
+
+# 各源项目运行产物目录
+external/*/data/
+external/*/inputs/
+external/*/rag_storage/
+external/*/nohup_out/
+external/hipporag2/nohup.out
+external/*/evaluation/contexts/
+external/*/evaluation/datasets/
+external/*/evaluation/expr/
+external/*/evaluation/results/
+external/lightrag/examples/input/
+external/lightrag/examples/output/
+
+# GraphRAG 引擎工作区在 caches/<ds>/ 下（settings.yaml + input/output/cache/logs），
+# 已由上面的 external/*/caches/* 规则覆盖。
+
+# 运行锁文件
+external/*/run.lock
+
+# Env files（已由全局 .env 规则覆盖，此处显式标注）
+external/**/.env
 
 # ==================== Historical local notes ====================
+internal_docs/
+/docs/internal/
 # Development-only plans and audits are intentionally not part of the
 # public source distribution.
 docs/archive/
 *.fix-plan.md
+
+# ==================== Local run artifacts ====================
+/document/
+/nohup.out
+
+# Local experimental worktree; not part of the source distribution.
+test/

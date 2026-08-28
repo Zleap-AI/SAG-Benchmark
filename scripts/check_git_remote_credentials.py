@@ -17,8 +17,7 @@ def has_http_userinfo(url: str) -> bool:
 def safe_remote_label(remote: str, url: str) -> str:
     parsed = urlsplit(url)
     return (
-        f"remote={remote} scheme={parsed.scheme or 'unknown'} "
-        f"host={parsed.hostname or 'unknown'}"
+        f"remote={remote} scheme={parsed.scheme or 'unknown'} host={parsed.hostname or 'unknown'}"
     )
 
 

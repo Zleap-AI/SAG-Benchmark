@@ -1,14 +1,14 @@
 [project]
 name = "sag-benchmark"
-version = "0.1.0"
-description = "数据流智能引擎 - AI驱动的数据处理与聚合检索"
+version = "2.0.0"
+description = "SAG benchmark reproduction: upload, retrieval, and evaluation on HotpotQA, 2WikiMultiHopQA, and MuSiQue"
 authors = [
     {name = "Zleap Team", email = "contact@zleap.ai"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
-keywords = ["ai", "nlp", "event-extraction", "knowledge-management", "rag"]
+keywords = ["rag", "retrieval", "benchmark", "knowledge-graph", "question-answering"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -65,8 +65,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black>=23.12.0",
-    "ruff>=0.1.9",
+    "ruff==0.15.12",
     "mypy>=1.7.0",
     "pre-commit>=3.6.0",
     "ipython>=8.18.0",
@@ -88,26 +87,30 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["pipeline"]
 
-[tool.black]
-line-length = 100
-target-version = ["py311"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+include = [
+    "pipeline/**/*.py",
+    "scripts/**/*.py",
+    "tests/**/*.py",
+    "external/*/reproduce/**/*.py",
+    "external/*/scripts/**/*.py",
+    "external/*/*_config.py",
+]
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".mypy_cache",
+    "build",
+    "dist",
+    "output",
+    "outputs",
+    "caches",
+]
 
 [tool.ruff.lint]
 select = [
@@ -120,29 +123,26 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",  # line too long (handled by Ruff formatter)
     "E402",  # module level import not at top of file（scripts 里 sys.path.insert 后 import 的合法模式）
     "E712",  # == True 比较（SQLAlchemy / ORM 过滤表达式必须用 ==，不能改 is）
     "E741",  # ambiguous variable name
     "B008",  # do not perform function calls in argument defaults
     "B901",  # return value in generator
-    "B904",  # raise from（项目内自定义异常体系不强制 from 链，避免大面积改动）
-    "B905",  # zip() without strict=（项目内 zip 均为已知等长序列，逐个加 strict 风险大于收益）
+    "B904",  # Custom exception boundaries intentionally omit chained internals.
+    "B905",  # Project zip() calls operate on validated equal-length sequences.
     "C901",  # too complex
-    "UP042", # class X(str, Enum) -> StrEnum（破坏性重构，影响序列化/Pydantic，暂不迁移）
+    "UP042", # Preserve str/Enum serialization behavior used by Pydantic models.
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-# 前向引用字符串注解 + 循环变量与 import 同名等 ruff 误报
-"pipeline/core/ai/factory.py" = ["F821"]
+# multi_vector.py 的 for 循环变量 field 遮蔽了 dataclasses 的 field import（真实遮蔽，非误报）
 "pipeline/modules/search/multi_vector.py" = ["F402"]
 # pipeline 基类/抽象方法采用空方法 + 子类覆盖的约定，不强制 @abstractmethod
 "pipeline/core/ai/base.py" = ["B027"]
-"pipeline/core/storage/repositories/base.py" = ["B024"]
 
 [tool.pytest.ini_options]
-# External projects are validated in their shared graph runtime. Keep the root
+# External projects are validated by independent lockfile CI jobs. Keep the root
 # default suite scoped to the pipeline's own tests and dependencies.
 testpaths = ["tests"]
 
@@ -167,19 +167,3 @@ module = [
     "tiktoken.*",
 ]
 ignore_missing_imports = true
-
-[tool.pylint.messages_control]
-disable = [
-    "logging-fstring-interpolation",  # 允许在日志中使用 f-string
-    "too-few-public-methods",         # 允许单方法类（如 EventExtractor, EventProcessor）
-    "broad-exception-caught",         # 允许捕获通用异常（批处理容错）
-    "no-member",                      # Pydantic Field(default_factory) 的误报
-]
-
-[tool.pylint.format]
-max-line-length = 100  # 与 black/ruff 保持一致
-
-[tool.pylint.typecheck]
-# 忽略 Pydantic 模型的动态属性
-generated-members = ["pydantic.*"]
-ignored-classes = ["pydantic.fields.FieldInfo"]

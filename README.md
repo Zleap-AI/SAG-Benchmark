@@ -232,9 +232,37 @@ uv run python scripts/init_database.py
 
 Run `scripts/init_elasticsearch.py` only when the active vector backend is Elasticsearch (`mysql_es` or `oceanbase_es`). It is not required for `oceanbase_full`. The `--fix-grants` option is only for local MySQL permission repair; do not use it for OceanBase profiles.
 
+**How `init_elasticsearch.py` resolves the embedding dimension**
+
+By default the script probes the configured embedding model directly to determine the actual vector dimension, then creates four physical indices with a dimension suffix (`source_chunks_4096`, `event_vectors_4096`, etc.). The result is cached in `.cache/embedding_dims.json` so subsequent runs skip the network call.
+
+```bash
+# Standard usage — auto-probes the embedding model from .env
+uv run python scripts/init_elasticsearch.py
+
+# Force a fresh probe, ignoring the cache
+uv run python scripts/init_elasticsearch.py --refresh-dim
+
+# Skip the probe entirely and use a known dimension
+uv run python scripts/init_elasticsearch.py --dim 4096
+```
+
+The script is idempotent: if an index already exists with a matching dimension it is skipped; if it exists with a mismatched dimension the script fails fast with a clear error rather than silently leaving a broken index. The legacy 1024-dimension indices (`source_chunks`, etc., without a suffix) are preserved untouched when `ES_INDEX_LEGACY_UNSUFFIXED=true` in `.env`.
+
+`run_upload.py` verifies that the required indices exist and have the correct dimension before writing any data. If the indices are missing or were auto-created by Elasticsearch with the wrong mapping, the upload exits immediately with an actionable error message.
+
 ### 4. Upload Datasets
 
-`run_upload.py` first converts `pipeline/evaluation/dataset/<dataset>.json` into a Markdown corpus, then writes structured rows and vectors through the configured storage facade. With `mysql_es`, data goes to MySQL plus Elasticsearch. With `oceanbase_full`, structured data and vectors are written into OceanBase. After upload, it generates:
+Before uploading, prepare the dataset files:
+
+- `test_hotpotqa` and `sample` are included in the repository.
+- For `hotpotqa`, `musique`, `2wikimultihopqa`, or `narrativeqa`, download the
+  corresponding `*.json` and `*_corpus.json` files from the
+  [HippoRAG 2 data release](https://huggingface.co/datasets/osunlp/HippoRAG_2/tree/main)
+  and place them in `dataset/`. See [dataset/README.md](dataset/README.md) for
+  the complete file layout, provenance, licenses, and citation requirements.
+
+`run_upload.py` first converts `dataset/<dataset>.json` into a Markdown corpus, then writes structured rows and vectors through the configured storage facade. With `mysql_es`, data goes to MySQL plus Elasticsearch. With `oceanbase_full`, structured data and vectors are written into OceanBase. After upload, it generates:
 
 ```text
 pipeline/evaluation/source/SAG/<LLM_MODEL>/<dataset>/<timestamp>/source_info.json
@@ -272,93 +300,87 @@ Upload has three supported modes:
 Choose one mode per upload. The default compact mode is the recommended path for SAG2 and for experiments that compare SAG2 with vector or BM25. Use `--no-extraction` only for a vector-only run when SAG is not part of the experiment; SAG2 requires extracted events, so do not use `--no-extraction` if you plan to run SAG2 as well.
 
 
-### 5. Run Paper Reproduction Benchmarks
+### 5. Run Search
 
-Quick validation:
-
-```bash
-uv run python scripts/run_search_benchmark.py \
-  --dataset-name test_hotpotqa \
-  --strategy sag2 \
-  --top-k 10 \
-  --k-values "1,2,5,10" \
-  --max-concurrency 5 \
-  --limit 10
-```
-
-Main datasets:
+#### 5.1 Minimal Command
 
 ```bash
-uv run python scripts/run_search_benchmark.py \
-  --dataset-name hotpotqa \
-  --strategy sag2 \
-  --top-k 10 \
-  --k-values "1,2,5,10" \
-  --max-concurrency 10 \
-  --bench-size 20
-
-uv run python scripts/run_search_benchmark.py \
-  --dataset-name 2wikimultihopqa \
-  --strategy sag2 \
-  --top-k 10 \
-  --k-values "1,2,5,10" \
-  --max-concurrency 10 \
-  --bench-size 20
-
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy sag2 \
-  --top-k 10 \
-  --k-values "1,2,5,10" \
-  --max-concurrency 10 \
-  --bench-size 20
+  --strategy sag2
 ```
 
-To run the SAG2 event-candidate-pool variant, enable the scope and set its pool size (`k_pool`) with `--sag2-event-top-k`:
+The omitted options use their built-in defaults: `top-k=10`, `k-values=1,2,5,10`, `max-concurrency=10`, and `bench-size=5`. These defaults are the paper configuration, so this single command is the paper's SAG2 retrieval reproduction path. Replace `musique` with `hotpotqa` or `2wikimultihopqa` for the other main datasets.
+
+#### 5.2 Common Parameter Overrides
+
+Append these to the 5.1 command as needed:
+
+```bash
+# Adjust concurrency (default 10)
+--max-concurrency 20
+
+# Run only the first N questions (unlimited by default)
+--limit 10
+
+# Pin a specific uploaded source (by default the latest upload is picked; the ID comes from the source_info.json generated in Step 4)
+--source-config-id <source_config_id>
+```
+
+See [docs/search.md](docs/search.md) for the full argument reference.
+
+#### 5.3 Other Strategies and Variants
+
+The commands below list only parameters that differ from the defaults; everything else matches 5.1.
+
+##### SAG2 Scope (Event Candidate Pool)
+
+Enable the candidate pool and set its size `k_pool` with `--sag2-event-top-k`. This variant is recorded as a separate search configuration at the same experiment level as the vector and atomic baselines:
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
   --strategy sag2 \
   --sag2-scope \
-  --sag2-event-top-k 500 \
-  --top-k 10
+  --sag2-event-top-k 500
 ```
 
-The candidate-pool variant is recorded as a separate search configuration at the same experiment level as the vector and atomic baselines. BM25 is also a first-class strategy:
+##### Atomic (Triple indexing)
+
+Upload in atomic mode first, then search with the atomic strategy:
+
+```bash
+uv run python scripts/run_upload.py --dataset musique --atomic
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy atomic
+```
+
+##### BM25
+
+Elasticsearch BM25 keyword-search baseline, no extra options:
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy bm25 \
-  --top-k 10
+  --strategy bm25
 ```
 
-To reproduce the bge-large-en-v1.5 pure-vector baseline, use `--no-extraction` during upload only when Vector is the sole method being run:
+##### Vector
 
-```bash
-uv run python scripts/run_upload.py --dataset musique --no-extraction
-uv run python scripts/run_search_benchmark.py \
-  --dataset-name musique \
-  --strategy vector \
-  --top-k 10
-```
-
-If the experiment compares Vector with SAG2, upload with the default Compact mode instead so the same source contains the events required by SAG2.
-
-To pin a specific uploaded source, pass the `source_config_id` generated during upload:
+Pure vector retrieval runs directly after the default Compact upload:
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy sag2 \
-  --source-config-id musique-20260512_213908 \
-  --top-k 10 \
-  --k-values "1,2,5,10" \
-  --max-concurrency 10
+  --strategy vector
 ```
 
-Enable MLflow:
+If the experiment compares Vector with SAG2, upload with the default Compact mode instead so the same source contains the events required by SAG2. When Vector is the sole method being run, you may upload with `--no-extraction` to skip event extraction, but that source can no longer run SAG2 and would need a re-upload; see [docs/search.md](docs/search.md) for the trade-off.
+
+#### 5.4 Tool Integrations
+
+Enable MLflow experiment tracking:
 
 ```bash
 uv run python scripts/run_search_benchmark.py \
@@ -368,6 +390,8 @@ uv run python scripts/run_search_benchmark.py \
   --mlflow-url http://localhost:5000 \
   --mlflow-experiment sag-benchmark
 ```
+
+#### Output
 
 Default output directory:
 
@@ -390,13 +414,94 @@ Main output files:
 ```bash
 uv run python scripts/run_qa_benchmark.py \
   --dataset-name musique \
-  --input output/musique/sag2/20260730_172839/search_results.json \
+  --input output/musique/sag2/YOUR_SEARCH_RUN_ID/search_results.json \
   --qa-top-k 5
 ```
 
 `--qa-top-k` controls how many retrieved passages are placed in each QA prompt. The main output is `qa_results.json`; use `--output-dir` to choose a different output directory, or `--max-concurrency` and `--limit` to control runtime and scope.
 
-### 7. Reproduce SAG Ablation Results
+### 7. Run External Methods
+
+The external baselines are independent integrations. Their setup, indexing, retrieval, QA, output layout, and method-specific options are documented in their own READMEs. Run the commands from the relevant project directory and use the repository-root .env as described there.
+
+| Method | Usage guide |
+|---|---|
+| Microsoft GraphRAG | [external/graphrag/README.md](external/graphrag/README.md) |
+| HippoRAG 2 | [external/hipporag2/README.md](external/hipporag2/README.md) |
+| HyperGraphRAG | [external/hypergraphrag/README.md](external/hypergraphrag/README.md) |
+| Hyper-RAG | [external/hyperrag/README.md](external/hyperrag/README.md) |
+| LightRAG | [external/lightrag/README.md](external/lightrag/README.md) |
+
+See [external/README.md](external/README.md) for the integrated-method overview. After a method has produced its native results, use the Judge workflow below to convert and evaluate them in the unified artifact layout.
+
+### 8. Run LLM Judge
+
+run_llm_judge.py converts a method's latest native output into the shared prediction format and evaluates generation, retrieval, and optionally indexing metrics. At the end of each run it prints every requested metric value and its valid-sample count.
+
+Run the complete convert + generation + retrieval flow:
+
+```bash
+uv run --frozen --env-file .env python scripts/run_llm_judge.py \
+  --project hypergraphrag \
+  --dataset musique
+```
+
+See [docs/judge.md](docs/judge.md) for the full subcommand reference, argument table, metric routing, and output layout.
+
+To run evaluation separately, convert the native output first, then select the metrics needed. The `evaluate` subcommand runs generation and/or retrieval evaluation in a single Judge run; metrics are routed to the correct phase by name:
+
+```bash
+uv run --frozen --env-file .env python scripts/run_llm_judge.py convert \
+  --project hypergraphrag \
+  --datasets musique
+
+uv run --frozen --env-file .env python scripts/run_llm_judge.py evaluate \
+  --project hypergraphrag \
+  --dataset musique \
+  --metrics context_relevancy,evidence_recall
+```
+
+For core SAG, use `--project sag`. It is fixed to the `sag2` strategy and automatically selects the latest **complete** run in `output/<dataset>/sag2/<run_id>/`: a run must contain both `search_results.json` and `qa_*/qa_results.json`. Run the QA benchmark first, then run:
+
+```bash
+uv run --frozen --env-file .env python scripts/run_llm_judge.py \
+  --project sag \
+  --dataset musique
+```
+
+Generation metrics are answer_correctness, coverage_score, qa_em, qa_f1, and rouge_score; retrieval metrics are context_relevancy and evidence_recall. `--metrics` accepts any mix of these across both phases and routes each metric to its phase automatically; when omitted, all generation and retrieval metrics run by default (evidence_recall is dropped automatically for datasets without evidence capability). Adding the `indexing` token to `--metrics` runs graph indexing metrics in the same Judge run (requires `--framework` and `--base-path`); without it, indexing is skipped by default.
+
+The `indexing` subcommand also exists on its own to backfill graph indexing metrics into an existing Judge run without re-running generation or retrieval. HyperGraphRAG graphs are graphml; the supported `--framework` values are listed in [docs/judge.md](docs/judge.md):
+
+```bash
+uv run --frozen --env-file .env python scripts/run_llm_judge.py indexing \
+  --project hypergraphrag \
+  --dataset musique \
+  --framework graphml \
+  --base-path /path/to/graph/output \
+  --resume-run-id YOUR_JUDGE_RUN_ID
+```
+
+#### Recover failed Judge samples
+
+Each result file records per-sample status, error type, and error message in its `detailed` field. First correct the underlying cause (for example, an API endpoint or model configuration issue), then resume the same Judge run with `--retry-failed`. Successful samples and already valid metric results are retained; only previously failed samples are requested again.
+
+```bash
+# Retry failed samples only (retrieval metrics are selected by name).
+# Use the Judge run ID printed by the original command.
+uv run --frozen --env-file .env python scripts/run_llm_judge.py evaluate \
+  --project hypergraphrag \
+  --dataset musique \
+  --metrics context_relevancy,evidence_recall \
+  --resume-run-id YOUR_JUDGE_RUN_ID \
+  --retry-failed
+```
+
+Use `evaluate` instead of the retired `generation`/`retrieval` subcommands (generation-only, retrieval-only, and indexing selections are all expressed via `--metrics`). `--retry-failed` requires `--resume-run-id` and cannot be combined with `--force` or `--force-metrics`; `--top-k` caps the number of evaluated rows, it is not the retrieval k. Resume is intentionally unavailable in the no-subcommand auto mode. See [docs/judge.md](docs/judge.md) for the full argument constraints.
+
+`--top-k` is a limit on the first N prediction rows evaluated; it does **not** change the retrieval result k. `--context-top-k` controls how many already-saved contexts each Judge metric sees. Both are part of the resume contract: retry with the same values used by the original run. To change either value, create a new Judge run rather than combining the change with `--retry-failed`.
+
+### 9. Reproduce SAG Ablation Results
 
 The following experiments correspond to Table 6 of the paper. Run them on MuSiQue with the same dataset, source configuration, embedding model, and `top-k` values, changing only the indicated component.
 
@@ -483,7 +588,12 @@ The default row uses hyperedge indexing, one-hop expansion (`L=1`), and Qwen3.6-
 | `test_hotpotqa` | Small HotpotQA test set |
 | `sample` | Tiny sample set for pipeline debugging |
 
-Dataset files are under `pipeline/evaluation/dataset/`.
+Dataset files are under `dataset/`. The repository ships only `sample` and
+`test_hotpotqa`; download the full benchmarks (`hotpotqa`, `musique`,
+`2wikimultihopqa`, `narrativeqa`) from the
+[HippoRAG 2 data release](https://huggingface.co/datasets/osunlp/HippoRAG_2/tree/main)
+and place them in `dataset/` — see [dataset/README.md](dataset/README.md) for
+provenance and license notes.
 
 ## Retrieval Strategies
 
@@ -521,11 +631,11 @@ uv run python scripts/run_benchmark.py \
 ```text
 SAG-Benchmark/
 ├── assets/                         # README figures and logo
+├── dataset/                        # Evaluation datasets
 ├── pipeline/
 │   ├── core/                       # Config, AI clients, storage layer
 │   ├── db/                         # SQLAlchemy ORM
 │   ├── evaluation/
-│   │   ├── dataset/                # Evaluation datasets
 │   │   ├── metrics/                # Recall and related metrics
 │   │   └── utils/                  # Data loading, MLflow, token tracking
 │   ├── modules/

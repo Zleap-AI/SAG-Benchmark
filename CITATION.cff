@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use SAG Benchmark, please cite the associated paper and software repository."
+title: "SAG Benchmark"
+type: software
+version: "2.0.0"
+authors:
+  - name: "Zleap Team"
+repository-code: "https://github.com/Zleap-AI/SAG-Benchmark"
+url: "https://github.com/Zleap-AI/SAG-Benchmark"
+identifiers:
+  - type: arxiv
+    value: "2608.12129"

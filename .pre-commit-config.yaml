@@ -1,4 +1,4 @@
-# 见 pyproject.toml 的 [tool.ruff] / [tool.black] / [tool.mypy] 配置
+# 见 pyproject.toml 的 [tool.ruff] / [tool.mypy] 配置
 # 本地首次使用：pre-commit install（安装 git hook），随后每次 commit 自动执行
 # 手动全量跑一次：pre-commit run --all-files
 
@@ -15,15 +15,11 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.12
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
+        files: ^(pipeline|scripts|tests|external/[^/]+/reproduce)/.*\.py$
       - id: ruff-format
-
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
-    hooks:
-      - id: black
-        language_version: python3.11
+        files: ^(pipeline|scripts|tests|external/[^/]+/reproduce)/.*\.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
