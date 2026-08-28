@@ -373,7 +373,3 @@ class PipelineEngine:
 
     def get_result(self) -> TaskResult:
         return self.result
-
-
-# Backward-compatible import name. New code should use ``PipelineEngine``.
-pipelineEngine = PipelineEngine

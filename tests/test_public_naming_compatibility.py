@@ -1,12 +1,30 @@
-"""Public naming migrations keep the historical import names working."""
+"""Canonical public naming stays importable; retired aliases stay retired."""
 
-from pipeline import PipelineEngine, PipelineError, pipelineEngine, pipelineError
-from pipeline.models import PipelineBaseModel, pipelineBaseModel
-from pipeline.storage.providers.database import MySQLDatabaseStore, MySqlDatabaseStore
+import pytest
 
 
-def test_canonical_public_names_and_compatibility_aliases():
-    assert pipelineEngine is PipelineEngine
-    assert pipelineError is PipelineError
-    assert pipelineBaseModel is PipelineBaseModel
-    assert MySqlDatabaseStore is MySQLDatabaseStore
+def test_canonical_public_names_importable():
+    from pipeline import PipelineEngine, PipelineError
+    from pipeline.models import PipelineBaseModel
+    from pipeline.storage.providers.database import MySQLDatabaseStore
+
+    assert PipelineEngine is not None
+    assert PipelineError is not None
+    assert PipelineBaseModel is not None
+    assert MySQLDatabaseStore is not None
+
+
+@pytest.mark.parametrize(
+    "module_name, attr",
+    [
+        ("pipeline", "pipelineError"),
+        ("pipeline", "pipelineEngine"),
+        ("pipeline.models", "pipelineBaseModel"),
+        ("pipeline.storage.providers.database", "MySqlDatabaseStore"),
+    ],
+)
+def test_retired_camelcase_aliases_no_longer_exist(module_name, attr):
+    import importlib
+
+    module = importlib.import_module(module_name)
+    assert not hasattr(module, attr)

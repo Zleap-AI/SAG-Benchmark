@@ -82,7 +82,6 @@ class SAG2RerankStage:
             retry_count=retry_count,
         )
 
-
     async def rank_events(
         self,
         query: str,
@@ -109,10 +108,17 @@ class SAG2RerankStage:
         """
         strategy = config.sag2_rerank.strategy
         if strategy == "llm_rank":
-            events, ids, scores, failed, event_map, display_ids, reason, retries = (
-                await self._llm_rank_events(
-                    query, event_ids, event_scores, source_config_ids, config, event_details
-                )
+            (
+                events,
+                ids,
+                scores,
+                failed,
+                event_map,
+                display_ids,
+                reason,
+                retries,
+            ) = await self._llm_rank_events(
+                query, event_ids, event_scores, source_config_ids, config, event_details
             )
             return (
                 events,
@@ -136,7 +142,6 @@ class SAG2RerankStage:
         display_ids = [event_id for event_id in ids if event_id in scores]
         return events, ids, scores, failed, "rerank", event_map, display_ids, None, 0
 
-
     async def _load_rank_candidate_events(
         self,
         event_ids: list[str],
@@ -148,7 +153,11 @@ class SAG2RerankStage:
         if not event_ids:
             return [], {}
         if event_details is not None:
-            event_map = {event_id: event_details[event_id] for event_id in event_ids if event_id in event_details}
+            event_map = {
+                event_id: event_details[event_id]
+                for event_id in event_ids
+                if event_id in event_details
+            }
             return [event_id for event_id in event_ids if event_id in event_map], event_map
         event_docs = await self.runtime.get_events_by_ids(
             event_ids=event_ids,
@@ -162,7 +171,6 @@ class SAG2RerankStage:
         ordered = [e for e in event_ids if e in event_map]
         logger.info("[SAG2] 排序候选详情: input=%d, loaded=%d", len(event_ids), len(ordered))
         return ordered, event_map
-
 
     async def rerank_events(
         self,
@@ -185,8 +193,7 @@ class SAG2RerankStage:
             return [], [], {}, False, event_map
 
         documents = [
-            {"id": e, "text": event_text_for_rerank(event_map[e], e)}
-            for e in ordered_event_ids
+            {"id": e, "text": event_text_for_rerank(event_map[e], e)} for e in ordered_event_ids
         ]
         rerank_top_k = min(
             config.sag2_rerank.rerank_top_k,
@@ -270,7 +277,6 @@ class SAG2RerankStage:
             len(rerank_event_ids),
         )
         return rerank_events, rerank_event_ids, rerank_scores, False, event_map
-
 
     async def _llm_rank_events(
         self,
@@ -424,7 +430,6 @@ class SAG2RerankStage:
             None,
             int(getattr(llm_client, "_last_call_timing", {}).get("retries", 0)),
         )
-
 
     async def _rrf_rank_events(
         self,

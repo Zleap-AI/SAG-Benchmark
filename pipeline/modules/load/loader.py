@@ -317,7 +317,7 @@ class BaseLoader(ABC):
             "embedding_batches": (len(chunks) + embedding_batch_size - 1) // embedding_batch_size,
             "vector_batches": (len(documents) + es_bulk_size - 1) // es_bulk_size,
             "total_time": f"{total_time:.2f}s",
-            "avg_time": f"{total_time/len(chunks):.3f}s/chunk",
+            "avg_time": f"{total_time / len(chunks):.3f}s/chunk",
         }
 
     async def _retry_chunk_vector_upserts(

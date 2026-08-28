@@ -18,7 +18,6 @@ class EventVectorRepository(BaseRepository):
     """事件向量 Repository"""
 
     BASE_INDEX_NAME = BASE_INDEX_EVENT_VECTORS
-    INDEX_NAME = BASE_INDEX_EVENT_VECTORS
 
     async def index_event(
         self,

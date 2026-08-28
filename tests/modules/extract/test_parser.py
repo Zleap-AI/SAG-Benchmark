@@ -3,8 +3,6 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from pipeline.modules.extract.config import ExtractConfig, ExtractPromptStrategy
 from pipeline.modules.extract.parser import ParseContext, ResultParser
 
@@ -29,7 +27,7 @@ def _make_mock_items(count=3):
     for i in range(count):
         item = MagicMock()
         item.id = str(uuid.uuid4())
-        item.content = f"content-{i+1}"
+        item.content = f"content-{i + 1}"
         items.append(item)
     return items
 

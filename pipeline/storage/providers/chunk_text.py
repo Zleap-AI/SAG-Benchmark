@@ -1,9 +1,11 @@
 """Source-chunk keyword-search providers."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pipeline.storage.backends.elasticsearch.client import close_es_client, get_es_client
-from pipeline.storage.backends.elasticsearch.repositories.source_chunk_repository import SourceChunkRepository
+from pipeline.storage.backends.elasticsearch.repositories.source_chunk_repository import (
+    SourceChunkRepository,
+)
 
 
 class ElasticsearchChunkTextSearchStore:
@@ -16,7 +18,7 @@ class ElasticsearchChunkTextSearchStore:
     backend_name = "elasticsearch"
 
     def __init__(self) -> None:
-        self._repository: Optional[SourceChunkRepository] = None
+        self._repository: SourceChunkRepository | None = None
 
     def _get_repository(self) -> SourceChunkRepository:
         if self._repository is None:
@@ -27,9 +29,9 @@ class ElasticsearchChunkTextSearchStore:
         self,
         *,
         query: str,
-        source_config_ids: Optional[List[str]] = None,
+        source_config_ids: list[str] | None = None,
         size: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Delegate to the existing ES repository without changing scoring."""
         return await self._get_repository().search_by_text(
             query=query,

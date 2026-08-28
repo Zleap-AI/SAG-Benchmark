@@ -72,9 +72,7 @@ class SAG2RecallStage:
         t0 = time.perf_counter()
         processor = await self.runtime.get_processor()
         query_vector = await processor.generate_embedding(effective_query)
-        self.timing.record_timed_stage(
-            timings, retry_wasted_by_stage, "query_embedding", t0
-        )
+        self.timing.record_timed_stage(timings, retry_wasted_by_stage, "query_embedding", t0)
 
         t0 = time.perf_counter()
         scope = None
@@ -90,9 +88,7 @@ class SAG2RecallStage:
                 include_event_content=config.sag2_scope.include_event_content,
             )
         if scope is not None:
-            self.timing.record_timed_stage(
-                timings, retry_wasted_by_stage, "candidate_pool", t0
-            )
+            self.timing.record_timed_stage(timings, retry_wasted_by_stage, "candidate_pool", t0)
             logger.info("[SAG2] candidate scope enabled: %s", scope.stats())
 
         t0 = time.perf_counter()
@@ -137,21 +133,25 @@ class SAG2RecallStage:
 
         t0 = time.perf_counter()
         if scope is not None:
-            entity_events, entity_event_ids, entity_event_docs = (
-                await self._filter_entity_events_by_similarity_in_scope(
-                    entity_event_ids_pre, entity_events, scope, config
-                )
+            (
+                entity_events,
+                entity_event_ids,
+                entity_event_docs,
+            ) = await self._filter_entity_events_by_similarity_in_scope(
+                entity_event_ids_pre, entity_events, scope, config
             )
         else:
-            entity_events, entity_event_ids, entity_event_docs = (
-                await self._filter_entity_events_by_similarity(
-                    event_ids=entity_event_ids_pre,
-                    entity_events=entity_events,
-                    query_vector=query_vector,
-                    source_config_ids=source_config_ids,
-                    config=config,
-                    score_cache=event_score_cache,
-                )
+            (
+                entity_events,
+                entity_event_ids,
+                entity_event_docs,
+            ) = await self._filter_entity_events_by_similarity(
+                event_ids=entity_event_ids_pre,
+                entity_events=entity_events,
+                query_vector=query_vector,
+                source_config_ids=source_config_ids,
+                config=config,
+                score_cache=event_score_cache,
             )
         self.timing.record_timed_stage(
             timings, retry_wasted_by_stage, "event_similarity_filter", t0
@@ -180,9 +180,7 @@ class SAG2RecallStage:
             entity_events=entity_events,
             event_scores=event_scores,
         )
-        self.timing.record_timed_stage(
-            timings, retry_wasted_by_stage, "merge_routes", t0
-        )
+        self.timing.record_timed_stage(timings, retry_wasted_by_stage, "merge_routes", t0)
 
         return SAG2RecallResult(
             rewritten_query=rewritten_query,
@@ -200,7 +198,6 @@ class SAG2RecallStage:
             event_scores=event_scores,
             initial_route_stats=initial_route_stats,
         )
-
 
     async def _retrieve_entity_candidates(
         self,
@@ -229,15 +226,12 @@ class SAG2RecallStage:
         )
         return result
 
-
     async def _recall_query_to_event_in_scope(
         self, scope: SAG2CandidateSubgraph, config: SAGConfig
     ) -> tuple[list[dict[str, Any]], dict[str, float]]:
         threshold = config.sag2_recall.score_threshold
         score_cache = {
-            event_id: score
-            for event_id, score in scope.event_scores.items()
-            if score >= threshold
+            event_id: score for event_id, score in scope.event_scores.items() if score >= threshold
         }
         events = [
             event
@@ -245,7 +239,6 @@ class SAG2RecallStage:
             if event["event_id"] in score_cache
         ]
         return events, score_cache
-
 
     async def _recall_entity_event_candidates_in_scope(
         self,
@@ -291,7 +284,6 @@ class SAG2RecallStage:
         )
         return entity_events, event_ids, query_entity_ids
 
-
     async def _filter_entity_events_by_similarity_in_scope(
         self,
         event_ids: list[str],
@@ -315,7 +307,6 @@ class SAG2RecallStage:
             for event_id in kept_ids
         ]
         return filtered, kept_ids, docs
-
 
     async def _recall_query_to_event(
         self,
@@ -363,7 +354,6 @@ class SAG2RecallStage:
             len(score_cache),
         )
         return results, score_cache
-
 
     async def _recall_entity_event_candidates(
         self,
@@ -420,7 +410,6 @@ class SAG2RecallStage:
         )
         return entity_events, event_ids, query_entity_ids
 
-
     async def events_from_entities(
         self,
         entity_ids: list[str],
@@ -444,7 +433,6 @@ class SAG2RecallStage:
             len(event_ids),
         )
         return event_to_entity_ids, event_ids
-
 
     async def _filter_entity_events_by_similarity(
         self,
@@ -515,7 +503,6 @@ class SAG2RecallStage:
             len(filtered_event_ids),
         )
         return filtered_entity_events, filtered_event_ids, filtered_events
-
 
     async def _rewrite_query_and_extract_entities(
         self,

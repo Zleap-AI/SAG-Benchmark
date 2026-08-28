@@ -13,16 +13,28 @@ from typing import Any, cast
 from openai import (
     APIConnectionError,
     APIError,
+    APIStatusError,
     APITimeoutError,
     AsyncOpenAI,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    PermissionDeniedError,
     RateLimitError,
+    UnprocessableEntityError,
 )
 from openai.types.chat import ChatCompletionMessageParam
 
 from pipeline.core.ai.base import BaseLLMClient
 from pipeline.core.ai.models import LLMMessage, LLMProvider, LLMResponse, LLMUsage, ModelConfig
 from pipeline.core.config.settings import get_settings
-from pipeline.exceptions import LLMError, LLMRateLimitError, LLMTimeoutError
+from pipeline.exceptions import (
+    LLMError,
+    LLMRateLimitError,
+    LLMRequestError,
+    LLMTimeoutError,
+    LLMTransientError,
+)
 from pipeline.utils import get_logger
 
 logger = get_logger("ai.openai")
@@ -68,24 +80,37 @@ class OpenAIClient(BaseLLMClient):
 
         return headers
 
+    def _build_thinking_extra_body(self) -> dict[str, Any]:
+        """按端点构造关闭思维链的 extra_body(与 hipporag2 openai_gpt.py 对齐)。
+
+        两种端点的思考模式传参方式不同:
+          - 302ai / 网关代理:认顶层 enable_thinking
+          - 本地 vLLM(OpenAI 兼容):只认 chat_template_kwargs.enable_thinking
+        同时下发二者会让 302.ai 网关返回 400「Parameter error」(qwen3.7-plus 已
+        复现)。enable_thinking=True(保留思考)时不传任何关闭参数。
+        """
+        if self.config.enable_thinking:
+            return {}
+        base_url = (self.config.base_url or "").lower()
+        if "302ai" in base_url or "gpt.302.ai" in base_url:
+            return {"enable_thinking": False}
+        return {"chat_template_kwargs": {"enable_thinking": False}}
+
     def _build_extra_body(self) -> dict[str, Any]:
         """
         构建 chat.completions.create 的 extra_body。
 
-        extra_body 用于透传 OpenAI 标准之外、但推理后端（vLLM/SGLang 等）支持的参数：
-        - enable_thinking：思考模式开关（双路径 — 顶层给 302.ai，chat_template_kwargs 给 vLLM）
-        - top_k / min_p / repetition_penalty：扩展采样参数（仅当非默认值时才下发，
-          避免向不支持的后端发送冗余字段导致报错；OpenAI 官方会忽略这些键）
+        extra_body 用于透传 OpenAI 标准之外、但推理后端(vLLM/SGLang 等)支持的参数：
+        - enable_thinking：思考模式开关(按端点分派，见 _build_thinking_extra_body)
+        - top_k / min_p / repetition_penalty：扩展采样参数(仅当非默认值时才下发，
+          避免向不支持的后端发送冗余字段导致报错；OpenAI 官方会忽略这些键)
 
         Returns:
             extra_body 字典
         """
-        extra_body: dict[str, Any] = {
-            "enable_thinking": self.config.enable_thinking,
-            "chat_template_kwargs": {"enable_thinking": self.config.enable_thinking},
-        }
+        extra_body: dict[str, Any] = self._build_thinking_extra_body()
 
-        # 扩展采样参数：默认值（top_k=-1 / min_p=0.0 / repetition_penalty=1.0）表示关闭，
+        # 扩展采样参数：默认值(top_k=-1 / min_p=0.0 / repetition_penalty=1.0)表示关闭，
         # 不下发，保持对其他后端的兼容性。
         if self.config.top_k != -1:
             extra_body["top_k"] = self.config.top_k
@@ -128,7 +153,7 @@ class OpenAIClient(BaseLLMClient):
                 "🤖 调用 LLM - 模型: %s, base_url: %s, temperature: %.2f, max_tokens: %s, timeout: %s, enable_think: %s",
                 self.config.model,
                 self.config.base_url,
-                temperature or self.config.temperature,
+                self.config.temperature if temperature is None else temperature,
                 max_tokens or self.config.max_tokens or "未设置",
                 self.config.timeout,
                 self.config.enable_thinking,
@@ -141,16 +166,40 @@ class OpenAIClient(BaseLLMClient):
                 sum(len(m.content) for m in messages),
             )
 
+            # verbose 模式：打印完整 prompt
+            from pipeline.utils.llm_tracking import is_llm_verbose
+
+            if is_llm_verbose():
+                logger.info("=" * 70)
+                logger.info("🔍 [VERBOSE] 完整 LLM 输入 Prompt")
+                logger.info("=" * 70)
+                for i, msg in enumerate(messages):
+                    logger.info(
+                        "--- 消息 [%d/%d] role=%s ---\n%s",
+                        i + 1,
+                        len(messages),
+                        msg.role.value,
+                        msg.content,
+                    )
+                logger.info("=" * 70)
+
             # 调用API（使用 cast 显式类型转换）
+            # max_tokens 为 None 表示不限制输出（对齐 GraphRAG-Benchmark 留空行为），
+            # 此时不传该参数给 API，让其使用模型默认输出上限。
+            effective_max_tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+            request_kwargs: dict[str, Any] = {
+                "model": self.config.model,
+                "messages": cast(Iterable[ChatCompletionMessageParam], api_messages),
+                "temperature": self.config.temperature if temperature is None else temperature,
+                "top_p": self.config.top_p,
+                "frequency_penalty": self.config.frequency_penalty,
+                "presence_penalty": self.config.presence_penalty,
+                "extra_body": self._build_extra_body(),
+            }
+            if effective_max_tokens is not None:
+                request_kwargs["max_tokens"] = effective_max_tokens
             response = await self.client.chat.completions.create(
-                model=self.config.model,
-                messages=cast(Iterable[ChatCompletionMessageParam], api_messages),
-                temperature=temperature or self.config.temperature,
-                max_tokens=max_tokens or self.config.max_tokens,  # 从配置读取，不硬编码
-                top_p=self.config.top_p,
-                frequency_penalty=self.config.frequency_penalty,
-                presence_penalty=self.config.presence_penalty,
-                extra_body=self._build_extra_body(),
+                **request_kwargs,
                 **kwargs,
             )
 
@@ -170,19 +219,38 @@ class OpenAIClient(BaseLLMClient):
                 reasoning,
                 choice.finish_reason,
             )
-            #  添加总 token 数
-            logger.info(
-                f"Token usage | prompt: {usage.prompt_tokens}, "
-                f"completion: {usage.completion_tokens}, "
-                f"total: {usage.prompt_tokens + usage.completion_tokens}"
-            )
 
+            # verbose 模式：打印完整输出
+            if is_llm_verbose():
+                logger.info("=" * 70)
+                logger.info("🔍 [VERBOSE] 完整 LLM 输出 Response")
+                logger.info("=" * 70)
+                logger.info("Content:\n%s", content or "(empty)")
+                if reasoning:
+                    logger.info("--- reasoning_content ---\n%s", reasoning)
+                logger.info(
+                    "finish_reason=%s | model=%s | usage(prompt=%s,completion=%s,total=%s)",
+                    choice.finish_reason,
+                    response.model,
+                    usage.prompt_tokens if usage else "?",
+                    usage.completion_tokens if usage else "?",
+                    usage.total_tokens if usage else "?",
+                )
+                logger.info("=" * 70)
             llm_usage = LLMUsage(
                 prompt_tokens=usage.prompt_tokens if usage else 0,
                 completion_tokens=usage.completion_tokens if usage else 0,
                 total_tokens=usage.total_tokens if usage else 0,
             )
             await self._record_usage(llm_usage)
+
+            # 添加总 token 数（usage 可能为 None，vLLM/中转代理不保证返回 usage）
+            logger.info(
+                "Token usage | prompt: %s, completion: %s, total: %s",
+                llm_usage.prompt_tokens,
+                llm_usage.completion_tokens,
+                llm_usage.total_tokens,
+            )
 
             return LLMResponse(
                 content=content or "",
@@ -207,6 +275,32 @@ class OpenAIClient(BaseLLMClient):
                 e,
             )
             raise LLMRateLimitError(f"OpenAI速率限制: {e}") from e
+        except (
+            BadRequestError,
+            AuthenticationError,
+            PermissionDeniedError,
+            NotFoundError,
+            UnprocessableEntityError,
+        ) as e:
+            logger.error("❌ OpenAI不可恢复请求错误 - 模型: %s, 错误: %s", self.config.model, e)
+            raise LLMRequestError(f"OpenAI请求参数或配置错误: {e}") from e
+        except APIStatusError as e:
+            status_code = getattr(e, "status_code", None)
+            if status_code is not None and (status_code >= 500 or status_code in {408, 409}):
+                logger.error(
+                    "❌ OpenAI瞬态服务错误 - 模型: %s, 状态码: %s, 错误: %s",
+                    self.config.model,
+                    status_code,
+                    e,
+                )
+                raise LLMTransientError(f"OpenAI瞬态服务错误 ({status_code}): {e}") from e
+            logger.error(
+                "❌ OpenAI不可恢复状态错误 - 模型: %s, 状态码: %s, 错误: %s",
+                self.config.model,
+                status_code,
+                e,
+            )
+            raise LLMRequestError(f"OpenAI请求被拒绝 ({status_code}): {e}") from e
         except (APIError, APIConnectionError) as e:
             logger.error(
                 "❌ OpenAI调用失败 - 模型: %s, base_url: %s, 错误: %s",
@@ -215,10 +309,10 @@ class OpenAIClient(BaseLLMClient):
                 e,
                 exc_info=True,
             )
-            raise LLMError(f"OpenAI调用失败: {e}") from e
+            raise LLMTransientError(f"OpenAI调用失败: {e}") from e
         except Exception as e:
-            logger.error("未知错误: %s", e, exc_info=True)
-            raise LLMError(f"OpenAI调用失败: {e}") from e
+            logger.error("未知且不可恢复的OpenAI调用错误: %s", e, exc_info=True)
+            raise LLMRequestError(f"OpenAI调用失败: {e}") from e
 
     async def chat_stream(
         self,
@@ -250,7 +344,7 @@ class OpenAIClient(BaseLLMClient):
                 "🤖 调用流式LLM - 模型: %s, base_url: %s, temperature: %.2f, max_tokens: %s, timeout: %s, enable_think: %s",
                 self.config.model,
                 self.config.base_url,
-                temperature or self.config.temperature,
+                self.config.temperature if temperature is None else temperature,
                 max_tokens or self.config.max_tokens or "未设置",
                 self.config.timeout,
                 self.config.enable_thinking,
@@ -265,16 +359,22 @@ class OpenAIClient(BaseLLMClient):
             api_messages = self._prepare_messages(messages)
 
             # 调用流式API（使用 cast 显式类型转换）
+            # max_tokens 为 None 表示不限制输出，不传该参数给 API。
+            effective_max_tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+            request_kwargs: dict[str, Any] = {
+                "model": self.config.model,
+                "messages": cast(Iterable[ChatCompletionMessageParam], api_messages),
+                "temperature": self.config.temperature if temperature is None else temperature,
+                "top_p": self.config.top_p,
+                "frequency_penalty": self.config.frequency_penalty,
+                "presence_penalty": self.config.presence_penalty,
+                "stream": True,
+                "extra_body": self._build_extra_body(),
+            }
+            if effective_max_tokens is not None:
+                request_kwargs["max_tokens"] = effective_max_tokens
             stream = await self.client.chat.completions.create(
-                model=self.config.model,
-                messages=cast(Iterable[ChatCompletionMessageParam], api_messages),
-                temperature=temperature or self.config.temperature,
-                max_tokens=max_tokens or self.config.max_tokens,
-                top_p=self.config.top_p,
-                frequency_penalty=self.config.frequency_penalty,
-                presence_penalty=self.config.presence_penalty,
-                stream=True,
-                extra_body=self._build_extra_body(),
+                **request_kwargs,
                 **kwargs,
             )
 
@@ -346,7 +446,7 @@ async def create_openai_client(  # pylint: disable=too-many-arguments,too-many-p
         model=model or settings.llm_model,
         api_key=api_key,
         base_url=base_url or settings.llm_base_url,
-        temperature=temperature or settings.llm_temperature,
+        temperature=settings.llm_temperature if temperature is None else temperature,
         max_tokens=max_tokens or settings.llm_max_tokens,
         top_p=settings.llm_top_p,
         frequency_penalty=settings.llm_frequency_penalty,

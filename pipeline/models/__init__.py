@@ -8,7 +8,6 @@ from pipeline.models.base import (
     MetadataMixin,
     PipelineBaseModel,
     TimestampMixin,
-    pipelineBaseModel,
 )
 from pipeline.models.entity import (
     CustomEntityType,
@@ -20,7 +19,6 @@ from pipeline.models.entity import (
 __all__ = [
     # Base
     "PipelineBaseModel",
-    "pipelineBaseModel",
     "TimestampMixin",
     "MetadataMixin",
     # Entity

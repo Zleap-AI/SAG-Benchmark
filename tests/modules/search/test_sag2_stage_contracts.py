@@ -55,8 +55,7 @@ class _RecallRuntime:
 class _RerankRuntime:
     async def get_events_by_ids(self, event_ids: list[str], **_: Any):
         return [
-            {"event_id": event_id, "title": event_id, "content": event_id}
-            for event_id in event_ids
+            {"event_id": event_id, "title": event_id, "content": event_id} for event_id in event_ids
         ]
 
     async def search_events_by_text(self, **_: Any):

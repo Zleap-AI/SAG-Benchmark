@@ -777,7 +777,7 @@ class MultiSearcherES:
 
             if not new_entity_ids:
                 logger.info(
-                    f"[event.expand] hop={hop+1}/{max_hops} "
+                    f"[event.expand] hop={hop + 1}/{max_hops} "
                     f"no_new_entities tracked_entities={len(state.entity_ids)}"
                 )
                 break
@@ -791,7 +791,7 @@ class MultiSearcherES:
                 )
 
             logger.info(
-                f"[event.expand] hop={hop+1}/{max_hops} "
+                f"[event.expand] hop={hop + 1}/{max_hops} "
                 f"entities: {pre_entities} -> +{len(new_entity_ids)} new, "
                 f"total={len(state.entity_ids)}"
             )
@@ -814,7 +814,7 @@ class MultiSearcherES:
 
             if not new_event_ids:
                 logger.info(
-                    f"[event.expand] hop={hop+1}/{max_hops} "
+                    f"[event.expand] hop={hop + 1}/{max_hops} "
                     f"no_new_events tracked_events={len(state.relation_ids)}"
                 )
                 break
@@ -832,7 +832,7 @@ class MultiSearcherES:
                     )
 
                 logger.info(
-                    f"[event.expand] hop={hop+1}/{max_hops} done: "
+                    f"[event.expand] hop={hop + 1}/{max_hops} done: "
                     f"events {pre_events} -> {len(state.relation_ids)} (+{len(new_event_ids)}), "
                     f"entities {pre_entities} -> {len(state.entity_ids)}, "
                     f"limit={max_expand_events_per_hop}, "
@@ -869,7 +869,7 @@ class MultiSearcherES:
                 )
 
             logger.info(
-                f"[event.expand] hop={hop+1}/{max_hops} done: "
+                f"[event.expand] hop={hop + 1}/{max_hops} done: "
                 f"events {pre_events} -> {len(state.relation_ids)} (+{len(new_event_ids)}), "
                 f"entities {pre_entities} -> {len(state.entity_ids)}, "
                 f"limit={max_expand_events_per_hop}"
@@ -1522,8 +1522,7 @@ class MultiSearcherES:
                 if len(sections) >= target:
                     break
             logger.info(
-                f"[native.fill] multi={multi_count}, native=+{native_added}, "
-                f"total={len(sections)}"
+                f"[native.fill] multi={multi_count}, native=+{native_added}, total={len(sections)}"
             )
 
         timings["total"] = time.perf_counter() - t_total
@@ -1533,7 +1532,7 @@ class MultiSearcherES:
             "_timings": timings,
         }
 
-    # 兼容旧 pipelineEngine 接口名；内部不执行模型 rerank。
+    # 兼容旧 PipelineEngine 接口名；内部不执行模型 rerank。
     search_for_rerank = search_for_sections
 
     async def search_chunks(

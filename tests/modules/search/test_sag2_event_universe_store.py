@@ -17,9 +17,7 @@ class FakeEventUniverseStore:
         self.calls.append(("active", list(event_ids), source_config_ids))
         return [event_id for event_id in event_ids if event_id != "deleted"]
 
-    async def get_event_entity_pairs_by_events(
-        self, event_ids, source_config_ids=None, limit=None
-    ):
+    async def get_event_entity_pairs_by_events(self, event_ids, source_config_ids=None, limit=None):
         self.calls.append(("scope_pairs", list(event_ids), source_config_ids, limit))
         return [("e1", "x"), ("e2", "y")]
 
@@ -151,7 +149,7 @@ async def test_database_event_universe_provider_has_session_factory_dependency(m
         lambda: lambda: FakeSession(),
     )
 
-    rows = await database_provider.MySqlDatabaseStore().get_event_entity_pairs_by_entities(
+    rows = await database_provider.MySQLDatabaseStore().get_event_entity_pairs_by_entities(
         ["entity-1"]
     )
 

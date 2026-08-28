@@ -488,9 +488,7 @@ class EventProcessor:
                     errors.append(f"实体禁止字段 '{field}' 出现在 {entity_path}")
                 for required_field in ("type", "name", "description"):
                     if required_field not in entity:
-                        errors.append(
-                            f"实体缺少必填字段 '{required_field}'，位置: {entity_path}"
-                        )
+                        errors.append(f"实体缺少必填字段 '{required_field}'，位置: {entity_path}")
                     elif (
                         not isinstance(entity[required_field], str)
                         or not entity[required_field].strip()

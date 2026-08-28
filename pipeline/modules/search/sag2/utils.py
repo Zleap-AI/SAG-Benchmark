@@ -30,7 +30,9 @@ def top_event_ids_by_score(event_scores: dict[str, float], limit: int) -> list[s
         return []
     return [
         event_id
-        for event_id, _ in sorted(event_scores.items(), key=lambda item: item[1], reverse=True)[:limit]
+        for event_id, _ in sorted(event_scores.items(), key=lambda item: item[1], reverse=True)[
+            :limit
+        ]
     ]
 
 
@@ -68,9 +70,7 @@ def scores_from_events(events: list[dict[str, Any]]) -> dict[str, float]:
     return scores
 
 
-def merge_event_entity_mapping(
-    target: dict[str, list[str]], source: dict[str, list[str]]
-) -> None:
+def merge_event_entity_mapping(target: dict[str, list[str]], source: dict[str, list[str]]) -> None:
     for event_id, entity_ids in source.items():
         bucket = target.setdefault(event_id, [])
         for entity_id in entity_ids:

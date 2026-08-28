@@ -17,7 +17,6 @@ class EventEntityRepository(BaseRepository):
     """事件-实体关系向量 Repository"""
 
     BASE_INDEX_NAME = BASE_INDEX_EVENT_ENTITY_VECTORS
-    INDEX_NAME = BASE_INDEX_EVENT_ENTITY_VECTORS
 
     async def index_event_entity(
         self,

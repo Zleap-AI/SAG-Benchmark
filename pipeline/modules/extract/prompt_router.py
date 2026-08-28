@@ -43,7 +43,7 @@ def resolve_extract_prompt_route(
     compact  + test_mode=False → template_name="extract_compact"
     compact  + test_mode=True  → 应在 config validator 层被拒绝；此处防御性检查
     """
-    # pipelineBaseModel 配置会将 Enum 序列化为字符串；路由入口统一恢复枚举，
+    # PipelineBaseModel 配置会将 Enum 序列化为字符串；路由入口统一恢复枚举，
     # 禁止使用对象 identity 判断。
     strategy = ExtractPromptStrategy(strategy)
 

@@ -599,7 +599,7 @@ class EventSaver:
                 # 准备文本（每个事项需要2个向量，使用 embedding 专用长度限制）
                 title_texts = [event.title for event in batch]
                 content_texts = [
-                    f"{event.title}\n\n{event.content[:config.embedding_max_length]}"
+                    f"{event.title}\n\n{event.content[: config.embedding_max_length]}"
                     for event in batch
                 ]
 
@@ -618,7 +618,7 @@ class EventSaver:
                     try:
                         title_vec = await embedding_client.generate(event.title)
                         content_for_vec = (
-                            f"{event.title}\n\n{event.content[:config.embedding_max_length]}"
+                            f"{event.title}\n\n{event.content[: config.embedding_max_length]}"
                         )
                         content_vec = await embedding_client.generate(content_for_vec)
                         doc = self._build_event_document(event, title_vec, content_vec)

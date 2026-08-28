@@ -156,7 +156,7 @@ class BM25ChunkSearcher:
         # Top-5 日志
         for i, sec in enumerate(sections[:5]):
             heading = sec.get("heading", "")[:40] if sec.get("heading") else "无标题"
-            logger.info(f"  Top-{i+1}: score={sec['score']:.4f} | {heading}...")
+            logger.info(f"  Top-{i + 1}: score={sec['score']:.4f} | {heading}...")
 
         return {
             "sections": sections,

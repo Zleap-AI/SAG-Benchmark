@@ -113,7 +113,9 @@ class SAG2TimingService:
             "total_no_retry": total_no_retry,
             "retry_wasted_total": retry_wasted_total,
             "wall_total_observed": round_seconds(max(0.0, wall_total_observed)),
-            "step7_llm_with_retry": round_seconds(float(step7_timing.get("with_retry", 0.0) or 0.0)),
+            "step7_llm_with_retry": round_seconds(
+                float(step7_timing.get("with_retry", 0.0) or 0.0)
+            ),
             "step7_llm_no_retry": round_seconds(float(step7_timing.get("no_retry", 0.0) or 0.0)),
             "step7_llm_calls": int(step7_timing.get("calls", 0) or 0),
             "step7_prompt_tokens": int(step7_timing.get("prompt_tokens", 0) or 0),
@@ -133,7 +135,14 @@ class SAG2TimingService:
             raise ValueError("SAG2 timing v2 with-retry stages do not conserve total")
         if abs(no_total - payload["total_no_retry"]) > tolerance:
             raise ValueError("SAG2 timing v2 no-retry stages do not conserve total")
-        if abs(payload["total_with_retry"] - payload["total_no_retry"] - payload["retry_wasted_total"]) > tolerance:
+        if (
+            abs(
+                payload["total_with_retry"]
+                - payload["total_no_retry"]
+                - payload["retry_wasted_total"]
+            )
+            > tolerance
+        ):
             raise ValueError("SAG2 timing v2 retry waste does not conserve totals")
 
     @staticmethod

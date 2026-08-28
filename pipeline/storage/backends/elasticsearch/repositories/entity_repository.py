@@ -10,16 +10,15 @@ from typing import Any
 from elasticsearch import AsyncElasticsearch
 from elasticsearch_dsl import Q, Search
 
+from pipeline.db import get_session_factory
 from pipeline.storage.backends.elasticsearch.index_naming import BASE_INDEX_ENTITY_VECTORS
 from pipeline.storage.backends.elasticsearch.repositories.base import BaseRepository
-from pipeline.db import get_session_factory
 
 
 class EntityVectorRepository(BaseRepository):
     """实体向量 Repository"""
 
     BASE_INDEX_NAME = BASE_INDEX_ENTITY_VECTORS
-    INDEX_NAME = BASE_INDEX_ENTITY_VECTORS
 
     # 类级别缓存：类型阈值 (缓存 key -> (thresholds_dict, timestamp))
     _type_thresholds_cache: dict[str, tuple[dict[str, float], float]] = {}

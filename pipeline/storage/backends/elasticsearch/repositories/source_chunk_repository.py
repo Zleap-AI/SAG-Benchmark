@@ -16,8 +16,6 @@ class SourceChunkRepository(BaseRepository):
     """来源片段 Repository"""
 
     BASE_INDEX_NAME = BASE_INDEX_SOURCE_CHUNKS
-    # 兼容：类级别 INDEX_NAME 仍指向 legacy 名，供不实例化就读该属性的旧代码兜底
-    INDEX_NAME = BASE_INDEX_SOURCE_CHUNKS
 
     async def index_chunk(
         self,
@@ -186,7 +184,7 @@ class SourceChunkRepository(BaseRepository):
         s = s.query(
             "multi_match",
             query=query,
-            fields=["heading","content"],  # 仅正文，不含 heading
+            fields=["heading", "content"],  # 仅正文，不含 heading
             minimum_should_match="0%",
         )
 

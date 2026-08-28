@@ -1,7 +1,5 @@
 """Composed storage facade."""
 
-from typing import Optional
-
 from pipeline.core.config import get_settings
 from pipeline.storage.capabilities import StorageHealth
 from pipeline.storage.interfaces import (
@@ -58,7 +56,7 @@ class StorageFacade:
         await self.database.close()
 
 
-_storage_facade: Optional[StorageFacade] = None
+_storage_facade: StorageFacade | None = None
 
 
 def get_storage_facade() -> StorageFacade:

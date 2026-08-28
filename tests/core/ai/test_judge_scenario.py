@@ -21,25 +21,29 @@ class TestJudgeSettingsDefaults:
         assert s.judge_llm_api_key == ""
         assert s.judge_llm_model == ""
         assert s.judge_llm_base_url is None
-        assert s.judge_llm_max_async == 4
-        assert s.judge_llm_timeout == 300
-        assert s.judge_llm_max_retries == 5
+        assert s.judge_llm_max_async == 3
+        assert s.judge_llm_timeout == 180
+        assert s.judge_llm_max_retries == 3
         assert s.judge_llm_enable_thinking is False
-        assert s.judge_llm_max_tokens == 8000
+        assert s.judge_llm_max_tokens is None
         assert s.judge_allow_fallback is False
 
     def test_judge_fields_from_env(self):
-        with patch.dict(os.environ, {
-            "JUDGE_LLM_API_KEY": "sk-test-judge",
-            "JUDGE_LLM_MODEL": "judge-model",
-            "JUDGE_LLM_BASE_URL": "https://judge.api/v1",
-            "JUDGE_LLM_MAX_ASYNC": "2",
-            "JUDGE_LLM_TIMEOUT": "120",
-            "JUDGE_LLM_MAX_RETRIES": "3",
-            "JUDGE_LLM_ENABLE_THINKING": "true",
-            "JUDGE_LLM_MAX_TOKENS": "4096",
-            "JUDGE_ALLOW_FALLBACK": "true",
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "JUDGE_LLM_API_KEY": "sk-test-judge",
+                "JUDGE_LLM_MODEL": "judge-model",
+                "JUDGE_LLM_BASE_URL": "https://judge.api/v1",
+                "JUDGE_LLM_MAX_ASYNC": "2",
+                "JUDGE_LLM_TIMEOUT": "120",
+                "JUDGE_LLM_MAX_RETRIES": "3",
+                "JUDGE_LLM_ENABLE_THINKING": "true",
+                "JUDGE_LLM_MAX_TOKENS": "4096",
+                "JUDGE_ALLOW_FALLBACK": "true",
+            },
+            clear=True,
+        ):
             s = _clean_settings()
             assert s.judge_llm_api_key == "sk-test-judge"
             assert s.judge_llm_model == "judge-model"
@@ -58,14 +62,18 @@ class TestJudgeScenarioConfig:
     def test_build_judge_config_with_dedicated_settings(self):
         from pipeline.core.ai.factory import _build_judge_config
 
-        with patch.dict(os.environ, {
-            "JUDGE_LLM_API_KEY": "sk-judge",
-            "JUDGE_LLM_MODEL": "qwen-judge",
-            "JUDGE_LLM_BASE_URL": "https://judge.api/v1",
-            "JUDGE_LLM_TIMEOUT": "180",
-            "JUDGE_LLM_MAX_TOKENS": "4096",
-            "JUDGE_LLM_MAX_RETRIES": "3",
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "JUDGE_LLM_API_KEY": "sk-judge",
+                "JUDGE_LLM_MODEL": "qwen-judge",
+                "JUDGE_LLM_BASE_URL": "https://judge.api/v1",
+                "JUDGE_LLM_TIMEOUT": "180",
+                "JUDGE_LLM_MAX_TOKENS": "4096",
+                "JUDGE_LLM_MAX_RETRIES": "3",
+            },
+            clear=True,
+        ):
             s = _clean_settings()
             cfg = _build_judge_config(s)
             assert cfg["api_key"] == "sk-judge"
@@ -90,11 +98,15 @@ class TestJudgeScenarioConfig:
     def test_build_judge_config_fallback_enabled(self):
         from pipeline.core.ai.factory import _build_judge_config
 
-        with patch.dict(os.environ, {
-            "LLM_API_KEY": "sk-main",
-            "LLM_MODEL": "main-model",
-            "JUDGE_ALLOW_FALLBACK": "true",
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "LLM_API_KEY": "sk-main",
+                "LLM_MODEL": "main-model",
+                "JUDGE_ALLOW_FALLBACK": "true",
+            },
+            clear=True,
+        ):
             s = _clean_settings()
             cfg = _build_judge_config(s)
             assert cfg["api_key"] == "sk-main"
@@ -176,9 +188,13 @@ class TestJudgeLogSafety:
         from pipeline.core.ai.factory import _build_judge_config
         from pipeline.exceptions import ConfigError
 
-        with patch.dict(os.environ, {
-            "JUDGE_LLM_MODEL": "some-model",
-        }, clear=True):
+        with patch.dict(
+            os.environ,
+            {
+                "JUDGE_LLM_MODEL": "some-model",
+            },
+            clear=True,
+        ):
             s = _clean_settings()
             with pytest.raises(ConfigError) as exc_info:
                 _build_judge_config(s)

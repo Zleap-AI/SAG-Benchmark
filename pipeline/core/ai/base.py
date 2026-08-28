@@ -14,7 +14,13 @@ from typing import Any
 from pydantic import BaseModel
 
 from pipeline.core.ai.models import LLMMessage, LLMResponse, ModelConfig
-from pipeline.exceptions import LLMError, LLMTimeoutError
+from pipeline.exceptions import (
+    LLMError,
+    LLMRateLimitError,
+    LLMRequestError,
+    LLMTimeoutError,
+    LLMTransientError,
+)
 from pipeline.utils import get_logger
 
 logger = get_logger("ai.llm")
@@ -69,7 +75,7 @@ def _normalize_strict_schema(node: Any) -> Any:
             # 若存在 $ref，说明 schema 含嵌套引用，当前不支持
             if key == "$ref":
                 raise LLMError(
-                    "chat_parsed 暂不支持含嵌套模型($ref)的 pydantic 模型，" "请使用扁平字段结构"
+                    "chat_parsed 暂不支持含嵌套模型($ref)的 pydantic 模型，请使用扁平字段结构"
                 )
             cleaned[key] = _normalize_strict_schema(value)
 
@@ -405,7 +411,7 @@ class LLMRetryClient:
         # Preserve the BaseLLMClient surface for callers that inspect model
         # metadata (for example Judge output naming).
         self.config = client.config
-        self.max_retries = max_retries or client.config.max_retries
+        self.max_retries = client.config.max_retries if max_retries is None else max_retries
         self.retry_delay = retry_delay
         self.backoff_factor = backoff_factor
         # 最近一次 chat_parsed 调用的耗时口径（成功或失败都会刷新）。
@@ -423,28 +429,21 @@ class LLMRetryClient:
         Returns:
             True表示应该重试，False表示不应该重试
         """
-        # 超时错误重试（GPU端点偶发波动，重试通常能恢复）
-        if isinstance(error, LLMTimeoutError):
+        # 只重试明确的瞬态故障。参数、认证、响应校验和未知错误都必须立即上抛，
+        # 以免把错误配置放大为多次相同请求。
+        if isinstance(error, LLMRequestError):
+            return False
+        if isinstance(
+            error,
+            (
+                LLMTimeoutError,
+                LLMRateLimitError,
+                LLMTransientError,
+                asyncio.TimeoutError,
+                ConnectionError,
+            ),
+        ):
             return True
-
-        # 速率限制错误应该重试
-        from pipeline.exceptions import LLMRateLimitError
-
-        if isinstance(error, LLMRateLimitError):
-            return True
-
-        # 其他LLM错误可以重试
-        if isinstance(error, LLMError):
-            return True
-
-        # pydantic 校验失败可重试：模型偶发输出不符合 schema（尤其非 strict 后端），
-        # 重试有机会拿到合规输出。主要服务 chat_parsed，chat_with_schema 也受益。
-        from pydantic import ValidationError
-
-        if isinstance(error, ValidationError):
-            return True
-
-        # 未知错误默认不重试
         return False
 
     def _compute_delay(self, attempt: int) -> float:
@@ -492,10 +491,7 @@ class LLMRetryClient:
 
         实现指数退避重试策略（含随机抖动，避免多 worker 同时重试）
 
-        根据错误类型智能决定是否重试：
-        - 超时错误：不重试
-        - 速率限制：重试
-        - 其他LLM错误：重试
+        仅对明确的瞬态错误执行重试；不可恢复请求错误立即上抛。
         """
         last_error: Exception | None = None
 
@@ -657,8 +653,7 @@ class LLMRetryClient:
                 # 发生过重试才打点，区分纯计算 vs 重试浪费
                 total_time = time.perf_counter() - overall_t0
                 logger.info(
-                    "[chat_parsed耗时] 总耗时=%.2fs, 成功那次=%.2fs, "
-                    "重试浪费=%.2fs, 重试次数=%d",
+                    "[chat_parsed耗时] 总耗时=%.2fs, 成功那次=%.2fs, 重试浪费=%.2fs, 重试次数=%d",
                     total_time,
                     success_time,
                     wasted_retry_time,

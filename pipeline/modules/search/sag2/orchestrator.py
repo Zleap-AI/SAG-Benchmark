@@ -67,7 +67,6 @@ class SAG2Searcher:
             settings=self._settings,
         )
 
-
     async def aclose(self) -> None:
         """Release resources owned by this searcher's SAG2 runtime."""
 
@@ -76,16 +75,6 @@ class SAG2Searcher:
     # ------------------------------------------------------------------
     # SAG2-owned dependency accessors
     # ------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
 
     # ------------------------------------------------------------------
     # 主搜索方法
@@ -302,9 +291,7 @@ class SAG2Searcher:
 
             wall_total_observed = time.perf_counter() - total_start
             explicit_total = sum(
-                timings[stage]
-                for stage in SAG2_TIMING_STAGE_ORDER
-                if stage != "other_overhead"
+                timings[stage] for stage in SAG2_TIMING_STAGE_ORDER if stage != "other_overhead"
             )
             timings["other_overhead"] = max(0.0, wall_total_observed - explicit_total)
             step7_t = self._timing_service.context_var.get() or {}
@@ -406,51 +393,25 @@ class SAG2Searcher:
     # 召回路 A：query -> event
     # ------------------------------------------------------------------
 
-
-
-
-
-
-
-
     # ------------------------------------------------------------------
     # 召回路 B：query -> entities -> event candidates
     # ------------------------------------------------------------------
-
-
-
 
     # ------------------------------------------------------------------
     # expand 阶段
     # ------------------------------------------------------------------
 
-
-
-
-
     # ------------------------------------------------------------------
     # 排序阶段
     # ------------------------------------------------------------------
-
-
-
-
-
 
     # ------------------------------------------------------------------
     # query 重写 + 实体提取
     # ------------------------------------------------------------------
 
-
     # ------------------------------------------------------------------
     # route 反向追链系统（自带轻量实现，无 Tracker 依赖）
     # ------------------------------------------------------------------
-
-
-
-
-
-
 
     async def _build_answer_clues_from_routes(
         self,
@@ -472,7 +433,9 @@ class SAG2Searcher:
         if entity_map is None:
             entity_map = await self._load_route_entities(needed_entity_ids)
         else:
-            entity_map = {entity_id: entity_map.get(entity_id, {}) for entity_id in needed_entity_ids}
+            entity_map = {
+                entity_id: entity_map.get(entity_id, {}) for entity_id in needed_entity_ids
+            }
 
         for edge in selected_edges:
             self._add_clue(
@@ -653,21 +616,6 @@ class SAG2Searcher:
         node = sag2_utils.full_entity_node(node_id, entity_map.get(node_id, {}))
         node["hop"] = hop
         return node
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 __all__ = ["SAG2Searcher"]

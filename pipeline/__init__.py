@@ -14,6 +14,7 @@ from pipeline.engine import (
     LogLevel,
     OutputConfig,
     OutputMode,
+    PipelineEngine,
     SearchBaseConfig,
     StageResult,
     TaskConfig,
@@ -21,17 +22,19 @@ from pipeline.engine import (
     TaskResult,
     TaskStage,
     TaskStatus,
-    PipelineEngine,
-    pipelineEngine,
 )
-from pipeline.exceptions import LLMError, PipelineError, StorageError, ValidationError, pipelineError
+from pipeline.exceptions import (
+    LLMError,
+    PipelineError,
+    StorageError,
+    ValidationError,
+)
 
 __all__ = [
     # Version
     "__version__",
     # Engine
     "PipelineEngine",
-    "pipelineEngine",
     "TaskConfig",
     "TaskResult",
     "TaskLog",
@@ -48,7 +51,6 @@ __all__ = [
     "LogLevel",
     # Exceptions
     "PipelineError",
-    "pipelineError",
     "LLMError",
     "StorageError",
     "ValidationError",

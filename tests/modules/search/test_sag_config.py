@@ -1,12 +1,10 @@
 """Tests for SAGConfig — independent SAG2 configuration decoupled from MultiConfig."""
 
 import pytest
+from pydantic import ValidationError
+
 from pipeline.modules.search.config import (
     MultiConfig,
-    SAG2ExpandConfig,
-    SAG2RecallConfig,
-    SAG2RerankConfig,
-    SAG2ScopeConfig,
     SAGConfig,
 )
 
@@ -15,14 +13,10 @@ class TestSAGConfigIndependence:
     """SAGConfig must not be a subclass of MultiConfig."""
 
     def test_sagconfig_not_subclass_of_multiconfig(self):
-        assert not issubclass(SAGConfig, MultiConfig), (
-            "SAGConfig must not inherit from MultiConfig"
-        )
+        assert not issubclass(SAGConfig, MultiConfig), "SAGConfig must not inherit from MultiConfig"
 
     def test_multiconfig_not_subclass_of_sagconfig(self):
-        assert not issubclass(MultiConfig, SAGConfig), (
-            "MultiConfig must not inherit from SAGConfig"
-        )
+        assert not issubclass(MultiConfig, SAGConfig), "MultiConfig must not inherit from SAGConfig"
 
 
 class TestSAGConfigDefaults:
@@ -65,8 +59,7 @@ class TestSAGConfigDefaults:
             if hasattr(multi_val, "model_dump"):
                 multi_val = multi_val.model_dump()
             assert sag_val == multi_val, (
-                f"Field {key!r} differs: SAGConfig={sag_val!r}, "
-                f"MultiConfig={multi_val!r}"
+                f"Field {key!r} differs: SAGConfig={sag_val!r}, MultiConfig={multi_val!r}"
             )
 
 
@@ -229,9 +222,9 @@ class TestSAGConfigValidation:
     def test_max_sections_range(self):
         SAGConfig(max_sections=1)
         SAGConfig(max_sections=50)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             SAGConfig(max_sections=0)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             SAGConfig(max_sections=51)
 
     def test_strategy_default(self):

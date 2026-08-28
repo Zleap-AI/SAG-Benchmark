@@ -28,6 +28,7 @@ from typing import Any
 
 from pipeline.db import get_session_factory
 from pipeline.modules.load.processor import DocumentProcessor
+from pipeline.modules.search.config import DEFAULT_QUERY_INSTRUCTION
 from pipeline.storage import get_storage_facade
 from pipeline.utils import get_logger
 
@@ -78,22 +79,29 @@ class VectorSearcher:
         # 从 VectorConfig / SearchConfig 获取参数
         top_k = 20
         min_score = 0.0
+        query_instruction = DEFAULT_QUERY_INSTRUCTION
 
         if config:
             top_k = getattr(config, "top_k", top_k)
             min_score = getattr(config, "similarity_threshold", min_score)
+            query_instruction = getattr(config, "query_instruction", query_instruction)
 
         logger.info("=" * 60)
         logger.info(f"【向量检索】Query: '{query}'")
-        logger.info(f"  top_k={top_k}, min_score={min_score}")
+        logger.info(
+            f"  top_k={top_k}, min_score={min_score}, instruction={bool(query_instruction)}"
+        )
         logger.info("=" * 60)
 
         # Step 1: 生成查询向量
         vector_time = 0.0
         if query_vector is None:
             vector_start = time.perf_counter()
-            query_vector = await self.processor.generate_embedding(query)
+            query_vector = await self.processor.generate_embedding(
+                query, instruction=query_instruction or None
+            )
             vector_time = time.perf_counter() - vector_start
+
             logger.info(f"✓ 向量生成完成，维度={len(query_vector)}，耗时={vector_time:.3f}s")
         else:
             logger.info(f"✓ 使用预计算向量，维度={len(query_vector)}")
@@ -158,7 +166,7 @@ class VectorSearcher:
         # Top-5 日志
         for i, sec in enumerate(sections[:5]):
             heading = sec.get("heading", "")[:40] if sec.get("heading") else "无标题"
-            logger.info(f"  Top-{i+1}: score={sec['score']:.4f} | {heading}...")
+            logger.info(f"  Top-{i + 1}: score={sec['score']:.4f} | {heading}...")
 
         return {
             "sections": sections,

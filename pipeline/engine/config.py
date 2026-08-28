@@ -8,7 +8,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from pipeline.core.config.settings import DEFAULT_LLM_MAX_RETRIES
+from pipeline.core.config.settings import DEFAULT_MODEL_MAX_RETRIES
 from pipeline.engine.enums import OutputMode
 from pipeline.modules.extract.config import ExtractBaseConfig
 from pipeline.modules.load.config import DocumentLoadConfig
@@ -22,7 +22,7 @@ class ModelConfig(BaseModel):
     model: str = Field(default="sophnet/Qwen3-30B-A3B-Thinking-2507", description="模型名称")
     base_url: str | None = Field(default=None, description="API基础URL")
     timeout: int = Field(default=300, description="超时时间（秒）")
-    max_retries: int = Field(default=DEFAULT_LLM_MAX_RETRIES, description="最大重试次数")
+    max_retries: int = Field(default=DEFAULT_MODEL_MAX_RETRIES, description="最大重试次数")
     temperature: float = Field(default=0.7, description="生成温度")
     with_retry: bool = Field(default=True, description="是否启用重试")
 

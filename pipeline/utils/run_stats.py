@@ -2,9 +2,10 @@
 
 import time
 from collections import defaultdict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any
 
 from pipeline.utils.llm_tracking import LLMTokenTracker
 

@@ -16,7 +16,6 @@ from pipeline.core.config import get_settings
 from pipeline.db.base import close_database
 from pipeline.storage import get_storage_facade
 
-
 TABLE_METHODS = {
     "source_chunk": "search_chunks_by_vector",
     "source_event": "search_events_by_vector",
@@ -129,9 +128,7 @@ async def search_table(
 
 
 async def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Test 4-table KNN via StorageFacade.vector"
-    )
+    parser = argparse.ArgumentParser(description="Test 4-table KNN via StorageFacade.vector")
     parser.add_argument("--query", default="Who is Lionel Messi?", help="Query text to embed")
     parser.add_argument("--top-k", type=int, default=5, help="Top K results per table")
     parser.add_argument("--source-config-id", default=None, help="Optional source_config_id filter")

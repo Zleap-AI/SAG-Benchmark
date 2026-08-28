@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 from pipeline.core.ai.models import LLMMessage, LLMRole
-
 from pipeline.utils import get_logger
 
 logger = get_logger("search.prompts")
@@ -239,7 +238,6 @@ Relationship descriptions:
 {relations}"""
 
 
-
 def _render(template: str, fmt: dict) -> str:
     """按双花括号语义渲染模板。
 
@@ -265,7 +263,7 @@ def _normalize_chat_template(template) -> list[dict]:
         if isinstance(m, dict):
             out.append({"role": m["role"], "content": m["content"]})
         else:
-            out.append({"role": getattr(m, "role"), "content": getattr(m, "content")})
+            out.append({"role": m.role, "content": m.content})
     return out
 
 

@@ -8,9 +8,22 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 
 from pipeline.models.base import PipelineBaseModel
+
+# ── 非对称 embedding 的 query 侧指令（客户端只传纯文本，模板由服务端拼接）────────
+# 不做模型自动识别：换模型时手动改 VectorConfig.query_instruction 的默认值即可。
+# 空串 = 禁用指令，退回对称编码。
+NV_QUERY_INSTRUCTION = "Given a question, retrieve passages that answer the question"
+BGE_QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages:"
+GRITLM_QUERY_INSTRUCTION = "Given a scientific paper title, retrieve the paper's abstract"
+GTE_QWEN2_QUERY_INSTRUCTION = (
+    "Given a question, retrieve relevant documents that best answer the question."
+)
+
+# 当前启用的默认 query 指令（改这一行即可切换 NV-Embed ↔ BGE ↔ GritLM ↔ GTE-Qwen2）
+DEFAULT_QUERY_INSTRUCTION = NV_QUERY_INSTRUCTION
 
 
 class RerankStrategy(str, Enum):
@@ -97,6 +110,12 @@ class VectorConfig(PipelineBaseModel):
     # 相似度阈值（直接用作召回）
     similarity_threshold: float = Field(
         default=0.4, ge=0.0, le=1.0, description="相似度阈值，低于此分数的结果会被过滤"
+    )
+
+    # query 侧非对称指令（纯文本，"Instruct: ...\nQuery: " 模板由服务端拼；空串=禁用）
+    query_instruction: str = Field(
+        default=DEFAULT_QUERY_INSTRUCTION,
+        description="query 侧非对称指令（纯文本，模板由服务端拼接）；空串=禁用，退回对称编码",
     )
 
 
@@ -347,9 +366,7 @@ class SAG2ExpandConfig(PipelineBaseModel):
     enabled: bool = Field(default=True, description="是否启用扩展")
     max_hops: int = Field(default=1, ge=0, le=2, description="扩展跳数")
     entities_per_hop: int = Field(default=15, ge=1, le=100, description="每跳新增实体上限")
-    max_events_per_hop: int = Field(
-        default=50, ge=1, le=500, description="每跳新增事项上限"
-    )
+    max_events_per_hop: int = Field(default=50, ge=1, le=500, description="每跳新增事项上限")
     event_similarity_threshold: float = Field(
         default=0.4, ge=0.0, le=1.0, description="expand 中 entity→event 相似度阈值"
     )
@@ -413,13 +430,9 @@ class SAG2RerankConfig(PipelineBaseModel):
     )
     rrf_k: int = Field(default=60, ge=1, description="RRF 名次融合常数")
     max_results: int = Field(default=10, ge=1, le=100, description="最终返回事项数")
-    rerank_timeout: float = Field(
-        default=60.0, ge=1.0, le=60.0, description="rerank 超时秒数"
-    )
+    rerank_timeout: float = Field(default=60.0, ge=1.0, le=60.0, description="rerank 超时秒数")
     llm_rank_top_n: int = Field(default=100, ge=1, le=200, description="送 LLM 前粗排上限")
-    llm_rank_max_results: int = Field(
-        default=5, ge=1, le=20, description="LLM 排序返回上限"
-    )
+    llm_rank_max_results: int = Field(default=5, ge=1, le=20, description="LLM 排序返回上限")
     llm_rank_include_content: bool = Field(default=True, description="LLM 排序是否带全文")
     llm_rank_max_content_len: int = Field(
         default=2000, ge=100, description="每条 content 截断字符数"
@@ -472,15 +485,12 @@ class SAGConfig(PipelineBaseModel):
         default_factory=SAG2RerankConfig, description="SAG2 排序配置"
     )
 
-    sag2_rewrite_query_enabled: bool = Field(
-        default=False, description="SAG2 LLM 问题重写开关"
-    )
+    sag2_rewrite_query_enabled: bool = Field(default=False, description="SAG2 LLM 问题重写开关")
     sag2_enable_entity_extraction: bool = Field(
-        default=True, description="SAG2 独立 NER 开关（默认开启，对齐 benchmark --foundation search）"
+        default=True,
+        description="SAG2 独立 NER 开关（默认开启，对齐 benchmark --foundation search）",
     )
-    sag2_use_fast_mode: bool = Field(
-        default=False, description="SAG2 快速模式（跳过 LLM 排序）"
-    )
+    sag2_use_fast_mode: bool = Field(default=False, description="SAG2 快速模式（跳过 LLM 排序）")
 
 
 class MultiConfig(PipelineBaseModel):
@@ -521,7 +531,10 @@ class MultiConfig(PipelineBaseModel):
 
     # ========== 通用参数 ==========
     entity_top_k: int = Field(
-        default=20, ge=1, le=1000, description="query->entity 返回的最大实体数量（MULTI_ES 使用 BM25 召回）"
+        default=20,
+        ge=1,
+        le=1000,
+        description="query->entity 返回的最大实体数量（MULTI_ES 使用 BM25 召回）",
     )
     multi_top_k: int = Field(
         default=20,
@@ -540,7 +553,8 @@ class MultiConfig(PipelineBaseModel):
         default=1, ge=0, le=10, description="[multi_es] 多跳扩展次数（0=不扩展，1=扩展1轮）"
     )
     max_events: int = Field(
-        default=100, ge=1, le=500, description="[multi_es] 粗排序最大返回事项数量")
+        default=100, ge=1, le=500, description="[multi_es] 粗排序最大返回事项数量"
+    )
     max_expand_events_per_hop: int = Field(
         default=2000,
         ge=1,
@@ -603,15 +617,13 @@ class MultiConfig(PipelineBaseModel):
     sag2_rerank: SAG2RerankConfig = Field(
         default_factory=SAG2RerankConfig, description="SAG2 排序配置"
     )
-    sag2_rewrite_query_enabled: bool = Field(
-        default=False, description="SAG2 LLM 问题重写开关"
-    )
+    sag2_rewrite_query_enabled: bool = Field(default=False, description="SAG2 LLM 问题重写开关")
     sag2_enable_entity_extraction: bool = Field(
-        default=True, description="SAG2 独立 NER 开关（默认开启，对齐 benchmark --foundation search）"
+        default=True,
+        description="SAG2 独立 NER 开关（默认开启，对齐 benchmark --foundation search）",
     )
-    sag2_use_fast_mode: bool = Field(
-        default=False, description="SAG2 快速模式（跳过 LLM 排序）"
-    )
+    sag2_use_fast_mode: bool = Field(default=False, description="SAG2 快速模式（跳过 LLM 排序）")
+
 
 __all__ = [
     # 配置
@@ -630,4 +642,9 @@ __all__ = [
     "QueryNormalizationConfig",
     "RerankStrategy",
     "ReturnType",
+    "DEFAULT_QUERY_INSTRUCTION",
+    "NV_QUERY_INSTRUCTION",
+    "BGE_QUERY_INSTRUCTION",
+    "GRITLM_QUERY_INSTRUCTION",
+    "GTE_QWEN2_QUERY_INSTRUCTION",
 ]

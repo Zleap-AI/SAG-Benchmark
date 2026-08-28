@@ -525,7 +525,7 @@ class AtomicSearcher:
 
             if not new_entity_ids:
                 logger.info(
-                    f"[Step5-扩展] hop={hop+1}/{max_hops} "
+                    f"[Step5-扩展] hop={hop + 1}/{max_hops} "
                     f"无新实体 (tracked_entities={len(self._entity_ids)})，停止"
                 )
                 break
@@ -534,7 +534,7 @@ class AtomicSearcher:
             self._entity_ids.update(new_entity_ids)
 
             logger.info(
-                f"[Step5-扩展] hop={hop+1}/{max_hops} "
+                f"[Step5-扩展] hop={hop + 1}/{max_hops} "
                 f"entities: {pre_entities} -> +{len(new_entity_ids)} new, total={len(self._entity_ids)}"
             )
 
@@ -558,7 +558,7 @@ class AtomicSearcher:
 
             if not new_event_ids:
                 logger.info(
-                    f"[Step5-扩展] hop={hop+1}/{max_hops} "
+                    f"[Step5-扩展] hop={hop + 1}/{max_hops} "
                     f"无新事项 (tracked_events={len(self._relation_ids)})，停止"
                 )
                 break
@@ -576,7 +576,7 @@ class AtomicSearcher:
             prev_hop_entities = hop_entities
 
             logger.info(
-                f"[Step5-扩展] hop={hop+1}/{max_hops} done: "
+                f"[Step5-扩展] hop={hop + 1}/{max_hops} done: "
                 f"events {pre_events} -> {len(self._relation_ids)} (+{len(new_event_ids)}), "
                 f"entities {pre_entities} -> {len(self._entity_ids)}"
             )
@@ -1031,8 +1031,7 @@ class AtomicSearcher:
                 if len(sections) >= target:
                     break
             logger.info(
-                f"[Native补充] atomic={atomic_count}, native=+{native_added}, "
-                f"total={len(sections)}"
+                f"[Native补充] atomic={atomic_count}, native=+{native_added}, total={len(sections)}"
             )
 
         return {
@@ -1092,8 +1091,7 @@ class AtomicSearcher:
         total_time = time.perf_counter() - start_time
 
         logger.info(
-            f"[Query→Chunk] query='{query}', "
-            f"returned={len(sections)}, total_time={total_time:.3f}s"
+            f"[Query→Chunk] query='{query}', returned={len(sections)}, total_time={total_time:.3f}s"
         )
 
         return {

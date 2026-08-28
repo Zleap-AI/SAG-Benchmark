@@ -11,6 +11,8 @@ from pipeline.utils.batch import (
 from pipeline.utils.llm_tracking import (
     LLMTokenTracker,
     enable_llm_tracking,
+    enable_llm_verbose,
+    is_llm_verbose,
     llm_tracking_scope,
     llm_tracking_stage,
     record_llm_usage,
@@ -20,7 +22,6 @@ from pipeline.utils.retry import (
     is_retryable_db_error,
     is_retryable_error,
     is_retryable_network_error,
-    retry_async,
 )
 from pipeline.utils.run_stats import RunStatsTracker, StageMeasurement
 from pipeline.utils.text import (
@@ -70,6 +71,8 @@ __all__ = [
     "TokenEstimator",
     "LLMTokenTracker",
     "enable_llm_tracking",
+    "enable_llm_verbose",
+    "is_llm_verbose",
     "llm_tracking_scope",
     "llm_tracking_stage",
     "record_llm_usage",
@@ -79,7 +82,6 @@ __all__ = [
     "is_retryable_error",
     "is_retryable_db_error",
     "is_retryable_network_error",
-    "retry_async",
     # Batch
     "batch_generate_embeddings",
     "batch_index_to_es",

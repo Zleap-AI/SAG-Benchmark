@@ -422,7 +422,9 @@ class ElasticsearchClient:
                 "field": field,
                 "query_vector": vector,
                 "k": size,
-                "num_candidates": max(100, size * 2),  # num_candidates 随 size 线性放大（Step6 全量打分时 k 可达 len(all_details)~500）；num_candidates >= k 是 ES 硬约束，max(100,size*2) 恒满足
+                "num_candidates": max(
+                    100, size * 2
+                ),  # num_candidates 随 size 线性放大（Step6 全量打分时 k 可达 len(all_details)~500）；num_candidates >= k 是 ES 硬约束，max(100,size*2) 恒满足
             }
 
             if filter_query:

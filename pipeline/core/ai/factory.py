@@ -204,7 +204,7 @@ async def create_llm_client(
     # ============ 验证必需参数 ============
     if not config.get("api_key"):
         raise ConfigError(
-            f"❌ LLM配置错误：缺少 API Key！\n" f"场景: {scenario}\n" f"请检查环境变量 LLM_API_KEY"
+            f"❌ LLM配置错误：缺少 API Key！\n场景: {scenario}\n请检查环境变量 LLM_API_KEY"
         )
 
     if not config.get("model"):

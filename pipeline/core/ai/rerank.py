@@ -80,11 +80,7 @@ class RerankClient:
             model or getattr(settings, "rerank_model_name", None) or "Qwen/Qwen3-Reranker-8B"
         )
         # 基础 URL，拼接 /rerank 端点
-        base = (
-            base_url
-            or getattr(settings, "rerank_base_url", None)
-            or settings.embedding_base_url
-        )
+        base = base_url or getattr(settings, "rerank_base_url", None) or settings.embedding_base_url
         self.base_url = base.rstrip("/")
         endpoint = getattr(settings, "rerank_endpoint", None) or "/rerank"
         endpoint = endpoint.strip()

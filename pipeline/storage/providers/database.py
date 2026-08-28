@@ -1,11 +1,11 @@
 """Structured database backend and event-universe implementations."""
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from sqlalchemy import select, text
 
-from pipeline.db.base import close_database, get_engine, get_session_factory
 from pipeline.db import EventEntity, SourceChunk, SourceEvent
+from pipeline.db.base import close_database, get_engine, get_session_factory
 
 
 class _SqlAlchemyDatabaseStore:
@@ -25,9 +25,9 @@ class _SqlAlchemyDatabaseStore:
 
     async def filter_active_event_ids(
         self,
-        event_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[str]:
+        event_ids: list[str],
+        source_config_ids: list[str] | None = None,
+    ) -> list[str]:
         """Filter candidate ids using the canonical SourceEvent semantics."""
         normalized = [str(event_id) for event_id in event_ids if event_id]
         if not normalized:
@@ -47,10 +47,10 @@ class _SqlAlchemyDatabaseStore:
 
     async def get_event_entity_pairs_by_events(
         self,
-        event_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-        limit: Optional[int] = None,
-    ) -> List[Tuple[str, str]]:
+        event_ids: list[str],
+        source_config_ids: list[str] | None = None,
+        limit: int | None = None,
+    ) -> list[tuple[str, str]]:
         """Read scope edges with the existing active/source/order semantics."""
         normalized = [str(event_id) for event_id in event_ids if event_id]
         if not normalized:
@@ -79,9 +79,9 @@ class _SqlAlchemyDatabaseStore:
 
     async def get_event_entity_pairs_by_entities(
         self,
-        entity_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[Tuple[str, str]]:
+        entity_ids: list[str],
+        source_config_ids: list[str] | None = None,
+    ) -> list[tuple[str, str]]:
         """Read entity-recall edges without changing its current semantics."""
         normalized = [str(entity_id) for entity_id in entity_ids if entity_id]
         if not normalized:
@@ -109,8 +109,8 @@ class _SqlAlchemyDatabaseStore:
 
     async def get_chunks_by_event_ids(
         self,
-        event_ids: List[str],
-    ) -> Dict[str, Dict[str, Any]]:
+        event_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
         """Hydrate chunks with the exact shape previously built in Runtime."""
         normalized = [str(event_id) for event_id in event_ids if event_id]
         if not normalized:
@@ -119,11 +119,9 @@ class _SqlAlchemyDatabaseStore:
         session_factory = get_session_factory()
         async with session_factory() as session:
             event_result = await session.execute(
-                select(SourceEvent.id, SourceEvent.chunk_id).where(
-                    SourceEvent.id.in_(normalized)
-                )
+                select(SourceEvent.id, SourceEvent.chunk_id).where(SourceEvent.id.in_(normalized))
             )
-            event_chunk_map: Dict[str, str] = {}
+            event_chunk_map: dict[str, str] = {}
             chunk_ids: set[str] = set()
             for event_id, chunk_id in event_result.fetchall():
                 if chunk_id:
@@ -137,7 +135,7 @@ class _SqlAlchemyDatabaseStore:
             chunk_result = await session.execute(
                 select(SourceChunk).where(SourceChunk.id.in_(chunk_ids))
             )
-            chunk_map: Dict[str, Dict[str, Any]] = {}
+            chunk_map: dict[str, dict[str, Any]] = {}
             for chunk in chunk_result.scalars().all():
                 chunk_map[str(chunk.id)] = {
                     "chunk_id": str(chunk.id),
@@ -164,7 +162,3 @@ class OceanBaseDatabaseStore(_SqlAlchemyDatabaseStore):
     """OceanBase structured data backend in MySQL-compatible mode."""
 
     backend_name = "oceanbase"
-
-
-# Backward-compatible import name. New code should use ``MySQLDatabaseStore``.
-MySqlDatabaseStore = MySQLDatabaseStore

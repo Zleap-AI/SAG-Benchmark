@@ -4,11 +4,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from pipeline.core.ai.models import LLMMessage, LLMRole
+from pipeline.core.ai.models import LLMRole
 from pipeline.modules.extract.config import ExtractBaseConfig, ExtractPromptStrategy
 from pipeline.modules.extract.processor import EventProcessor
-from pipeline.modules.extract.prompt_router import ExtractPromptRoute
-
 
 # ---------------------------------------------------------------------------
 # Fake PromptManager: 为不同模板返回带唯一标记的配置
@@ -62,10 +60,12 @@ def _make_fake_prompt_manager():
 
 def _make_fake_llm_client():
     client = MagicMock()
-    client.chat_with_schema = AsyncMock(return_value={
-        "type": "response",
-        "data": {"items": [], "meta": {}},
-    })
+    client.chat_with_schema = AsyncMock(
+        return_value={
+            "type": "response",
+            "data": {"items": [], "meta": {}},
+        }
+    )
     return client
 
 
@@ -151,9 +151,11 @@ class TestProcessorRouteConsistency:
 
     def test_compact_template_is_static_and_does_not_render(self):
         processor = _make_processor(ExtractPromptStrategy.COMPACT)
-        processor.prompt_manager.get_template_config = MagicMock(return_value={
-            "template": "STATIC_COMPACT",
-        })
+        processor.prompt_manager.get_template_config = MagicMock(
+            return_value={
+                "template": "STATIC_COMPACT",
+            }
+        )
         assert processor._build_system_prompt() == "STATIC_COMPACT"
         processor.prompt_manager.render.assert_not_called()
 
