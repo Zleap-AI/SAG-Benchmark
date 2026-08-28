@@ -1,0 +1,24 @@
+[project]
+name = "hipporag2"
+version = "0.1.0"
+description = "SAG-Benchmark external method: HippoRAG 2 graph-based QA (igraph + Parquet vector store)"
+requires-python = ">=3.10"
+dependencies = [
+    # graph index / storage
+    "igraph>=0.11",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "tqdm>=4.60",
+    # LLM / embedding API clients
+    "openai>=1.30",
+    "httpx>=0.25",
+    "filelock>=3.0",
+    "packaging>=23.0",
+    "tenacity>=8.0",
+    "tiktoken>=0.5",
+    "pydantic>=2.0",
+    # KNN 同义词边（add_synonymy_edges）需要 torch
+    "torch>=2.0",
+    # Parquet 向量存储（EmbeddingStore 依赖 pyarrow 引擎）
+    "pyarrow>=14.0",
+]

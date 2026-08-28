@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["hyperrag"]
+
+[project]
+name = "hyper-rag"
+version = "0.1.0"
+description = "Hyper-RAG: a hypergraph-driven retrieval-augmented generation framework (iMoonLab)"
+requires-python = ">=3.11"
+dependencies = [
+    "accelerate>=1.14.0",
+    "aioboto3>=15.5.0",
+    "aiohttp>=3.14.1",
+    "numpy>=2.3.4",
+    "nano-vectordb>=0.0.4.3",
+    "openai>=1.86",
+    "tenacity>=9.1.4",
+    "tiktoken>=0.13",
+    "xxhash>=3.7.0",
+    "hypergraph-db>=0.3.0",
+    "igraph>=1.0.0",
+]
