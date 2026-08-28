@@ -8,6 +8,7 @@ from pipeline.evaluation.judge.metrics.answer_correctness import (
     compute_answer_correctness,
     fbeta_score,
 )
+from pipeline.exceptions import LLMResponseError
 
 
 class TestFBetaScore:
@@ -38,11 +39,15 @@ class TestAnswerCorrectness:
             usage=LLMUsage(),
         )
         class_resp = LLMResponse(
-            content=json.dumps({
-                "TP": [{"statement": "Paris is the capital of France", "reason": "Exact match"}],
-                "FP": [],
-                "FN": [],
-            }),
+            content=json.dumps(
+                {
+                    "TP": [
+                        {"statement": "Paris is the capital of France", "reason": "Exact match"}
+                    ],
+                    "FP": [],
+                    "FN": [],
+                }
+            ),
             model="fake",
             usage=LLMUsage(),
         )
@@ -65,11 +70,19 @@ class TestAnswerCorrectness:
         from tests.evaluation.judge.conftest import FakeLLM
 
         llm = FakeLLM()
-        llm.set_responses([
-            '["Paris is the capital of France"]',
-            '["London is the capital of UK"]',
-            json.dumps({"TP": [], "FP": [], "FN": [{"statement": "London is the capital of UK", "reason": "Different"}]}),
-        ])
+        llm.set_responses(
+            [
+                '["Paris is the capital of France"]',
+                '["London is the capital of UK"]',
+                json.dumps(
+                    {
+                        "TP": [],
+                        "FP": [],
+                        "FN": [{"statement": "London is the capital of UK", "reason": "Different"}],
+                    }
+                ),
+            ]
+        )
 
         score = await compute_answer_correctness(
             question="What is the capital of France?",
@@ -84,15 +97,21 @@ class TestAnswerCorrectness:
         from tests.evaluation.judge.conftest import FakeLLM
 
         llm = FakeLLM()
-        llm.set_responses([
-            '["Paris is the capital of France"]',
-            '["Paris is the capital of France"]',
-            json.dumps({
-                "TP": [{"statement": "Paris is the capital of France", "reason": "Exact match"}],
-                "FP": [],
-                "FN": [],
-            }),
-        ])
+        llm.set_responses(
+            [
+                '["Paris is the capital of France"]',
+                '["Paris is the capital of France"]',
+                json.dumps(
+                    {
+                        "TP": [
+                            {"statement": "Paris is the capital of France", "reason": "Exact match"}
+                        ],
+                        "FP": [],
+                        "FN": [],
+                    }
+                ),
+            ]
+        )
 
         result = await compute_answer_correctness(
             question="What is the capital of France?",
@@ -106,3 +125,37 @@ class TestAnswerCorrectness:
         assert "classification" in intermediate
         assert "answer_statements" in intermediate
         assert "gt_statements" in intermediate
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "classification_response",
+        [
+            pytest.param("I cannot answer that.", id="not_json"),
+            pytest.param("null", id="null"),
+            pytest.param('{"TP": "yes", "FP": [], "FN": []}', id="tp_not_a_list"),
+            pytest.param('{"TP": [{"statement": "a"}], "FP": [], "FN": []}', id="missing_reason"),
+        ],
+    )
+    async def test_unusable_classification_raises(self, classification_response):
+        """An unusable classification must fail the sample rather than score 0.0,
+        which is indistinguishable from a genuinely wrong answer. The error type
+        matters too: LLMResponseError is an expected failure, so the runner records
+        the sample and continues instead of aborting the run."""
+        from tests.evaluation.judge.conftest import FakeLLM
+
+        llm = FakeLLM()
+        llm.set_responses(
+            [
+                '["Paris is the capital of France"]',
+                '["Paris is the capital of France"]',
+                classification_response,
+            ]
+        )
+
+        with pytest.raises(LLMResponseError):
+            await compute_answer_correctness(
+                question="What is the capital of France?",
+                answer="Paris is the capital of France.",
+                ground_truth="Paris is the capital of France.",
+                llm=llm,
+            )

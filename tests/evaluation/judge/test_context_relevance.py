@@ -3,7 +3,6 @@
 Verifies: two independent LLM calls, averaging, 0-2 scale conversion to 0-1.
 """
 
-
 import pytest
 
 from pipeline.evaluation.judge.metrics.context_relevance import (
@@ -11,6 +10,7 @@ from pipeline.evaluation.judge.metrics.context_relevance import (
     _normalize_rating,
     compute_context_relevance,
 )
+from pipeline.exceptions import LLMResponseError
 
 
 class TestNormalizeRating:
@@ -56,10 +56,12 @@ class TestContextRelevance:
 
         llm = FakeLLM()
         # Two independent ratings
-        llm.set_responses([
-            '{"rating": 2}',
-            '{"rating": 0}',
-        ])
+        llm.set_responses(
+            [
+                '{"rating": 2}',
+                '{"rating": 0}',
+            ]
+        )
 
         score = await compute_context_relevance(
             question="What is the capital of France?",
@@ -106,3 +108,19 @@ class TestContextRelevance:
             llm=llm,
         )
         assert score == 0.0
+
+    @pytest.mark.asyncio
+    async def test_all_ratings_failing_raises(self):
+        """A sample whose ratings all fail must raise, not return NaN: the
+        runner records it as failed, whereas NaN aborts the whole run."""
+        from tests.evaluation.judge.conftest import FakeLLM
+
+        llm = FakeLLM()
+        llm.set_responses(["not a rating", "still not a rating"])
+
+        with pytest.raises(LLMResponseError):
+            await compute_context_relevance(
+                question="What is the capital of France?",
+                contexts=["Paris is in France."],
+                llm=llm,
+            )

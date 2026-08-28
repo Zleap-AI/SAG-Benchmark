@@ -64,18 +64,15 @@ class TestCanonicalGTText:
 class TestContextPreprocessing:
     def test_graph_context_is_preserved(self):
         context = "-----Entities-----\na,b\n\n-----Sources-----\nc,d"
-        assert _preprocess_context(context, context_top_k=1) == [context]
+        assert _preprocess_context(context, context_top_k=1) == context
 
     def test_plain_context_uses_top_k_chunks(self):
         context = "first\n\nsecond\n\nthird"
-        assert _preprocess_context(context, context_top_k=2) == [
-            "first",
-            "second",
-        ]
+        assert _preprocess_context(context, context_top_k=2) == "first\n\nsecond"
 
     def test_zero_disables_plain_context_truncation(self):
         context = "first\n\nsecond"
-        assert _preprocess_context(context, context_top_k=0) == [context]
+        assert _preprocess_context(context, context_top_k=0) == context
 
 
 class TestSingleAnswerEM:

@@ -1,6 +1,6 @@
 """JSON parser for Judge LLM responses — no LangChain dependency.
 
-Replicates the fallback chain from external/judge/Evaluation/metrics/utils.py
+Replicates the fallback chain from GraphRAG-Benchmark/Evaluation/metrics/utils.py
 but replaces `llm.ainvoke(prompt, config={"callbacks": callbacks})` with
 pipeline-native `await llm.chat(...)`.
 """
@@ -120,8 +120,7 @@ async def _heal_with_llm(
 
     key_instruction = f' with a key "{key}"' if key else ""
     repair_prompt = (
-        f"Return ONLY valid JSON{key_instruction}.\n"
-        f"Invalid output was:\n{invalid_text}\n"
+        f"Return ONLY valid JSON{key_instruction}.\nInvalid output was:\n{invalid_text}\n"
     )
     try:
         response = await llm.chat(

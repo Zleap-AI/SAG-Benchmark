@@ -1,9 +1,9 @@
-"""Judge prompts — verbatim from external/judge, annotated with source.
+"""Judge prompts aligned with GraphRAG-Benchmark, annotated with source.
 
 DO NOT "optimize" these prompts. Any change risks score drift.
 """
 
-# === answer_accuracy.py (external/judge/Evaluation/metrics/answer_accuracy.py) ===
+# === GraphRAG-Benchmark/Evaluation/metrics/answer_accuracy.py ===
 # Original: STATEMENT_GENERATOR_PROMPT, CORRECTNESS_PROMPT_TEMPLATE, CORRECTNESS_EXAMPLES
 
 STATEMENT_GENERATOR_PROMPT = """
@@ -41,84 +41,82 @@ CORRECTNESS_EXAMPLES = [
             "question": "What powers the sun and what is its primary function?",
             "answer": [
                 "The sun is powered by nuclear fission, similar to nuclear reactors on Earth.",
-                "The primary function of the sun is to provide light to the solar system."
+                "The primary function of the sun is to provide light to the solar system.",
             ],
             "ground_truth": [
                 "The sun is powered by nuclear fusion, where hydrogen atoms fuse to form helium.",
                 "This fusion process in the sun's core releases a tremendous amount of energy.",
                 "The energy from the sun provides heat and light, which are essential for life on Earth.",
                 "The sun's light plays a critical role in Earth's climate system.",
-                "Sunlight helps to drive the weather and ocean currents."
-            ]
+                "Sunlight helps to drive the weather and ocean currents.",
+            ],
         },
         "output": {
             "TP": [
                 {
                     "statement": "The primary function of the sun is to provide light to the solar system.",
-                    "reason": "This statement is somewhat supported by the ground truth mentioning the sun providing light and its roles, though it focuses more broadly on the sun's energy."
+                    "reason": "This statement is somewhat supported by the ground truth mentioning the sun providing light and its roles, though it focuses more broadly on the sun's energy.",
                 }
             ],
             "FP": [
                 {
                     "statement": "The sun is powered by nuclear fission, similar to nuclear reactors on Earth.",
-                    "reason": "This statement is incorrect and contradicts the ground truth which states that the sun is powered by nuclear fusion."
+                    "reason": "This statement is incorrect and contradicts the ground truth which states that the sun is powered by nuclear fusion.",
                 }
             ],
             "FN": [
                 {
                     "statement": "The sun is powered by nuclear fusion, where hydrogen atoms fuse to form helium.",
-                    "reason": "This accurate description of the sun's power source is not included in the answer."
+                    "reason": "This accurate description of the sun's power source is not included in the answer.",
                 },
                 {
                     "statement": "This fusion process in the sun's core releases a tremendous amount of energy.",
-                    "reason": "This process and its significance are not mentioned in the answer."
+                    "reason": "This process and its significance are not mentioned in the answer.",
                 },
                 {
                     "statement": "The energy from the sun provides heat and light, which are essential for life on Earth.",
-                    "reason": "The answer only mentions light, omitting the essential aspects of heat and its necessity for life, which the ground truth covers."
+                    "reason": "The answer only mentions light, omitting the essential aspects of heat and its necessity for life, which the ground truth covers.",
                 },
                 {
                     "statement": "The sun's light plays a critical role in Earth's climate system.",
-                    "reason": "This broader impact of the sun's light on Earth's climate system is not addressed in the answer."
+                    "reason": "This broader impact of the sun's light on Earth's climate system is not addressed in the answer.",
                 },
                 {
                     "statement": "Sunlight helps to drive the weather and ocean currents.",
-                    "reason": "The effect of sunlight on weather patterns and ocean currents is omitted in the answer."
-                }
-            ]
-        }
+                    "reason": "The effect of sunlight on weather patterns and ocean currents is omitted in the answer.",
+                },
+            ],
+        },
     },
     {
         "input": {
             "question": "What is the boiling point of water?",
-            "answer": [
-                "The boiling point of water is 100 degrees Celsius at sea level"
-            ],
+            "answer": ["The boiling point of water is 100 degrees Celsius at sea level"],
             "ground_truth": [
                 "The boiling point of water is 100 degrees Celsius (212 degrees Fahrenheit) at sea level.",
-                "The boiling point of water can change with altitude."
-            ]
+                "The boiling point of water can change with altitude.",
+            ],
         },
         "output": {
             "TP": [
                 {
                     "statement": "The boiling point of water is 100 degrees Celsius at sea level",
-                    "reason": "This statement is directly supported by the ground truth which specifies the boiling point of water as 100 degrees Celsius at sea level."
+                    "reason": "This statement is directly supported by the ground truth which specifies the boiling point of water as 100 degrees Celsius at sea level.",
                 }
             ],
             "FP": [],
             "FN": [
                 {
                     "statement": "The boiling point of water can change with altitude.",
-                    "reason": "This additional information about how the boiling point of water can vary with altitude is not mentioned in the answer."
+                    "reason": "This additional information about how the boiling point of water can vary with altitude is not mentioned in the answer.",
                 }
-            ]
-        }
-    }
+            ],
+        },
+    },
 ]
 
 
-# === coverage.py (external/judge/Evaluation/metrics/coverage.py) ===
+# === GraphRAG-Benchmark/Evaluation/metrics/coverage.py ===
 # Original: FACT_EXTRACTION_PROMPT, FACT_COVERAGE_PROMPT
 
 FACT_EXTRACTION_PROMPT = """
@@ -176,7 +174,7 @@ Reference Facts: {facts}
 """
 
 
-# === context_relevance.py (external/judge/Evaluation/metrics/context_relevance.py) ===
+# === GraphRAG-Benchmark/Evaluation/metrics/context_relevance.py ===
 # Original: CONTEXT_RELEVANCE_PROMPT
 
 CONTEXT_RELEVANCE_PROMPT = """
@@ -206,9 +204,6 @@ Question: {question}
 Context: {context}
 """
 
-
-# === evidence_recall.py (external/judge/Evaluation/metrics/evidence_recall.py) ===
-# Original: EVIDENCE_RECALL_PROMPT
 
 EVIDENCE_RECALL_PROMPT = """
 ### Task

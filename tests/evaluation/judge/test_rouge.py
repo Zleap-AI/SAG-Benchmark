@@ -43,14 +43,10 @@ class TestRougeScore:
 
     @pytest.mark.asyncio
     async def test_precision_mode(self):
-        score = await compute_rouge_score(
-            "the cat sat on the mat", "the cat sat", mode="precision"
-        )
+        score = await compute_rouge_score("the cat sat on the mat", "the cat sat", mode="precision")
         assert 0.0 < score <= 1.0
 
     @pytest.mark.asyncio
     async def test_recall_mode(self):
-        score = await compute_rouge_score(
-            "the cat", "the cat sat on the mat", mode="recall"
-        )
+        score = await compute_rouge_score("the cat", "the cat sat on the mat", mode="recall")
         assert 0.0 < score <= 1.0

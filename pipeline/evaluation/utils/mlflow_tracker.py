@@ -10,15 +10,15 @@ from typing import Any
 
 
 def get_local_ip():
-    """获取本机 IP 地址"""
+    """返回本机标识，用于 MLflow run/experiment 命名。
+
+    改用 hostname 而非连接 8.8.8.8 探测出网 IP：去掉对公网地址的硬编码依赖，
+    且 hostname 比 IP 更可读。函数名沿用历史命名，实际返回 hostname。
+    """
     import socket
 
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip
+        return socket.gethostname()
     except Exception:
         return "unknown"
 
@@ -251,7 +251,7 @@ class MLflowTracker:
         import mlflow
 
         for metric_name, value in metrics.items():
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, int | float):
                 continue
             self._safe_log(mlflow.log_metric, f"{prefix}{metric_name}", float(value), step=step)
 
@@ -294,7 +294,7 @@ class MLflowTracker:
         numeric_metrics = {
             metric_name: float(value)
             for metric_name, value in metrics.items()
-            if isinstance(value, (int, float))
+            if isinstance(value, int | float)
         }
         if numeric_metrics:
             self._safe_log(mlflow.log_metrics, numeric_metrics, step=step)

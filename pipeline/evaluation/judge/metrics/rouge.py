@@ -1,4 +1,4 @@
-"""ROUGE Score — migrated from external/judge/Evaluation/metrics/rouge.py.
+"""ROUGE Score aligned with GraphRAG-Benchmark/Evaluation/metrics/rouge.py.
 
 Deterministic metric; no LLM calls. Uses rouge-score library.
 """

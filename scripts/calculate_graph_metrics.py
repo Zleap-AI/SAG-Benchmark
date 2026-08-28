@@ -4,157 +4,47 @@
 
 从 MySQL 数据库中读取指定 source_config 的 event 和 entity 数据，
 构建无向图（event 和 entity 均为节点，event_entity 关联为无向边），
-然后计算与 external/judge/Evaluation/indexing_eval.py 一致的结构化指标。
+然后计算与 GraphRAG-Benchmark/Evaluation/indexing_eval.py 一致的结构化指标。
 
 用法:
-    # 默认计算 musique-20260525_091815
-    python scripts/calculate_graph_metrics.py
+    uv run python scripts/calculate_graph_metrics.py \
+        --source-config <source_config_id>
 
-    # 指定 source_config_id
-    python scripts/calculate_graph_metrics.py --source-config musique-20260525_091815
-
-    # 保存结果到文件
-    python scripts/calculate_graph_metrics.py --output results.json
-
-    # 自定义数据库连接
-    python scripts/calculate_graph_metrics.py \
-        --host 127.0.0.1 --port 3306 --user sag2 --password sag2 --database sag2
+数据库连接默认读取项目 Settings/.env，也可通过 CLI 参数显式覆盖。
 """
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 import igraph as ig
-import numpy as np
 import pymysql
 
+from pipeline.core.config.settings import get_settings
+from pipeline.evaluation.judge.indexing import analyze_graph as analyze_reference_graph
 
-# ── 图指标计算（与 external/judge/Evaluation/indexing_eval.py 一致）──
+# ── 图指标计算 ──
 
 
 def analyze_graph(g: ig.Graph) -> dict:
-    """
-    分析单个图并计算相关指标。
-
-    Args:
-        g: igraph.Graph 对象（无向图）
-
-    Returns:
-        包含所有图指标的字典
-    """
-    num_nodes = g.vcount()
-    num_edges = g.ecount()
-
-    # 基本指标
+    """计算基准 20 项指标，并附加 SAG2 专属节点类型/度分布字段。"""
+    metrics = analyze_reference_graph(g)
     degrees = g.degree(mode="all")
-    average_degree = sum(degrees) / num_nodes if num_nodes > 0 else 0.0
-    density = g.density()
-
-    # 连通分量分析
-    components = g.components()
-    num_components = len(components)
-    largest_component_size = components.giant().vcount() if num_nodes > 0 else 0
-
-    # 平均聚类系数
-    avg_clustering = g.transitivity_avglocal_undirected()
-
-    # 直径（仅在连通时有效）
-    diameter = float(g.diameter()) if g.is_connected() else float("inf")
-
-    # ── 非孤立连通分量分析 ──
-    component_sizes = [len(c) for c in components if len(c) > 1]
-
-    if component_sizes:
-        average_component_size = sum(component_sizes) / len(component_sizes)
-        median_component_size = float(np.median(component_sizes))
-        num_components_excluding_isolated = len(component_sizes)
-        num_components_above_average = sum(
-            1 for s in component_sizes if s > average_component_size
-        )
-        num_nodes_excluding_isolated_comp = sum(component_sizes)
-
-        # Trimmed mean（去掉最大和最小）
-        sizes_sorted = sorted(component_sizes)
-        if len(sizes_sorted) > 2:
-            trimmed = sum(sizes_sorted[1:-1]) / (len(sizes_sorted) - 2)
-        else:
-            trimmed = average_component_size
-
-        # Geometric mean
-        geo_mean = float(np.exp(np.mean(np.log(component_sizes))))
-
-        # Harmonic mean
-        harm_mean = (
-            len(component_sizes) / sum(1.0 / s for s in component_sizes)
-            if len(component_sizes) > 0
-            else 0.0
-        )
-    else:
-        average_component_size = 0.0
-        median_component_size = 0.0
-        num_components_excluding_isolated = 0
-        num_components_above_average = 0
-        num_nodes_excluding_isolated_comp = 0
-        trimmed = 0.0
-        geo_mean = 0.0
-        harm_mean = 0.0
-
-    # ── 度分布分析 ──
-    num_isolated_nodes = sum(1 for d in degrees if d == 0)
-    num_nodes_excluding_isolated = sum(1 for d in degrees if d > 0)
-    num_nodes_degree_above_1 = sum(1 for d in degrees if d > 1)
-    num_nodes_degree_above_2 = sum(1 for d in degrees if d > 2)
-    num_nodes_degree_above_3 = sum(1 for d in degrees if d > 3)
-
-    # 度分布统计
     degree_values = sorted(set(degrees))
     degree_distribution = {int(d): sum(1 for dd in degrees if dd == d) for d in degree_values}
-
-    # 最大度数
-    max_degree = max(degrees) if degrees else 0
-
-    return {
-        # 基本规模
-        "num_nodes": num_nodes,
-        "num_events": sum(1 for v in g.vs if v["node_type"] == "event"),
-        "num_entities": sum(1 for v in g.vs if v["node_type"] == "entity"),
-        "num_edges": num_edges,
-        # 度指标
-        "average_degree": round(average_degree, 4),
-        "max_degree": int(max_degree),
-        # 密度
-        "density": round(density, 6),
-        # 聚类
-        "average_clustering_coefficient": round(avg_clustering, 4),
-        # 连通性
-        "diameter": round(diameter, 4) if diameter != float("inf") else "inf",
-        "num_components": int(num_components),
-        "largest_component_size": int(largest_component_size),
-        # 非孤立分量分析
-        "average_component_size": round(average_component_size, 4),
-        "median_component_size": round(median_component_size, 4),
-        "trimmed_mean_component_size": round(trimmed, 4),
-        "geometric_mean_component_size": round(geo_mean, 4),
-        "harmonic_mean_component_size": round(harm_mean, 4),
-        "num_components_excluding_isolated": int(num_components_excluding_isolated),
-        "num_components_above_average": int(num_components_above_average),
-        "num_nodes_excluding_isolated_comp": int(num_nodes_excluding_isolated_comp),
-        # 孤立节点
-        "num_isolated_nodes": int(num_isolated_nodes),
-        "num_nodes_excluding_isolated": int(num_nodes_excluding_isolated),
-        # 度分布
-        "num_nodes_degree_above_1": int(num_nodes_degree_above_1),
-        "num_nodes_degree_above_2": int(num_nodes_degree_above_2),
-        "num_nodes_degree_above_3": int(num_nodes_degree_above_3),
-        # 度频次分布（前20个）
-        "degree_distribution_top20": dict(
-            sorted(degree_distribution.items(), key=lambda x: x[0])[:20]
-        ),
-    }
+    node_types = g.vs["node_type"] if "node_type" in g.vs.attributes() else []
+    metrics.update(
+        {
+            "num_events": sum(1 for node_type in node_types if node_type == "event"),
+            "num_entities": sum(1 for node_type in node_types if node_type == "entity"),
+            "max_degree": max(degrees) if degrees else 0,
+            "degree_distribution_top20": dict(
+                sorted(degree_distribution.items(), key=lambda item: item[0])[:20]
+            ),
+        }
+    )
+    return metrics
 
 
 # ── 数据加载 ──
@@ -187,7 +77,6 @@ def load_graph_from_mysql(
         (source_config_id,),
     )
     events = cursor.fetchall()
-    event_ids = {row[0] for row in events}
     print(f"      加载 {len(events)} 个 events ({time.time() - t0:.1f}s)")
 
     # 加载 entities
@@ -198,7 +87,6 @@ def load_graph_from_mysql(
         (source_config_id,),
     )
     entities = cursor.fetchall()
-    entity_ids = {row[0] for row in entities}
     print(f"      加载 {len(entities)} 个 entities ({time.time() - t0:.1f}s)")
 
     # 构建节点列表
@@ -213,7 +101,7 @@ def load_graph_from_mysql(
         nodes.append((eid, "entity", label))
 
     # 加载 event_entity 关联
-    print(f"[3/3] 加载 event_entity 关联 ...")
+    print("[3/3] 加载 event_entity 关联 ...")
     t0 = time.time()
 
     # 分批加载，避免一次性加载所有数据导致内存压力
@@ -344,9 +232,9 @@ def print_metrics(metrics: dict, title: str = "Graph Indexing Metrics"):
     # 度分布 top 20
     if "degree_distribution_top20" in metrics:
         dd = metrics["degree_distribution_top20"]
-        print(f"\n  ── 度分布 Top-20 ──")
+        print("\n  ── 度分布 Top-20 ──")
         print(f"  {'degree':>8s}  {'count':>8s}")
-        print(f"  {'-'*8}  {'-'*8}")
+        print(f"  {'-' * 8}  {'-' * 8}")
         for deg, cnt in list(dd.items())[:20]:
             print(f"  {int(deg):8d}  {int(cnt):8d}")
 
@@ -355,49 +243,62 @@ def print_metrics(metrics: dict, title: str = "Graph Indexing Metrics"):
 
 
 def main():
+    settings = get_settings()
     parser = argparse.ArgumentParser(
         description="计算 SAG2 知识图谱的 Indexing 指标",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  # 默认计算 musique-20260525_091815
-  python scripts/calculate_graph_metrics.py
-
   # 指定 source_config
-  python scripts/calculate_graph_metrics.py --source-config hotpotqa-20260710_104557
+  uv run python scripts/calculate_graph_metrics.py --source-config <source_config_id>
 
   # 保存 JSON 结果
-  python scripts/calculate_graph_metrics.py --output results.json
+  uv run python scripts/calculate_graph_metrics.py \
+      --source-config <source_config_id> --output <output.json>
 
-  # 自定义数据库连接
-  python scripts/calculate_graph_metrics.py \\
-      --host 127.0.0.1 --port 3306 --user sag2 --password sag2 --database sag2
+数据库连接默认读取项目 Settings/.env，也可通过对应 CLI 参数显式覆盖。
         """,
     )
 
     parser.add_argument(
         "--source-config",
         type=str,
-        default="musique-20260525_091815",
-        help="source_config_id（默认: musique-20260525_091815）",
+        required=True,
+        help="要计算的 source_config_id",
     )
     parser.add_argument(
-        "--host", type=str, default="127.0.0.1", help="MySQL 主机（默认: 127.0.0.1）"
+        "--host",
+        type=str,
+        default=settings.mysql_host,
+        help="MySQL 主机（默认读取 MYSQL_HOST）",
     )
     parser.add_argument(
-        "--port", type=int, default=3306, help="MySQL 端口（默认: 3306）"
+        "--port",
+        type=int,
+        default=settings.mysql_port,
+        help="MySQL 端口（默认读取 MYSQL_PORT）",
     )
     parser.add_argument(
-        "--user", type=str, default="sag2", help="MySQL 用户名（默认: sag2）"
+        "--user",
+        type=str,
+        default=settings.mysql_user,
+        help="MySQL 用户名（默认读取 MYSQL_USER）",
     )
     parser.add_argument(
-        "--password", type=str, default="sag2", help="MySQL 密码（默认: sag2）"
+        "--password",
+        type=str,
+        default=settings.mysql_password,
+        help="MySQL 密码（默认读取 MYSQL_PASSWORD）",
     )
     parser.add_argument(
-        "--database", type=str, default="sag2", help="MySQL 数据库名（默认: sag2）"
+        "--database",
+        type=str,
+        default=settings.mysql_database,
+        help="MySQL 数据库名（默认读取 MYSQL_DATABASE）",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=str,
         default=None,
         help="输出 JSON 文件路径（可选）",
