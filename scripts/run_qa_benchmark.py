@@ -5,7 +5,6 @@ QA Benchmark 脚本（检索增强问答 + 答案评估）
 本脚本是检索（run_search_benchmark.py）之后的 **QA 步骤**：
     检索结果(retrieved_docs) → 拼 prompt → LLM 生成答案 → EM/F1 评分
 
-设计依据：对齐 HippoRAG 2 (Zleap_SAG2) 的 QA 流程——
 QA 阶段只消费「检索回来的 passage」(retrieved_docs, "title\\ncontent" 格式)，
 取前 qa_top_k 条拼成 prompt，不依赖三元组/事实，与计算 Recall 用的是同一批 docs。
 
@@ -52,21 +51,42 @@ from pipeline.evaluation.utils import (
     llm_tracking_scope,
     llm_tracking_stage,
 )
+from pipeline.evaluation.utils.sample_identity import (
+    index_unique_records,
+    validate_identity_coverage,
+    validate_question_identity,
+)
 from pipeline.utils import get_logger
 
 logger = get_logger("scripts.run_qa_benchmark")
 
 _QA_FILE_HANDLER_MARKER = "_run_qa_benchmark_file_handler"
 
+
+def _fmt_dur(seconds: float) -> str:
+    """把秒格式化成 08m12s / 1h23m45s（与 external/graphrag 的 progress.py 口径一致）。"""
+    seconds = int(seconds)
+    h, rem = divmod(seconds, 3600)
+    m, s = divmod(rem, 60)
+    if h:
+        return f"{h:02d}h{m:02d}m{s:02d}s"
+    return f"{m:02d}m{s:02d}s"
+
+
 # 压制噪声日志（与 run_search_benchmark.py 保持一致）
 logging.getLogger("pipeline").setLevel(logging.WARNING)
 logging.getLogger("pipeline.ai.llm").setLevel(logging.INFO)
 logging.getLogger("pipeline.ai.openai").setLevel(logging.INFO)
+# 本脚本自身的 logger 在 pipeline.* 命名空间下（get_logger 加了前缀），
+# 会被上面那条 pipeline→WARNING 一并压掉，需显式放行，否则 QA 进度不打印。
+logger.setLevel(logging.INFO)
 for _noisy in ("httpx", "httpcore", "openai", "elasticsearch", "urllib3", "asyncio", "aiomysql"):
     logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 
-def _resolve_qa_output_dir(input_path: Path, explicit_output_dir: str | None, timestamp: str) -> Path:
+def _resolve_qa_output_dir(
+    input_path: Path, explicit_output_dir: str | None, timestamp: str
+) -> Path:
     """Resolve this QA run's artifact directory before installing file logging."""
 
     if explicit_output_dir:
@@ -106,7 +126,7 @@ def _install_qa_file_handler(output_dir: Path) -> tuple[logging.FileHandler, Pat
     return file_handler, log_file
 
 
-# 对齐 HippoRAG 2 rag_qa 的系统提示（与 musique 模板同源：阅读理解 + Thought/Answer 输出）
+# QA 使用统一的无 few-shot 简洁模板。
 QA_SYSTEM_PROMPT = (
     "You are an advanced reading comprehension assistant. Read the provided Wikipedia "
     "passages and answer the question at the end. Think briefly, then output your final "
@@ -115,17 +135,9 @@ QA_SYSTEM_PROMPT = (
 
 
 def build_qa_prompt(question: str, retrieved_docs: list[str], qa_top_k: int) -> list[LLMMessage]:
-    """
-    构造 QA prompt，与 HippoRAG 2 (HippoRAG.qa) 对齐：
-        user: "Wikipedia Title: {passage1}\n\n... \nQuestion: {q}\nThought: "
-    retrieved_docs 每条为 "title\\ncontent"，作为 passage；截断到 qa_top_k。
-    """
-    passages = retrieved_docs[:qa_top_k]
-    user_parts: list[str] = []
-    for passage in passages:
-        user_parts.append(f"Wikipedia Title: {passage}\n\n")
+    """构造唯一的无 few-shot QA 消息序列：system → 当前 user。"""
+    user_parts = [f"Wikipedia Title: {passage}\n\n" for passage in retrieved_docs[:qa_top_k]]
     user_parts.append(f"Question: {question}\nThought: ")
-
     return [
         LLMMessage(role=LLMRole.SYSTEM, content=QA_SYSTEM_PROMPT),
         LLMMessage(role=LLMRole.USER, content="".join(user_parts)),
@@ -154,17 +166,29 @@ def _load_search_results(input_path: Path) -> list[dict[str, Any]]:
         raise FileNotFoundError(f"检索结果文件不存在: {input_path}")
     with open(input_path, encoding="utf-8") as f:
         data = json.load(f)
+    if not isinstance(data, list):
+        raise ValueError("检索结果必须是 JSON 数组")
     # 兼容两种字段命名：retrieved_docs（当前） / sections（旧版内存结构）
     normalized = []
-    for item in data:
+    for row_index, item in enumerate(data):
+        if not isinstance(item, dict):
+            raise ValueError(f"检索结果 row {row_index} 必须是对象")
         docs = item.get("retrieved_docs") or item.get("sections") or []
+        sample_id = item.get("dataset_sample_id")
+        if not isinstance(sample_id, str) or not sample_id.strip():
+            raise ValueError(
+                f"检索结果 row {row_index} 缺少非空 dataset_sample_id；"
+                "请重新生成或先迁移 external 结果"
+            )
         normalized.append(
             {
                 "question_index": item.get("question_index"),
+                "dataset_sample_id": sample_id.strip(),
                 "question": item.get("question", ""),
                 "retrieved_docs": docs,
             }
         )
+    index_unique_records(normalized, "dataset_sample_id", "GraphRAG search results")
     return normalized
 
 
@@ -204,6 +228,7 @@ async def run(
     timestamp: str,
     output_dir: Path,
     token_tracker: LLMTokenTracker,
+    sample_ids: list[str],
 ) -> None:
     settings = get_settings()
     llm_model = settings.llm_model
@@ -227,15 +252,24 @@ async def run(
     raw_responses: list[str] = [""] * total  # LLM 原始输出（--verbose 用）
     prompt_messages: list[list[LLMMessage] | None] = [None] * total  # prompt（--verbose 用）
 
+    # 精确的「已完成题数」：gather 乱序完成，不能用 max(idx) 推断（会低估）。
+    # 单线程事件循环内累加无竞态，无需加锁。
+    done_count = 0
+
     async def _run(idx: int) -> None:
+        nonlocal done_count
         ans, raw, msgs = await answer_one(
             client, questions[idx], retrieved_docs_list[idx], args.qa_top_k, semaphore
         )
         predictions[idx] = ans
         raw_responses[idx] = raw
         prompt_messages[idx] = msgs
-        if (idx + 1) % args.bench_size == 0 or (idx + 1) == total:
-            logger.info(f"  QA 进度: {idx + 1}/{total}")
+        done_count += 1
+        if done_count % args.bench_size == 0 or done_count == total:
+            elapsed = time.perf_counter() - qa_start
+            eta = elapsed * (total - done_count) / done_count if done_count else None
+            eta_s = f"  预计剩余 {_fmt_dur(eta)}" if eta is not None else ""
+            logger.info(f"  QA 进度: {done_count}/{total}  已用 {_fmt_dur(elapsed)}{eta_s}")
 
     await asyncio.gather(*(_run(i) for i in range(total)))
     qa_time = time.perf_counter() - qa_start
@@ -274,9 +308,9 @@ async def run(
     bench_logger.info(f"📝 QA 评估结果: 数据集={args.dataset_name}, 共 {total} 个问题")
     bench_logger.info("=" * 50)
     bench_logger.info(
-        f"  Exact Match: {pooled['exact_match']:.4f} ({pooled['exact_match']*100:.2f}%)"
+        f"  Exact Match: {pooled['exact_match']:.4f} ({pooled['exact_match'] * 100:.2f}%)"
     )
-    bench_logger.info(f"  F1         : {pooled['f1']:.4f} ({pooled['f1']*100:.2f}%)")
+    bench_logger.info(f"  F1         : {pooled['f1']:.4f} ({pooled['f1'] * 100:.2f}%)")
     bench_logger.info("=" * 50)
     bench_logger.info(f"  QA 推理耗时: {qa_time:.1f} 秒")
     bench_logger.info("=" * 80)
@@ -287,6 +321,7 @@ async def run(
         per_example_full.append(
             {
                 "question_index": i + 1,
+                "dataset_sample_id": sample_ids[i],
                 "question": questions[i],
                 "predicted_answer": final_predictions[i],
                 "gold_answers": list(gold_answers[i]) if i < len(gold_answers) else [],
@@ -423,46 +458,54 @@ async def main():
     # ── 加载数据集（问题 + gold_answers）─────────────────────
     logger.info(f"Loading dataset: {args.dataset_name}")
     loader = DatasetLoader(args.dataset_name)
-    questions_all = loader.get_questions()
-    gold_answers_all = loader.get_gold_answers()
-    gold_answers_all = [list(ga) for ga in gold_answers_all]  # set → list
+    question_records = loader.get_question_records()
 
     if limit_start is not None or limit_end is not None:
         s = limit_start or 0
-        e = limit_end if limit_end is not None else len(questions_all)
-        questions_all = questions_all[s:e]
-        gold_answers_all = gold_answers_all[s:e]
+        e = limit_end if limit_end is not None else len(question_records)
+        question_records = question_records[s:e]
 
     # ── 加载检索结果（来自 run_search_benchmark.py）──────────────
     logger.info(f"📥 复用检索结果: {args.input}")
     search_results = _load_search_results(Path(args.input))
-    # 与 search_results 按 idx 同步裁剪（若指定了 --limit）
-    if limit_start is not None or limit_end is not None:
-        s = limit_start or 0
-        e = limit_end if limit_end is not None else len(search_results)
-        search_results = search_results[s:e]
-    questions = [r["question"] for r in search_results]
-    retrieved_docs_list = [r["retrieved_docs"] for r in search_results]
-    # 若 search_results 自带 question，优先用之（保证与 retrieved_docs 对齐）；
-    # gold_answers 仍来自数据集，按相同 idx 裁剪。
-    gold_answers = gold_answers_all[: len(questions)]
-
-    if len(questions) != len(gold_answers):
-        logger.warning(
-            f"questions({len(questions)}) 与 gold_answers({len(gold_answers)}) 长度不一致，"
-            f"按较短者对齐"
+    search_by_id = index_unique_records(
+        search_results, "dataset_sample_id", "GraphRAG search results"
+    )
+    expected_ids = {record["id"] for record in question_records}
+    validate_identity_coverage(
+        expected_ids,
+        set(search_by_id),
+        "GraphRAG retrieval/QA input",
+    )
+    ordered_search = []
+    for record in question_records:
+        sample_id = record["id"]
+        search_row = search_by_id[sample_id]
+        validate_question_identity(
+            record["question"],
+            search_row["question"],
+            sample_id,
+            "GraphRAG QA",
         )
-        n = min(len(questions), len(gold_answers))
-        questions = questions[:n]
-        gold_answers = gold_answers[:n]
-        retrieved_docs_list = retrieved_docs_list[:n]
+        ordered_search.append(search_row)
+    sample_ids = [record["id"] for record in question_records]
+    questions = [record["question"] for record in question_records]
+    retrieved_docs_list = [row["retrieved_docs"] for row in ordered_search]
+    gold_answers = [list(record["gold_answers"]) for record in question_records]
 
     logger.info(f"❓ 待评估问题数: {len(questions)}")
     logger.info(f"  输出目录: {output_dir}\n" + "=" * 80)
 
     with llm_tracking_scope(token_tracker), llm_tracking_stage("QA"):
         await run(
-            args, questions, retrieved_docs_list, gold_answers, timestamp, output_dir, token_tracker
+            args,
+            questions,
+            retrieved_docs_list,
+            gold_answers,
+            timestamp,
+            output_dir,
+            token_tracker,
+            sample_ids,
         )
     logger.info("\n✅ QA Benchmark 完成！")
 

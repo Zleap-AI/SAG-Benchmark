@@ -1,11 +1,10 @@
 """
 重试工具模块
 
-提供异常分类和重试逻辑
+提供异常分类纯函数（is_retryable_error 等），供加载/批量写路径
+（pipeline/modules/load/、pipeline/utils/batch.py）判断错误是否可重试。
+LLM 侧的重试判定由 pipeline.core.ai.base 的 LLMRetryClient 自行实现，不依赖本模块。
 """
-
-import asyncio
-from collections.abc import Callable
 
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -97,55 +96,3 @@ def is_retryable_error(error: Exception) -> bool:
         return True
 
     return False
-
-
-async def retry_async(
-    func: Callable,
-    max_retries: int = 3,
-    base_delay: float = 0.1,
-    max_delay: float = 10.0,
-    exponential_base: float = 2.0,
-    retryable_exceptions: tuple[type[Exception], ...] | None = None,
-) -> any:
-    """
-    异步重试装饰器
-
-    Args:
-        func: 异步函数
-        max_retries: 最大重试次数
-        base_delay: 基础延迟（秒）
-        max_delay: 最大延迟（秒）
-        exponential_base: 指数退避基数
-        retryable_exceptions: 可重试的异常类型（如果为None，使用is_retryable_error判断）
-
-    Returns:
-        函数执行结果
-
-    Raises:
-        最后一次重试的异常
-    """
-    last_exception = None
-
-    for attempt in range(max_retries):
-        try:
-            return await func()
-        except Exception as e:
-            last_exception = e
-
-            # 判断是否可重试
-            if retryable_exceptions:
-                is_retryable = isinstance(e, retryable_exceptions)
-            else:
-                is_retryable = is_retryable_error(e)
-
-            # 不可重试或已达最大重试次数
-            if not is_retryable or attempt >= max_retries - 1:
-                raise
-
-            # 计算延迟时间（指数退避）
-            delay = min(base_delay * (exponential_base**attempt), max_delay)
-            await asyncio.sleep(delay)
-
-    # 理论上不会到这里，但为了类型检查
-    if last_exception:
-        raise last_exception

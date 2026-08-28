@@ -1,6 +1,6 @@
 """Protocols for database and vector/search backends."""
 
-from typing import Any, Dict, List, Optional, Protocol, Tuple
+from typing import Any, Protocol
 
 from pipeline.storage.capabilities import StorageCapabilities
 
@@ -31,33 +31,33 @@ class EventUniverseStore(Protocol):
 
     async def filter_active_event_ids(
         self,
-        event_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[str]:
+        event_ids: list[str],
+        source_config_ids: list[str] | None = None,
+    ) -> list[str]:
         """Return active event ids in the same order as ``event_ids``."""
         ...
 
     async def get_event_entity_pairs_by_events(
         self,
-        event_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-        limit: Optional[int] = None,
-    ) -> List[Tuple[str, str]]:
+        event_ids: list[str],
+        source_config_ids: list[str] | None = None,
+        limit: int | None = None,
+    ) -> list[tuple[str, str]]:
         """Return canonical ``(event_id, entity_id)`` rows for scope building."""
         ...
 
     async def get_event_entity_pairs_by_entities(
         self,
-        entity_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[Tuple[str, str]]:
+        entity_ids: list[str],
+        source_config_ids: list[str] | None = None,
+    ) -> list[tuple[str, str]]:
         """Return canonical ``(event_id, entity_id)`` rows for entity recall."""
         ...
 
     async def get_chunks_by_event_ids(
         self,
-        event_ids: List[str],
-    ) -> Dict[str, Dict[str, Any]]:
+        event_ids: list[str],
+    ) -> dict[str, dict[str, Any]]:
         """Hydrate event chunks while preserving the SAG2 result shape."""
         ...
 
@@ -79,9 +79,9 @@ class ChunkTextSearchStore(Protocol):
         self,
         *,
         query: str,
-        source_config_ids: Optional[List[str]] = None,
+        source_config_ids: list[str] | None = None,
         size: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Return chunk payloads ranked by backend text relevance."""
         ...
 
@@ -107,39 +107,45 @@ class VectorSearchStore(Protocol):
         """Close vector/search resources owned by this store."""
         ...
 
-    async def upsert_chunk_vectors(self, documents: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
+    async def upsert_chunk_vectors(
+        self, documents: list[dict[str, Any]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Upsert chunk vector/search documents."""
         ...
 
-    async def upsert_event_vectors(self, documents: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
+    async def upsert_event_vectors(
+        self, documents: list[dict[str, Any]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Upsert event vector/search documents."""
         ...
 
-    async def upsert_entity_vectors(self, documents: List[Dict[str, Any]], **kwargs: Any) -> Dict[str, Any]:
+    async def upsert_entity_vectors(
+        self, documents: list[dict[str, Any]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Upsert entity vector/search documents."""
         ...
 
     async def upsert_event_entity_vectors(
-        self, documents: List[Dict[str, Any]], **kwargs: Any
-    ) -> Dict[str, Any]:
+        self, documents: list[dict[str, Any]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Upsert event-entity relation vector/search documents."""
         ...
 
-    async def search_chunks_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:
+    async def search_chunks_by_vector(self, *_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
         """Search chunks by vector. Concrete providers can implement richer signatures."""
         ...
 
-    async def search_events_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:
+    async def search_events_by_vector(self, *_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
         """Search events by vector. Concrete providers can implement richer signatures."""
         ...
 
-    async def search_entities_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:
+    async def search_entities_by_vector(self, *_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
         """Search entities by vector. Concrete providers can implement richer signatures."""
         ...
 
     async def search_event_entities_by_vector(
         self, *_args: Any, **_kwargs: Any
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Search event-entity relation vectors."""
         ...
 
@@ -156,33 +162,33 @@ class SearchStore(Protocol):
     async def search_entities_by_text(
         self,
         query: str,
-        source_config_ids: Optional[List[str]] = None,
+        source_config_ids: list[str] | None = None,
         size: int = 20,
-        entity_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        entity_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search entities by text relevance."""
         ...
 
-    async def get_entities_by_ids(self, entity_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_entities_by_ids(self, entity_ids: list[str]) -> list[dict[str, Any]]:
         """Fetch entity fields by id."""
         ...
 
     async def get_event_ids_by_entity_ids(
         self,
         *,
-        entity_ids: List[str],
-        source_config_ids: Optional[List[str]] = None,
-        exclude_event_ids: Optional[List[str]] = None,
+        entity_ids: list[str],
+        source_config_ids: list[str] | None = None,
+        exclude_event_ids: list[str] | None = None,
         size: int = 100,
-    ) -> List[str]:
+    ) -> list[str]:
         """Return event ids related to any of the given entity ids."""
         ...
 
     async def get_events_by_ids(
         self,
-        event_ids: List[str],
-        source_includes: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        event_ids: list[str],
+        source_includes: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Fetch event fields by id."""
         ...
 
@@ -190,17 +196,17 @@ class SearchStore(Protocol):
         self,
         *,
         query: str,
-        event_ids: List[str],
+        event_ids: list[str],
         k: int = 100,
-        source_config_ids: Optional[List[str]] = None,
-    ) -> List[Dict[str, Any]]:
+        source_config_ids: list[str] | None = None,
+    ) -> list[dict[str, Any]]:
         """Rank a bounded event candidate set by text relevance."""
         ...
 
-    async def search_events_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:
+    async def search_events_by_vector(self, *_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
         """Search events by vector."""
         ...
 
-    async def search_chunks_by_vector(self, *_args: Any, **_kwargs: Any) -> List[Dict[str, Any]]:
+    async def search_chunks_by_vector(self, *_args: Any, **_kwargs: Any) -> list[dict[str, Any]]:
         """Search chunks by vector."""
         ...

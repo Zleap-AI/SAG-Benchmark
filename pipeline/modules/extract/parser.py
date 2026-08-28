@@ -206,11 +206,7 @@ class ResultParser:
             if not isinstance(entity, dict):
                 continue
             entities.append(
-                {
-                    key: entity[key]
-                    for key in ("type", "name", "description")
-                    if key in entity
-                }
+                {key: entity[key] for key in ("type", "name", "description") if key in entity}
             )
 
         return {

@@ -21,6 +21,7 @@ async def test_run_batch_search_closes_every_engine(monkeypatch):
 
     result = await run_batch_search(
         questions=[],
+        sample_ids=[],
         source_config_id="source-1",
         strategy="sag2",
         mode="section",

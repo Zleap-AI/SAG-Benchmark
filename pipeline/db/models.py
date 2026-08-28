@@ -14,11 +14,11 @@ from typing import Optional
 
 from sqlalchemy import (
     CHAR,
-    Column,
     JSON,
     VARBINARY,
     BigInteger,
     Boolean,
+    Column,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -847,7 +847,10 @@ def _should_map_oceanbase_vector_columns() -> bool:
     from pipeline.core.config import get_settings
 
     settings = get_settings()
-    return _should_map_oceanbase_database_columns() and settings.effective_vector_backend == "oceanbase"
+    return (
+        _should_map_oceanbase_database_columns()
+        and settings.effective_vector_backend == "oceanbase"
+    )
 
 
 def _oceanbase_vector_dimensions() -> int:

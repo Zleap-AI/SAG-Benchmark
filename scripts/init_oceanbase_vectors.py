@@ -11,6 +11,7 @@ OceanBase vector columns and indexes. Run it only when:
 
 import argparse
 import asyncio
+import re
 import sys
 from pathlib import Path
 
@@ -47,15 +48,13 @@ async def column_exists(table_name: str, column_name: str) -> bool:
     engine = get_engine()
     async with engine.connect() as conn:
         result = await conn.execute(
-            text(
-                """
+            text("""
                 SELECT COUNT(*)
                 FROM information_schema.columns
                 WHERE table_schema = :database_name
                   AND table_name = :table_name
                   AND column_name = :column_name
-                """
-            ),
+                """),
             {
                 "database_name": database_name,
                 "table_name": table_name,
@@ -65,8 +64,60 @@ async def column_exists(table_name: str, column_name: str) -> bool:
         return int(result.scalar_one()) > 0
 
 
-async def add_column_if_missing(table_name: str, column_name: str, column_sql: str) -> None:
+async def get_column_type(table_name: str, column_name: str) -> str:
+    """查询 information_schema.columns 返回列的 COLUMN_TYPE（小写规范化）。"""
+    settings = get_settings()
+    database_name = settings.oceanbase_database
+    engine = get_engine()
+    async with engine.connect() as conn:
+        result = await conn.execute(
+            text("""
+                SELECT COLUMN_TYPE
+                FROM information_schema.columns
+                WHERE table_schema = :database_name
+                  AND table_name = :table_name
+                  AND column_name = :column_name
+                """),
+            {
+                "database_name": database_name,
+                "table_name": table_name,
+                "column_name": column_name,
+            },
+        )
+        row = result.fetchone()
+        return row[0].lower().replace(" ", "") if row else ""
+
+
+def _parse_vector_dim(type_str: str) -> int | None:
+    """从 'vector(1024)' 等类型字符串中解析出维度数值；非 vector 类型返回 None。"""
+    m = re.fullmatch(r"vector\((\d+)\)", type_str.lower().replace(" ", ""))
+    return int(m.group(1)) if m else None
+
+
+async def add_column_if_missing(
+    table_name: str,
+    column_name: str,
+    column_sql: str,
+    expected_type: str | None = None,
+) -> None:
+    """为表添加列（幂等）。
+
+    若列已存在且 expected_type 不为 None，则校验实际列类型是否与期望一致。
+    仅对向量列（VECTOR 类型）传入 expected_type；普通 JSON 列不传。
+    维度不符时抛出 RuntimeError，阻止后续步骤静默通过。
+    """
     if await column_exists(table_name, column_name):
+        if expected_type is not None:
+            expected_dim = _parse_vector_dim(expected_type)
+            if expected_dim is not None:
+                actual_type = await get_column_type(table_name, column_name)
+                actual_dim = _parse_vector_dim(actual_type)
+                if actual_dim != expected_dim:
+                    raise RuntimeError(
+                        f"{table_name}.{column_name}: 向量列维度不匹配 "
+                        f"（实际类型={actual_type}, 期望类型={expected_type.lower().replace(' ', '')}）"
+                        f"——请手动迁移列后重新运行初始化脚本"
+                    )
         print_info(f"{table_name}.{column_name}: already exists")
         return
 
@@ -82,15 +133,13 @@ async def index_exists(table_name: str, index_name: str) -> bool:
     engine = get_engine()
     async with engine.connect() as conn:
         result = await conn.execute(
-            text(
-                """
+            text("""
                 SELECT COUNT(*)
                 FROM information_schema.statistics
                 WHERE table_schema = :database_name
                   AND table_name = :table_name
                   AND index_name = :index_name
-                """
-            ),
+                """),
             {
                 "database_name": database_name,
                 "table_name": table_name,
@@ -136,11 +185,7 @@ async def create_vector_index_if_missing(
     engine = get_engine()
     async with engine.begin() as conn:
         await conn.execute(
-            text(
-                f"CREATE VECTOR INDEX {index_name} "
-                f"ON {table_name}({column_name}) "
-                f"WITH ({params})"
-            )
+            text(f"CREATE VECTOR INDEX {index_name} ON {table_name}({column_name}) WITH ({params})")
         )
     print_success(f"{table_name}.{index_name}: created")
 
@@ -162,13 +207,23 @@ async def create_fulltext_index_if_missing(
     parser: str | None = "ik",
     parser_properties: str | None = 'ik_mode="max_word"',
     rebuild: bool = False,
-) -> None:
+) -> bool:
+    """创建全文索引（幂等）。
+
+    返回 True 表示索引已就绪（已存在或新建成功）；返回 False 表示创建失败（已打印警告）。
+
+    降级逻辑：
+    - 带 parser 失败 → 重试无 parser；
+    - 无 parser 的首次失败（parser=None）→ 视为可选功能，打印警告并返回 False；
+    - 无 parser 的兜底重试失败 → 打印警告并返回 False，不再静默吞掉。
+    调用方应收集所有 False 结果并在所有步骤完成后统一抛出，确保 fail-fast。
+    """
     if await index_exists(table_name, index_name):
         if rebuild:
             await drop_index_if_exists(table_name, index_name)
         else:
             print_info(f"{table_name}.{index_name}: already exists")
-            return
+            return True
 
     column_sql = ", ".join(columns)
     parser_sql = ""
@@ -189,11 +244,11 @@ async def create_fulltext_index_if_missing(
             )
         parser_label = f" with parser {parser}" if parser else ""
         print_success(f"{table_name}.{index_name}: created{parser_label}")
-        return
+        return True
     except Exception as exc:
         if not parser:
             print_warning(f"{table_name}.{index_name}: fulltext index skipped: {exc}")
-            return
+            return False
         print_warning(
             f"{table_name}.{index_name}: fulltext index with parser {parser} "
             f"failed, retrying without parser: {exc}"
@@ -201,17 +256,15 @@ async def create_fulltext_index_if_missing(
         try:
             async with engine.begin() as conn:
                 await conn.execute(
-                    text(
-                        f"ALTER TABLE {table_name} "
-                        f"ADD FULLTEXT INDEX {index_name} ({column_sql})"
-                    )
+                    text(f"ALTER TABLE {table_name} ADD FULLTEXT INDEX {index_name} ({column_sql})")
                 )
         except Exception as fallback_exc:
             print_warning(
-                f"{table_name}.{index_name}: fulltext index skipped: {fallback_exc}"
+                f"{table_name}.{index_name}: fulltext index failed without parser too: {fallback_exc}"
             )
-            return
+            return False
     print_success(f"{table_name}.{index_name}: created without parser")
+    return True
 
 
 async def initialize_oceanbase_vectors(rebuild_fulltext: bool = False) -> None:
@@ -233,21 +286,25 @@ async def initialize_oceanbase_vectors(rebuild_fulltext: bool = False) -> None:
         "source_chunk",
         "heading_vector",
         f"heading_vector VECTOR({dims}) NULL COMMENT 'heading embedding vector'",
+        expected_type=f"vector({dims})",
     )
     await add_column_if_missing(
         "source_chunk",
         "content_vector",
         f"content_vector VECTOR({dims}) NULL COMMENT 'content embedding vector'",
+        expected_type=f"vector({dims})",
     )
     await add_column_if_missing(
         "source_event",
         "title_vector",
         f"title_vector VECTOR({dims}) NULL COMMENT 'event title embedding vector'",
+        expected_type=f"vector({dims})",
     )
     await add_column_if_missing(
         "source_event",
         "content_vector",
         f"content_vector VECTOR({dims}) NULL COMMENT 'event content embedding vector'",
+        expected_type=f"vector({dims})",
     )
     await add_column_if_missing(
         "source_event",
@@ -258,11 +315,13 @@ async def initialize_oceanbase_vectors(rebuild_fulltext: bool = False) -> None:
         "entity",
         "vector",
         f"vector VECTOR({dims}) NULL COMMENT 'entity name embedding vector'",
+        expected_type=f"vector({dims})",
     )
     await add_column_if_missing(
         "event_entity",
         "vector",
         f"vector VECTOR({dims}) NULL COMMENT 'event-entity relation embedding vector'",
+        expected_type=f"vector({dims})",
     )
 
     print_header("OceanBase vector indexes initialization")
@@ -298,24 +357,36 @@ async def initialize_oceanbase_vectors(rebuild_fulltext: bool = False) -> None:
     )
 
     print_header("OceanBase fulltext indexes initialization")
-    await create_fulltext_index_if_missing(
-        "entity",
-        "idx_obft_entity_name",
-        ["name", "normalized_name"],
-        rebuild=rebuild_fulltext,
+    fulltext_results = []
+    fulltext_results.append(
+        await create_fulltext_index_if_missing(
+            "entity",
+            "idx_obft_entity_name",
+            ["name", "normalized_name"],
+            rebuild=rebuild_fulltext,
+        )
     )
-    await create_fulltext_index_if_missing(
-        "source_event",
-        "idx_obft_source_event_text",
-        ["title", "content"],
-        rebuild=rebuild_fulltext,
+    fulltext_results.append(
+        await create_fulltext_index_if_missing(
+            "source_event",
+            "idx_obft_source_event_text",
+            ["title", "content"],
+            rebuild=rebuild_fulltext,
+        )
     )
-    await create_fulltext_index_if_missing(
-        "source_chunk",
-        "idx_obft_source_chunk_text",
-        ["heading", "content"],
-        rebuild=rebuild_fulltext,
+    fulltext_results.append(
+        await create_fulltext_index_if_missing(
+            "source_chunk",
+            "idx_obft_source_chunk_text",
+            ["heading", "content"],
+            rebuild=rebuild_fulltext,
+        )
     )
+
+    if not all(fulltext_results):
+        raise RuntimeError(
+            "部分全文索引创建失败（详见上方 [WARN] 输出）——OceanBase 初始化未完全成功"
+        )
 
     print_success("OceanBase vector/fulltext columns and indexes are ready")
 

@@ -21,9 +21,7 @@ def atomic_write_json(data: Any, target_path: str) -> None:
     """
     target_dir = os.path.dirname(target_path) or "."
     os.makedirs(target_dir, exist_ok=True)
-    tmp_fd, tmp_path = tempfile.mkstemp(
-        suffix=".tmp", prefix=".judge_ckpt_", dir=target_dir
-    )
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=".tmp", prefix=".judge_ckpt_", dir=target_dir)
     try:
         with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -39,9 +37,7 @@ def atomic_write_json(data: Any, target_path: str) -> None:
 def _entry_has_nan(entry: dict[str, Any]) -> bool:
     """Check whether any metric score in a detailed entry is NaN."""
     metrics = entry.get("metrics", {})
-    return any(
-        isinstance(v, float) and math.isnan(v) for v in metrics.values()
-    )
+    return any(isinstance(v, float) and math.isnan(v) for v in metrics.values())
 
 
 def _select_rerun_ids(
@@ -73,9 +69,7 @@ def load_checkpoint(path: str) -> dict[str, Any] | None:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError) as e:
-        logger.warning(
-            "Checkpoint %s is corrupted (not deleting): %s", path, e
-        )
+        logger.warning("Checkpoint %s is corrupted (not deleting): %s", path, e)
         return None
 
 
@@ -92,9 +86,7 @@ def merge_partial_results(
     - If only_metrics is set, only those metrics are updated per entry.
     - Other entries and metrics are preserved.
     """
-    old_by_id = {
-        d["id"]: d for d in existing.get(question_type, {}).get("detailed", [])
-    }
+    old_by_id = {d["id"]: d for d in existing.get(question_type, {}).get("detailed", [])}
     result_section = new_results.get(question_type, new_results)
     for d in result_section.get("detailed", []):
         oid = d["id"]
@@ -128,10 +120,7 @@ def merge_partial_results(
             d_entry["metrics"][m]
             for d_entry in merged_detailed
             if m in d_entry.get("metrics", {})
-            and not (
-                isinstance(d_entry["metrics"][m], float)
-                and math.isnan(d_entry["metrics"][m])
-            )
+            and not (isinstance(d_entry["metrics"][m], float) and math.isnan(d_entry["metrics"][m]))
         ]
         new_avg[m] = sum(vals) / len(vals) if vals else float("nan")
 

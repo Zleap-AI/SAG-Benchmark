@@ -364,9 +364,7 @@ class SAGSearcher:
                 sag2_config = self._get_sag2_config(config)
                 target_k = sag2_config.max_sections
                 self.logger.info("=" * 60)
-                self.logger.info(
-                    "【SAG2 模式】并行两路召回 + 相似度过滤 + 多跳扩展 + route 追链"
-                )
+                self.logger.info("【SAG2 模式】并行两路召回 + 相似度过滤 + 多跳扩展 + route 追链")
                 self.logger.info(
                     "召回配置: max_entities=%d, query_recall_event_max=%d, max_events_per_key=%d, score_threshold=%.2f",
                     sag2_config.sag2_recall.max_entities,

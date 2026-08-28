@@ -5,13 +5,27 @@
 """
 
 import json
+import logging
+import re
 import shutil
 from pathlib import Path
 from typing import Any
 
-from pipeline.utils import get_logger
+try:
+    from .sample_identity import index_unique_records, require_sample_id
+except ImportError:  # 顶层加载路径（Step_0 把 utils 目录插入 sys.path 后 `from load_utils import`）
+    from sample_identity import index_unique_records, require_sample_id
 
-logger = get_logger("evaluation.utils.load_utils")
+logger = logging.getLogger("evaluation.utils.load_utils")
+
+# 无原生唯一 ID 的数据集：身份用「全量数据集的行号字符串」，与 judge 侧
+# dataset_adapters/narrativeqa.py 的 dataset_sample_id 口径一致。
+# narrativeqa 的 document.id 是文档级 ID，多行共享同一值，不可作行级身份。
+ROW_INDEX_IDENTITY_DATASETS = frozenset({"narrativeqa"})
+
+# 时间戳副本（如 narrativeqa_20260101_120000）与原数据集同构，身份口径必须一致。
+# 与 judge 侧 dataset_adapters/resolver.py 的后缀剥离规则保持对称。
+_DATASET_TIMESTAMP_SUFFIX = re.compile(r"_\d{8}_\d{6}$")
 
 
 class DatasetLoader:
@@ -19,10 +33,29 @@ class DatasetLoader:
     数据集加载类
 
     支持加载corpus、问题数据集、提取评估标签（gold_docs、gold_answers）
-    支持的数据集：musique, hotpotqa, 2wikimultihopqa, sample
+    支持的数据集：musique, hotpotqa, 2wikimultihopqa, sample, test_hotpotqa, narrativeqa
     """
 
-    SUPPORTED_DATASETS = ["musique", "hotpotqa", "2wikimultihopqa", "sample", "test_hotpotqa"]
+    SUPPORTED_DATASETS = [
+        "musique",
+        "hotpotqa",
+        "2wikimultihopqa",
+        "sample",
+        "test_hotpotqa",
+        "narrativeqa",
+    ]
+    DEFAULT_DATASET_DIR = Path(__file__).resolve().parents[3] / "dataset"
+
+    @classmethod
+    def discover_datasets(cls, dataset_dir: str | Path | None = None) -> list[str]:
+        """Return datasets that have both QA and corpus source files."""
+        root = Path(dataset_dir) if dataset_dir is not None else cls.DEFAULT_DATASET_DIR
+        discovered: list[str] = []
+        for corpus_path in sorted(root.glob("*_corpus.json")):
+            name = corpus_path.name[: -len("_corpus.json")]
+            if (root / f"{name}.json").is_file():
+                discovered.append(name)
+        return discovered
 
     def __init__(self, dataset_name: str, dataset_dir: str | None = None):
         """
@@ -30,7 +63,7 @@ class DatasetLoader:
 
         Args:
             dataset_name: 数据集名称 (musique, hotpotqa, 2wikimultihopqa, sample)
-            dataset_dir: 数据集目录路径，默认为 pipeline/evaluation/dataset
+            dataset_dir: 数据集目录路径，默认为仓库根下的 dataset/
         """
         if dataset_name not in self.SUPPORTED_DATASETS:
             logger.warning(
@@ -42,8 +75,7 @@ class DatasetLoader:
 
         # 默认数据集目录
         if dataset_dir is None:
-            current_file = Path(__file__)
-            dataset_dir = current_file.parent.parent / "dataset"
+            dataset_dir = self.DEFAULT_DATASET_DIR
 
         self.dataset_dir = Path(dataset_dir)
 
@@ -62,6 +94,17 @@ class DatasetLoader:
         logger.info(
             f"Initialized DatasetLoader for '{dataset_name}' with directory: {self.dataset_dir}"
         )
+
+    def validate_source_pair(self) -> tuple[Path, Path]:
+        """Fail early when either member of the canonical source pair is absent."""
+        missing = [path for path in (self.samples_path, self.corpus_path) if not path.is_file()]
+        if missing:
+            missing_text = ", ".join(str(path) for path in missing)
+            raise FileNotFoundError(
+                f"Dataset '{self.dataset_name}' is incomplete under {self.dataset_dir}: "
+                f"missing {missing_text}"
+            )
+        return self.samples_path, self.corpus_path
 
     def load_corpus(self, force_reload: bool = False) -> list[dict[str, str]]:
         """
@@ -125,7 +168,19 @@ class DatasetLoader:
             return self._docs
 
         corpus = self.load_corpus(force_reload)
-        self._docs = [f"{doc['title']}\n{doc['text']}" for doc in corpus]
+        docs: list[str] = []
+        seen: set[str] = set()
+        for doc in corpus:
+            title = str(doc.get("title", "")).strip()
+            text = str(doc.get("text", doc.get("paragraph_text", ""))).strip()
+            if not text:
+                continue
+            content = f"{title}\n{text}" if title else text
+            if content in seen:
+                continue
+            seen.add(content)
+            docs.append(content)
+        self._docs = docs
 
         return self._docs
 
@@ -218,6 +273,48 @@ class DatasetLoader:
         """
         return self.get_gold_docs_for_recall(force_reload=force_reload)
 
+    def _uses_row_index_identity(self) -> bool:
+        """该数据集是否用行号作样本身份（时间戳副本与原数据集同口径）。"""
+        base_name = _DATASET_TIMESTAMP_SUFFIX.sub("", self.dataset_name)
+        return base_name in ROW_INDEX_IDENTITY_DATASETS
+
+    def get_question_records(self, force_reload: bool = False) -> list[dict[str, Any]]:
+        """Normalize QA rows for all reproduce pipelines without changing row order."""
+        samples = self.load_samples(force_reload)
+        gold_answers = self.get_gold_answers(force_reload)
+        gold_docs = self.get_gold_docs(force_reload) or [[] for _ in samples]
+        if not (len(samples) == len(gold_answers) == len(gold_docs)):
+            raise ValueError(
+                "Dataset normalization changed row alignment: "
+                f"sample={len(samples)}, answers={len(gold_answers)}, docs={len(gold_docs)}"
+            )
+
+        records: list[dict[str, Any]] = []
+        for index, sample in enumerate(samples):
+            question = str(sample.get("question", "")).strip()
+            if not question:
+                raise ValueError(f"Sample {index} has no non-empty question")
+            if self._uses_row_index_identity():
+                sample_id = str(index)
+            else:
+                sample_id = require_sample_id(
+                    sample.get("_id", sample.get("id")),
+                    "dataset questions",
+                    index,
+                )
+            docs = list(dict.fromkeys(gold_docs[index]))
+            records.append(
+                {
+                    "id": sample_id,
+                    "question": question,
+                    "gold_answers": sorted(str(answer) for answer in gold_answers[index] if answer),
+                    "gold_docs": docs,
+                    "gold_ref": "\n".join(docs),
+                }
+            )
+        index_unique_records(records, "id", f"{self.dataset_name} questions")
+        return records
+
     def get_gold_docs_for_recall(
         self, force_reload: bool = True, limit: int | None = None
     ) -> list[list[str]] | None:
@@ -261,11 +358,11 @@ class DatasetLoader:
                             )
                             docs.append(f"{item[0]}\n{content}")
 
-                # musique: paragraphs
-                elif self.dataset_name == "musique":
+                # musique / sample: paragraphs（is_supporting 标记支持文档）
+                elif self.dataset_name in ["musique", "sample"]:
                     for item in sample["paragraphs"]:
                         if item.get("is_supporting", False):
-                            content = item.get("paragraph_text", "")
+                            content = item.get("paragraph_text") or item.get("text") or ""
                             docs.append(f"{item['title']}\n{content}")
 
                 gold_docs_list.append(docs)
@@ -470,9 +567,7 @@ def load_dataset(
     gold_answers = loader.get_gold_answers()
     gold_docs = loader.get_gold_docs()
 
-    logger.info(
-        f"Loaded dataset '{dataset_name}': " f"{len(docs)} docs, {len(questions)} questions"
-    )
+    logger.info(f"Loaded dataset '{dataset_name}': {len(docs)} docs, {len(questions)} questions")
 
     return docs, questions, gold_answers, gold_docs
 

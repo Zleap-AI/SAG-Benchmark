@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- `OpenAIClient.chat()` no longer crashes on a successful response whose
+  `usage` is `None` (some OpenAI-compatible backends omit it); token logging now
+  reuses the guarded `LLMUsage` and reports the backend's `total_tokens`.
+
+### Removed
+
+- Dead `retry_async` helper and its public re-export. The `is_retryable_*`
+  classifiers remain and are the actual consumers' entry point.
+
+### Changed
+
+- MLflow run/experiment naming uses the hostname instead of a public-IP probe.
+- Project metadata (`description`, `keywords`) now reflects the benchmark
+  reproduction scope.
+- Added dataset provenance and licensing notes (`dataset/README.md`) and
+  clarified the MIT license scope in `THIRD_PARTY_NOTICES.md`.
+
 ## [v2.0.0] — 2026-08-14 — paper v2 release candidate
 
 This section describes the major v2 update prepared for the SAG paper experiments. The release tag and GitHub Release should be created after maintainer review and merge.
@@ -92,5 +113,20 @@ corresponding Git tag and publish package metadata.
 
 ## [Unreleased]
 
-Future changes should be recorded here first and moved into a numbered
-version section when a release is prepared.
+### Added
+
+- Independent lockfile compile jobs and a support matrix for all five external methods.
+- External issue-report fields, upstream provenance records, and trusted-artifact guidance.
+- Metric-level Judge resume and selective overwrite controls.
+
+### Changed
+
+- Aligned Judge context preprocessing, retry defaults, prompts, and generation/retrieval
+  metric behavior with the recorded GraphRAG-Benchmark reference.
+- Documented canonical Step 3 to prediction to Judge paths for every external method.
+
+### Removed
+
+- The unused `external/judge` converter and deprecated Judge wrapper/output entry points.
+
+Future changes should be moved into a numbered version section when a release is prepared.

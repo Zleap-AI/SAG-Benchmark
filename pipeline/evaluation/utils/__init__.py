@@ -15,6 +15,11 @@ from .mlflow_tracker import (
     MLflowTracker,
     get_local_ip,
 )
+from .reproduce_dataset import (
+    ReproduceDatasetExporter,
+    ReproduceDatasetPaths,
+    export_reproduce_dataset,
+)
 from .token_tracker import (
     LLMTokenTracker,
     enable_llm_tracking,
@@ -28,6 +33,9 @@ __all__ = [
     "DatasetLoader",
     "load_dataset",
     "get_gold_answers",
+    "ReproduceDatasetExporter",
+    "ReproduceDatasetPaths",
+    "export_reproduce_dataset",
     # mlflow_tracker
     "MLflowTracker",
     "MLflowConfig",

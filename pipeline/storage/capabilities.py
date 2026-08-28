@@ -1,7 +1,5 @@
 """Storage backend capability models."""
 
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -16,7 +14,7 @@ class StorageCapabilities(BaseModel):
     supports_transactional_vector_write: bool
     supports_json: bool = True
     supports_foreign_keys: bool = True
-    max_vector_dims: Optional[int] = None
+    max_vector_dims: int | None = None
 
 
 class StorageHealth(BaseModel):

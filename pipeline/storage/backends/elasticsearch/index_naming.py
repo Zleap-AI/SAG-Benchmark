@@ -36,6 +36,14 @@ class IndexDimMismatchError(StorageError):
     """已存在索引的 dense_vector dims 与期望维度不符"""
 
 
+class IndexNotReadyError(StorageError):
+    """目标索引缺失，或存在但 mapping 不含期望的 dense_vector 字段。
+
+    后者通常意味着索引被 ES 的 auto_create_index 自动建成了"野生索引"
+    （vector 字段被动态映射成普通 float 数组而非 dense_vector）。
+    """
+
+
 def index_suffix(dim: int) -> str:
     """维度后缀。1024 且开启 legacy 兼容时返回空串（沿用现有索引名）。"""
     if dim == LEGACY_DIM and get_settings().es_index_legacy_unsuffixed:
@@ -81,13 +89,22 @@ def extract_dense_vector_dims(mapping: dict[str, Any]) -> dict[str, int]:
     }
 
 
-async def assert_index_dims(es_client: Any, index_name: str, expected_dim: int) -> None:
+async def assert_index_dims(
+    es_client: Any,
+    index_name: str,
+    expected_dim: int,
+    *,
+    mapping: dict[str, Any] | None = None,
+) -> None:
     """校验已存在索引的 dense_vector dims == expected_dim，否则 fail-fast。
 
     ES 不允许对已存在索引 put_mapping 修改 dims，也无法把 1024 维向量
     "转换"成 4096 维 —— 只能重新 embed。所以这里只报错，不自动修复。
+
+    传入 mapping 可省去一次 get_mapping 往返（调用方已拉过 mapping 时复用）。
     """
-    mapping = await es_client.get_mapping(index=index_name)
+    if mapping is None:
+        mapping = await es_client.get_mapping(index=index_name)
     dims = extract_dense_vector_dims(mapping)
     bad = {f: d for f, d in dims.items() if d != expected_dim}
     if bad:

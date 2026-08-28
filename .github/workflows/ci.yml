@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, dev]
   pull_request:
-    branches: [main, master]
+    branches: [main, master, dev]
+
+permissions:
+  contents: read
 
 jobs:
   lint:
@@ -19,16 +22,65 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --frozen --extra dev
 
       - name: Git remote credential guard
         run: uv run python scripts/check_git_remote_credentials.py
 
-      - name: Ruff（lint + 格式检查）
-        run: uv run ruff check .
+      - name: Ruff lint
+        run: uv run ruff check --config pyproject.toml pipeline scripts tests external/*/reproduce external/*/scripts external/*/*_config.py
 
-      - name: Black 格式检查
-        run: uv run black --check pipeline scripts
+      - name: Ruff 格式检查
+        run: uv run ruff format --check --config pyproject.toml pipeline scripts tests external/*/reproduce external/*/scripts external/*/*_config.py
 
       - name: 语法/导入编译检查
         run: uv run python -m compileall -q pipeline scripts
+
+      - name: Offline test suite
+        run: uv run pytest -q
+
+      - name: Incremental mypy
+        run: uv run mypy pipeline/core/config
+
+      - name: Judge mypy (dataset contracts)
+        run: >-
+          uv run mypy
+          pipeline/evaluation/judge/dataset_adapters
+          pipeline/evaluation/judge/models.py
+          pipeline/evaluation/judge/metric_validation.py
+
+
+  external-lockfiles:
+    name: External lockfile (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: graphrag
+            compile_paths: reproduce graphrag_benchmark src
+          - project: hipporag2
+            compile_paths: reproduce scripts src
+          - project: hypergraphrag
+            compile_paths: reproduce scripts hypergraphrag
+          - project: hyperrag
+            compile_paths: reproduce scripts hyperrag
+          - project: lightrag
+            compile_paths: reproduce scripts lightrag
+    defaults:
+      run:
+        working-directory: external/${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install locked dependencies
+        run: uv sync --frozen
+
+      - name: Compile project sources and benchmark glue
+        run: uv run --frozen python -m compileall -q ${{ matrix.compile_paths }}

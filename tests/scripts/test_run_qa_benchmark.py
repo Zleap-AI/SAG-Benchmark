@@ -25,9 +25,7 @@ def test_default_output_keeps_run_log_and_results_in_timestamped_qa_directory(tm
     root = logging.getLogger()
     original_level = root.level
     non_qa_handlers = [
-        handler
-        for handler in root.handlers
-        if not getattr(handler, _QA_FILE_HANDLER_MARKER, False)
+        handler for handler in root.handlers if not getattr(handler, _QA_FILE_HANDLER_MARKER, False)
     ]
 
     handler, log_file = _install_qa_file_handler(output_dir)

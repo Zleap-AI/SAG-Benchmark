@@ -55,6 +55,24 @@ class LLMRateLimitError(LLMError):
     pass
 
 
+class LLMRequestError(LLMError):
+    """LLM请求不可恢复：参数、认证、权限或资源配置无效。"""
+
+    pass
+
+
+class LLMTransientError(LLMError):
+    """LLM瞬态服务或网络错误，可由统一重试层重试。"""
+
+    pass
+
+
+class LLMResponseError(LLMError):
+    """LLM响应不满足当前调用的输出契约，不应由调用方重复请求。"""
+
+    pass
+
+
 class AIError(PipelineError):
     """AI相关异常（包括LLM和Embedding）"""
 
@@ -145,11 +163,7 @@ class ResourceNotFoundError(NonRetryableError):
     pass
 
 
-class PermissionError(NonRetryableError):
+class PermissionDeniedError(NonRetryableError):
     """权限错误（访问被拒绝、认证失败等）"""
 
     pass
-
-
-# Backward-compatible import name. New code should use ``PipelineError``.
-pipelineError = PipelineError

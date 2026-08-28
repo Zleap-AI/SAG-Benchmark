@@ -11,9 +11,19 @@ from pipeline.core.prompt.manager import PromptManager
 # 被删除字段列表（prompt、example、schema 中均不得出现）
 # ---------------------------------------------------------------------------
 _DELETED_KEYS = {
-    "keywords", "priority", "status", "category", "summary",
-    "references", "reason", "confidence", "meta", "children",
-    "value_type", "value", "unit",
+    "keywords",
+    "priority",
+    "status",
+    "category",
+    "summary",
+    "references",
+    "reason",
+    "confidence",
+    "meta",
+    "children",
+    "value_type",
+    "value",
+    "unit",
 }
 
 # compact event 应精确包含的属性
@@ -140,9 +150,14 @@ class TestCompactSchemaContract:
         """模板正文不包含删除字段的生成指令"""
         template = compact_config.get("template", "")
         forbidden_phrases = [
-            "生成摘要", "生成分类", "生成关键词",
-            "判断优先级", "判断状态", "列出 references",
-            "解释 reason", "给出 confidence",
+            "生成摘要",
+            "生成分类",
+            "生成关键词",
+            "判断优先级",
+            "判断状态",
+            "列出 references",
+            "解释 reason",
+            "给出 confidence",
         ]
         for phrase in forbidden_phrases:
             assert phrase not in template, f"模板中发现禁止短语: {phrase}"
@@ -174,7 +189,10 @@ class TestCompactSchemaContract:
 
     def test_english_template_is_static_and_independent(self, compact_config):
         rendered = compact_config["template"]
-        assert "Generate the title, content, entity names, and entity descriptions in English." in rendered
+        assert (
+            "Generate the title, content, entity names, and entity descriptions in English."
+            in rendered
+        )
         assert "Put the single event object inside `data.items`" in rendered
         assert "data.meta" not in rendered
         assert "simplified Chinese" not in rendered

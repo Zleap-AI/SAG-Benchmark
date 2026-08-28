@@ -66,10 +66,13 @@ class FakeLLM:
         self, messages: list[LLMMessage], temperature: float = 0.0, **kwargs
     ) -> LLMResponse:
         self.call_count += 1
-        self.call_history.append({
-            "messages": [{"role": m.role.value, "content": m.content[:200]} for m in messages],
-            "temperature": temperature,
-        })
+        self.call_history.append(
+            {
+                "messages": [{"role": m.role.value, "content": m.content[:200]} for m in messages],
+                "temperature": temperature,
+                "kwargs": kwargs,
+            }
+        )
 
         # Queue mode
         if hasattr(self, "_response_queue") and self._queue_idx < len(self._response_queue):

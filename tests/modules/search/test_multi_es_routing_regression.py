@@ -5,7 +5,7 @@ unchanged after the SAG2 SAGConfig decoupling.  These tests use monkeypatching
 to avoid real ES / MySQL / LLM connections.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -75,7 +75,7 @@ class TestMultiESSearchForSections:
 
     @pytest.mark.asyncio
     async def test_search_one_question_multi_es_calls_search_for_sections(self, monkeypatch):
-        from pipeline.modules.search.config import MultiConfig, RerankStrategy
+        from pipeline.modules.search.config import MultiConfig
 
         fake_searcher = MagicMock()
         fake_searcher.search_for_sections = AsyncMock(
@@ -97,9 +97,9 @@ class TestMultiESBypassesEnginePool:
 
     def test_benchmark_utils_search_one_question_multi_es_no_engine(self, monkeypatch):
         """search_one_question with multi_es_searcher must NOT construct a PipelineEngine."""
-        from pipeline.modules.search.benchmark_utils import search_one_question
-
         import inspect
+
+        from pipeline.modules.search.benchmark_utils import search_one_question
 
         source = inspect.getsource(search_one_question)
         # multi_es path (early return) appears before PipelineEngine construction
@@ -107,7 +107,9 @@ class TestMultiESBypassesEnginePool:
         # PipelineEngine construction call (not import)
         engine_constr_idx = source.find("PipelineEngine(")
         assert multi_es_return_idx >= 0, "search_one_question must have multi_es_searcher branch"
-        assert engine_constr_idx >= 0, "search_one_question must construct PipelineEngine in fallback path"
+        assert engine_constr_idx >= 0, (
+            "search_one_question must construct PipelineEngine in fallback path"
+        )
         # The multi_es branch must appear before the PipelineEngine construction
         assert multi_es_return_idx < engine_constr_idx, (
             "multi_es_searcher branch must short-circuit before PipelineEngine construction"

@@ -79,9 +79,7 @@ def test_scope_modes_share_identical_event_schema_and_zero_disabled_scope_counts
 
 @pytest.mark.asyncio
 async def test_request_llm_timing_is_isolated_across_concurrent_tasks():
-    timing_service = SAG2TimingService(
-        object(), ctx_var_name="test_sag2_concurrent_timing"
-    )
+    timing_service = SAG2TimingService(object(), ctx_var_name="test_sag2_concurrent_timing")
 
     async def request(wasted: float, calls: int) -> tuple[float, int]:
         token = timing_service.start_request()
@@ -106,15 +104,18 @@ async def test_request_llm_timing_is_isolated_across_concurrent_tasks():
 
 def test_searcher_event_stats_prefers_v2_and_falls_back_to_flat_or_nested_payloads():
     direct = {"query_event_count": 3}
-    assert SAGSearcher._get_sag2_event_stats(
-        {"event_stats": direct, "stats": {"query_event_count": 99}}
-    ) == direct
-    assert SAGSearcher._get_sag2_event_stats(
-        {"stats": {"query_event_count": 4}}
-    ) == {"query_event_count": 4}
-    assert SAGSearcher._get_sag2_event_stats(
-        {"stats": {"sag2": {"query_event_count": 5}}}
-    ) == {"query_event_count": 5}
+    assert (
+        SAGSearcher._get_sag2_event_stats(
+            {"event_stats": direct, "stats": {"query_event_count": 99}}
+        )
+        == direct
+    )
+    assert SAGSearcher._get_sag2_event_stats({"stats": {"query_event_count": 4}}) == {
+        "query_event_count": 4
+    }
+    assert SAGSearcher._get_sag2_event_stats({"stats": {"sag2": {"query_event_count": 5}}}) == {
+        "query_event_count": 5
+    }
 
 
 def test_failed_llm_call_counts_once_without_reusing_success_tokens():

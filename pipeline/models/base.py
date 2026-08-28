@@ -39,9 +39,4 @@ class MetadataMixin(BaseModel):
 
     extra_data: dict[str, Any] | None = Field(default=None, description="扩展数据(JSON)")
 
-
     model_config = ConfigDict(from_attributes=True)
-
-
-# Backward-compatible import name. New code should use ``PipelineBaseModel``.
-pipelineBaseModel = PipelineBaseModel

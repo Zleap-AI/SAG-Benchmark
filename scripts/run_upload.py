@@ -108,9 +108,7 @@ async def upload_dataset(args, run_stats: RunStatsTracker | None = None):
     # Extract 路由预检必须早于 embedding probe 和数据写入。
     atomic_mode = getattr(args, "atomic", False)
     requested_extract_strategy = getattr(args, "extract_prompt_strategy", None)
-    extract_strategy = requested_extract_strategy or (
-        "original" if atomic_mode else "compact"
-    )
+    extract_strategy = requested_extract_strategy or ("original" if atomic_mode else "compact")
     from pipeline.modules.extract.config import ExtractPromptStrategy
     from pipeline.modules.extract.prompt_router import resolve_extract_prompt_route
 
@@ -121,6 +119,7 @@ async def upload_dataset(args, run_stats: RunStatsTracker | None = None):
 
     from pipeline.core.ai.embedding_dim import resolve_embedding_dim
     from pipeline.storage.indexing import (
+        assert_indices_ready,
         index_suffix,
         resolve_all_index_names,
         set_active_embedding_dim,
@@ -138,10 +137,19 @@ async def upload_dataset(args, run_stats: RunStatsTracker | None = None):
     )
     logger.info(f"   ES 索引映射: {es_indices}")
 
+    # ── ES 索引预检：必须已存在且 dims 匹配，防止 auto_create 生成野生索引 ──
+    from pipeline.core.config.settings import get_settings
+    from pipeline.exceptions import StorageError
+
+    if get_settings().effective_vector_backend == "elasticsearch":
+        try:
+            await assert_indices_ready(embedding_dim)
+        except StorageError as e:
+            logger.error(str(e))
+            return {"status": "error", "message": str(e)}
+
     # 提取模式提示：--atomic 打开原子事项（test_extract.yaml，每事项2实体），否则融合大事项
     try:
-        from pipeline.core.config.settings import get_settings
-
         _lang = get_settings().llm_language
     except Exception:
         _lang = "unknown"
@@ -150,7 +158,7 @@ async def upload_dataset(args, run_stats: RunStatsTracker | None = None):
         f"| test_mode={atomic_mode} | llm_language={_lang}"
     )
     logger.info(
-        f"Extract prompt strategy: {extract_strategy} " f"(template={extract_route.template_name})"
+        f"Extract prompt strategy: {extract_strategy} (template={extract_route.template_name})"
     )
 
     # 2. 创建 PipelineEngine
@@ -243,7 +251,6 @@ async def upload_dataset(args, run_stats: RunStatsTracker | None = None):
                         await engine.extract_async(
                             ExtractBaseConfig(
                                 parallel=True,
-                                max_concurrency=10,
                                 enable_entity_vector_sync=True,
                                 enable_event_entity_vector_sync=True,
                                 test_mode=getattr(args, "atomic", False),
@@ -416,7 +423,14 @@ async def main():
         "--dataset",
         type=str,
         required=True,
-        choices=["musique", "hotpotqa", "2wikimultihopqa", "sample", "test_hotpotqa"],
+        choices=[
+            "musique",
+            "hotpotqa",
+            "2wikimultihopqa",
+            "sample",
+            "test_hotpotqa",
+            "narrativeqa",
+        ],
         help="数据集名称",
     )
 
@@ -474,8 +488,22 @@ async def main():
         help="忽略维度缓存，强制重新 probe embedding 服务端维度",
     )
 
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="启用 verbose 模式：在日志中打印每次 LLM 调用的完整输入 prompt 和输出 response",
+    )
+
     args = parser.parse_args()
     run_stats = RunStatsTracker()
+
+    # 启用 verbose LLM 日志
+    if args.verbose:
+        from pipeline.utils import enable_llm_verbose
+
+        enable_llm_verbose()
+        logger.info("🔍 Verbose 模式已启用：将打印每次 LLM 调用的完整输入和输出")
 
     try:
         # 步骤1：生成 markdown 文件

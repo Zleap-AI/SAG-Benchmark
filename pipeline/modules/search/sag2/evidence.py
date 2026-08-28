@@ -3,6 +3,7 @@
 Shared by SAG2Searcher and evaluation flows.
 自包含：仅依赖 logger + stdlib。
 """
+
 from typing import Any
 
 from pipeline.utils import get_logger
@@ -100,17 +101,20 @@ class EvidenceTracker:
             cov = round(hit / self._total, 4) if self._total > 0 else 0.0
             # 反查命中的 event_id
             hit_event_ids = [
-                eid for eid in event_ids
+                eid
+                for eid in event_ids
                 if self._normalize(self._chunk_to_text(event_id_to_chunk.get(eid, {}))) in hit_texts
             ]
-            results.append({
-                "stage": stage,
-                "candidates": cnt,
-                "hit": hit,
-                "hit_event_ids": hit_event_ids,
-                "total_evidence": self._total,
-                "coverage": cov,
-            })
+            results.append(
+                {
+                    "stage": stage,
+                    "candidates": cnt,
+                    "hit": hit,
+                    "hit_event_ids": hit_event_ids,
+                    "total_evidence": self._total,
+                    "coverage": cov,
+                }
+            )
             logger.info(
                 "[evidence] %s: hit=%d/%d (%.2f%%), candidates=%d",
                 stage,

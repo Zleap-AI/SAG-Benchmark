@@ -26,7 +26,7 @@ class ExtractBaseConfig(PipelineBaseModel):
 
     # ==================== 并发控制 ====================
     max_concurrency: int = Field(
-        default=5, ge=1, le=100, description="最大并发数（Agent并发处理chunk数量）"
+        default=50, ge=1, le=100, description="最大并发数（Agent并发处理chunk数量）"
     )
 
     # ==================== 向量同步配置 ====================

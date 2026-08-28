@@ -63,25 +63,24 @@ class SAG2ExpandStage:
         started = time.perf_counter()
         seed_events = recall.query_events + recall.entity_event_docs
         if recall.scope is not None:
-            seed_new_entity_events, new_entity_ids = (
-                await self._new_entities_from_seed_events_in_scope(
-                    seed_events,
-                    recall.scope,
-                    recall.query_vector,
-                    request.source_config_ids,
-                    request.config,
-                    state,
-                )
+            (
+                seed_new_entity_events,
+                new_entity_ids,
+            ) = await self._new_entities_from_seed_events_in_scope(
+                seed_events,
+                recall.scope,
+                recall.query_vector,
+                request.source_config_ids,
+                request.config,
+                state,
             )
         else:
-            seed_new_entity_events, new_entity_ids = (
-                await self._new_entities_from_seed_events(
-                    events=seed_events,
-                    source_config_ids=request.source_config_ids,
-                    query_vector=recall.query_vector,
-                    config=request.config,
-                    state=state,
-                )
+            seed_new_entity_events, new_entity_ids = await self._new_entities_from_seed_events(
+                events=seed_events,
+                source_config_ids=request.source_config_ids,
+                query_vector=recall.query_vector,
+                config=request.config,
+                state=state,
             )
         route_stats = SAG2RouteTracker.record_relation(
             route_index=route_index,
@@ -133,9 +132,7 @@ class SAG2ExpandStage:
             event_ids = merge_ids(event_ids, hop_stat["event_ids"])
             evidence.check(f"4_expand_h{hop_stat['hop']}", event_ids)
         event_scores = merge_event_scores(event_scores, expand_event_scores)
-        self.timing.record_timed_stage(
-            timings, retry_wasted_by_stage, "expand", started
-        )
+        self.timing.record_timed_stage(timings, retry_wasted_by_stage, "expand", started)
         return SAG2ExpandResult(
             event_ids=event_ids,
             event_scores=event_scores,
@@ -148,7 +145,6 @@ class SAG2ExpandStage:
             expand_hops=expand_hops,
             route_stats=route_stats,
         )
-
 
     async def _new_entities_from_seed_events_in_scope(
         self,
@@ -180,7 +176,9 @@ class SAG2ExpandStage:
             if entity_id not in scope.entity_ids:
                 continue
             event_ids = [
-                event_id for event_id in relation_map.get(entity_id, []) if event_id in scope.event_ids
+                event_id
+                for event_id in relation_map.get(entity_id, [])
+                if event_id in scope.event_ids
             ]
             if not event_ids:
                 continue
@@ -189,7 +187,6 @@ class SAG2ExpandStage:
             if len(scoped_entities) >= config.sag2_expand.entities_per_hop:
                 break
         return scoped_map, scoped_entities
-
 
     async def _expand_from_scope(
         self,
@@ -265,7 +262,6 @@ class SAG2ExpandStage:
             current_entities = next_entities
         return expand_mapping, expand_ids, expand_scores, new_entities_all, hops
 
-
     async def _new_entities_from_seed_events(
         self,
         events: list[dict[str, Any]],
@@ -312,7 +308,6 @@ class SAG2ExpandStage:
             len(new_entity_ids),
         )
         return entity_to_event_ids, new_entity_ids
-
 
     async def _new_entities_from_event_ids(
         self,
@@ -391,7 +386,6 @@ class SAG2ExpandStage:
         )
         return entity_to_event_ids, new_entity_ids
 
-
     async def _events_from_entities(
         self,
         entity_ids: list[str],
@@ -407,7 +401,6 @@ class SAG2ExpandStage:
             max_events_per_entity=max_events_per_key,
             exclude_event_ids=exclude_event_ids,
         )
-
 
     async def _events_from_new_entities(
         self,
@@ -463,7 +456,6 @@ class SAG2ExpandStage:
         )
         return event_to_entity_ids, event_ids, event_scores
 
-
     async def _expand_from_entities(
         self,
         seed_entity_ids: list[str],
@@ -496,16 +488,18 @@ class SAG2ExpandStage:
             is_last_hop = hop == hop_count - 1
             hop_no = hop + 1
 
-            hop_entity_events, hop_event_ids, hop_event_scores = (
-                await self._events_from_new_entities(
-                    entity_ids=current_entity_ids,
-                    query=query,
-                    source_config_ids=source_config_ids,
-                    query_vector=query_vector,
-                    config=config,
-                    state=state,
-                    max_events=config.sag2_expand.max_events_per_hop,
-                )
+            (
+                hop_entity_events,
+                hop_event_ids,
+                hop_event_scores,
+            ) = await self._events_from_new_entities(
+                entity_ids=current_entity_ids,
+                query=query,
+                source_config_ids=source_config_ids,
+                query_vector=query_vector,
+                config=config,
+                state=state,
+                max_events=config.sag2_expand.max_events_per_hop,
             )
 
             SAG2RouteTracker.record_relation(

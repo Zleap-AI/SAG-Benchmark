@@ -125,6 +125,7 @@ def calculate_precision_f1_at_k(
 
 async def run_batch_search(
     questions: list[str],
+    sample_ids: list[str],
     source_config_id: str,
     strategy: str,
     mode: str,
@@ -201,7 +202,7 @@ async def run_batch_search(
     # 提示词来源：若启用 MLflow Prompt Registry，把开关注入到当前策略配置。
     # 显式传入 mlflow_url，绕过全局 _tracking_uri 状态依赖，
     # PromptProvider.load_all() 会用该 URI 调用 mlflow.set_tracking_uri。
-    if use_mlflow_prompts and isinstance(strategy_config, (MultiConfig, SAGConfig)):
+    if use_mlflow_prompts and isinstance(strategy_config, MultiConfig | SAGConfig):
         strategy_config.use_mlflow_prompts = True
         strategy_config.mlflow_prompt_alias = mlflow_prompt_alias
         if mlflow_url:
@@ -219,6 +220,8 @@ async def run_batch_search(
         multi_es_searcher = ESMultiSearcher(config=strategy_config)
         await multi_es_searcher.warmup(strategy_config)
 
+    if len(sample_ids) != len(questions):
+        raise ValueError("sample_ids and questions must have identical lengths")
     total = len(questions)
     search_results: list[dict] = []
 
@@ -260,6 +263,7 @@ async def run_batch_search(
                     return {
                         "question_index": idx + 1,
                         "question": question,
+                        "dataset_sample_id": sample_ids[idx],
                         "sections": sections,
                         "timing_steps": raw.get("_timings", {}),
                         "clues": [],
@@ -329,6 +333,7 @@ async def run_batch_search(
                 return {
                     "question_index": idx + 1,
                     "question": question,
+                    "dataset_sample_id": sample_ids[idx],
                     "sections": sections,
                     "timing_steps": timing_steps,
                     "clues": clues,
@@ -346,10 +351,11 @@ async def run_batch_search(
                     "gold_docs": gold_docs,
                 }
             except Exception as e:
-                logger.warning(f"问题 {idx+1} 搜索失败: {e}")
+                logger.warning(f"问题 {idx + 1} 搜索失败: {e}")
                 return {
                     "question_index": idx + 1,
                     "question": question,
+                    "dataset_sample_id": sample_ids[idx],
                     "sections": [],
                     "timing_steps": {},
                     "clues": [],
@@ -537,19 +543,19 @@ async def _emit_progress(
     batch_index = (current_idx + bench_size - 1) // bench_size
     total_batches = (total + bench_size - 1) // bench_size
 
-    bench_logger.info(f"\n{'='*80}")
+    bench_logger.info(f"\n{'=' * 80}")
     bench_logger.info(
         f"📝 Bench 进度: 批次 {batch_index}/{total_batches} ({current_idx}/{total} 问题)"
     )
-    bench_logger.info(f"{'='*80}")
+    bench_logger.info(f"{'=' * 80}")
 
     # ── 召回统计 ────────────────────────────────────────────────
     rs = _collect_recall_stats(ordered_results, gold_docs_for_recall)
     bench_logger.info(f"\n📊 累积召回情况统计 ({rs['completed']} 个问题):")
     bench_logger.info("=" * 50)
-    bench_logger.info(f"✅ 全部召回: {rs['full']} 个 ({rs['full']/rs['denom']*100:.1f}%)")
-    bench_logger.info(f"⚠️  部分召回: {rs['partial']} 个 ({rs['partial']/rs['denom']*100:.1f}%)")
-    bench_logger.info(f"❌ 零召回: {rs['zero']} 个 ({rs['zero']/rs['denom']*100:.1f}%)")
+    bench_logger.info(f"✅ 全部召回: {rs['full']} 个 ({rs['full'] / rs['denom'] * 100:.1f}%)")
+    bench_logger.info(f"⚠️  部分召回: {rs['partial']} 个 ({rs['partial'] / rs['denom'] * 100:.1f}%)")
+    bench_logger.info(f"❌ 零召回: {rs['zero']} 个 ({rs['zero'] / rs['denom'] * 100:.1f}%)")
     bench_logger.info("=" * 50)
 
     recall_metric = RetrievalRecall()
@@ -565,10 +571,10 @@ async def _emit_progress(
     )
     bench_logger.info("\n✅ 累积Recall@K:")
     for metric, score in pooled_recall.items():
-        bench_logger.info(f"  {metric}: {score:.4f} ({score*100:.2f}%)")
+        bench_logger.info(f"  {metric}: {score:.4f} ({score * 100:.2f}%)")
     bench_logger.info("\n✅ 累积Precision/F1@K:")
     for metric, score in pooled_precision_f1.items():
-        bench_logger.info(f"  {metric}: {score:.4f} ({score*100:.2f}%)")
+        bench_logger.info(f"  {metric}: {score:.4f} ({score * 100:.2f}%)")
 
     # ── 构造新增诊断（先不展示/上报；核心指标必须先写 MLflow）──
     cum = compute_step_timings(ordered_results)
@@ -637,24 +643,24 @@ def print_final_summary(
     )
 
     # ── 打印（与 benchmark.py _handle_bench_callback 格式完全一致）──
-    bench_logger.info(f"\n{'='*80}")
+    bench_logger.info(f"\n{'=' * 80}")
     bench_logger.info(f"📝 最终评估结果: 数据集={dataset_name}, 策略={strategy}, 共 {total} 个问题")
-    bench_logger.info(f"{'='*80}")
+    bench_logger.info(f"{'=' * 80}")
 
     bench_logger.info(f"\n📊 最终召回情况统计 ({total} 个问题):")
     bench_logger.info("=" * 50)
-    bench_logger.info(f"✅ 全部召回: {full_count} 个 ({full_count/total*100:.1f}%)")
-    bench_logger.info(f"⚠️  部分召回: {partial_count} 个 ({partial_count/total*100:.1f}%)")
-    bench_logger.info(f"❌ 零召回: {zero_count} 个 ({zero_count/total*100:.1f}%)")
+    bench_logger.info(f"✅ 全部召回: {full_count} 个 ({full_count / total * 100:.1f}%)")
+    bench_logger.info(f"⚠️  部分召回: {partial_count} 个 ({partial_count / total * 100:.1f}%)")
+    bench_logger.info(f"❌ 零召回: {zero_count} 个 ({zero_count / total * 100:.1f}%)")
     bench_logger.info("=" * 50)
 
     bench_logger.info("\n✅ 最终Recall@K:")
     for metric, score in pooled_recall.items():
-        bench_logger.info(f"  {metric}: {score:.4f} ({score*100:.2f}%)")
+        bench_logger.info(f"  {metric}: {score:.4f} ({score * 100:.2f}%)")
 
     bench_logger.info("\n✅ 最终Precision/F1@K:")
     for metric, score in pooled_precision_f1.items():
-        bench_logger.info(f"  {metric}: {score:.4f} ({score*100:.2f}%)")
+        bench_logger.info(f"  {metric}: {score:.4f} ({score * 100:.2f}%)")
 
     # 保留各 Step 耗时计算，供结果文件和 MLflow 使用；不在控制台逐阶段打印。
     timings = compute_step_timings(search_results)
@@ -667,7 +673,7 @@ def print_final_summary(
 
     total_successful = sum(1 for r in search_results if r.get("sections"))
     bench_logger.info(f"\n检索统计: {total_successful}/{total} 个问题检索成功")
-    bench_logger.info(f"{'='*80}\n")
+    bench_logger.info(f"{'=' * 80}\n")
 
     return {
         "recall": pooled_recall,
@@ -731,7 +737,7 @@ async def main():
     parser.add_argument(
         "--k-values", type=str, default="1,2,5,10", help="评估的K值列表，逗号分隔（默认：1,2,5,10）"
     )
-    parser.add_argument("--max-concurrency", type=int, default=1, help="搜索并发数（默认：1）")
+    parser.add_argument("--max-concurrency", type=int, default=10, help="搜索并发数（默认：10）")
     parser.add_argument(
         "--limit",
         type=int,
@@ -742,6 +748,12 @@ async def main():
     )
     parser.add_argument(
         "--bench-size", type=int, default=5, help="每 N 个问题打印一次累积统计（默认：5）"
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="SAG2 策略专属：在日志中打印 LLM 精选步骤（_llm_rank_events）和 query 重写步骤"
+        "（_rewrite_query_and_extract_entities）的完整 prompt 输入和输出内容。",
     )
     parser.add_argument(
         "--mode",
@@ -826,6 +838,12 @@ async def main():
     )
     args = parser.parse_args()
 
+    # ── SAG2 verbose 模式 ──────────────────────────────────────
+    if args.verbose:
+        from pipeline.modules.search.sag2 import SAG2Searcher
+
+        SAG2Searcher.verbose = True
+        logger.info("🔊 SAG2 verbose 模式已启用：将打印 LLM 精选步骤的完整 prompt 输入和输出")
     if args.strategy == "sag2":
         try:
             build_sag2_config(
@@ -917,7 +935,7 @@ async def main():
     if args.limit:
         if len(args.limit) == 1:
             limit_end = args.limit[0]
-            logger.info(f"  限制条数: 前 {limit_end} 条（索引 0~{limit_end-1}）")
+            logger.info(f"  限制条数: 前 {limit_end} 条（索引 0~{limit_end - 1}）")
         elif len(args.limit) == 2:
             limit_start, limit_end_incl = args.limit[0], args.limit[1]
             if limit_start > limit_end_incl:
@@ -939,17 +957,17 @@ async def main():
     # ── 加载数据集 ────────────────────────────────────────────
     logger.info(f"Loading dataset: {args.dataset_name}")
     dataset_loader = DatasetLoader(args.dataset_name)
-    dataset_info = dataset_loader.load_all()
-
-    questions: list[str] = dataset_info["questions"]
+    question_records = dataset_loader.get_question_records()
     if args.limit:
-        questions = questions[limit_start:limit_end]
+        question_records = question_records[limit_start:limit_end]
+    questions = [record["question"] for record in question_records]
+    sample_ids = [record["id"] for record in question_records]
 
     gold_docs_for_recall = dataset_loader.get_gold_docs_for_recall(limit=None)
     if gold_docs_for_recall and args.limit:
         gold_docs_for_recall = gold_docs_for_recall[limit_start:limit_end]
 
-    logger.info(f"Successfully loaded dataset with {dataset_info['total_questions']} questions")
+    logger.info(f"Successfully loaded dataset with {len(question_records)} questions")
     logger.info(f"❓ 问题总数: {len(questions)}")
     logger.info(f"📋 数据范围: [0:{len(questions)}]，共 {len(questions)} 个问题:")
     logger.info("\n" + "=" * 80)
@@ -1151,6 +1169,7 @@ async def main():
     search_start = time.perf_counter()
     with llm_tracking_scope(token_tracker), llm_tracking_stage("SEARCH"):
         search_results = await run_batch_search(
+            sample_ids=sample_ids,
             questions=questions,
             source_config_id=source_config_id,
             strategy=args.strategy,
@@ -1180,6 +1199,7 @@ async def main():
             "question_index": r["question_index"],
             "question": r["question"],
             "retrieved_docs": r["sections"],
+            "dataset_sample_id": r["dataset_sample_id"],
         }
         for r in search_results
     ]
@@ -1208,9 +1228,7 @@ async def main():
                 "metrics": {**metrics["recall"], **metrics["precision_f1"]},
                 "statistics": metrics["statistics"],
                 "timings": metrics.get("timings", {}),
-                "search_diagnostics": public_search_diagnostics(
-                    metrics.get("timings", {})
-                ),
+                "search_diagnostics": public_search_diagnostics(metrics.get("timings", {})),
                 "llm_token_usage": token_summary,
                 "metadata": {
                     "dataset_name": args.dataset_name,

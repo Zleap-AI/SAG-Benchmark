@@ -108,7 +108,7 @@ class EventExtractor:
             events = await extractor.extract(config)
         """
         self.logger.info(
-            f"开始批量提取: chunks={len(config.chunk_ids)}, " f"并发数={config.max_concurrency}"
+            f"开始批量提取: chunks={len(config.chunk_ids)}, 并发数={config.max_concurrency}"
         )
 
         sync_date_value = datetime.now(UTC).replace(tzinfo=None)
@@ -248,7 +248,7 @@ class EventExtractor:
 
                 try:
                     self.logger.info(
-                        f"[{index+1}/{total}] 开始处理: chunk_id={chunk.id}, "
+                        f"[{index + 1}/{total}] 开始处理: chunk_id={chunk.id}, "
                         f"type={chunk.source_type}"
                     )
 
@@ -258,7 +258,7 @@ class EventExtractor:
 
                 except Exception as e:
                     self.logger.error(
-                        f"❌ [{index+1}/{total}] 失败: " f"chunk_id={chunk.id}, error={e}",
+                        f"❌ [{index + 1}/{total}] 失败: chunk_id={chunk.id}, error={e}",
                         exc_info=True,
                     )
 
@@ -277,12 +277,12 @@ class EventExtractor:
 
                 if is_success:
                     self.logger.info(
-                        f"✅ [{index+1}/{total}] 完成 ({progress}%): "
+                        f"✅ [{index + 1}/{total}] 完成 ({progress}%): "
                         f"chunk_id={chunk.id}, events={len(events)}"
                     )
                 else:
                     self.logger.error(
-                        f"❌ [{index+1}/{total}] 失败 ({progress}%): " f"chunk_id={chunk.id}"
+                        f"❌ [{index + 1}/{total}] 失败 ({progress}%): chunk_id={chunk.id}"
                     )
 
                 if should_report:

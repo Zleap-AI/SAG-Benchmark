@@ -1,0 +1,49 @@
+name: External method enhancement
+description: Propose a scoped external integration, artifact, or Judge improvement.
+title: "[external] "
+labels: ["enhancement", "external"]
+body:
+  - type: dropdown
+    id: method
+    attributes:
+      label: Affected area
+      options:
+        - GraphRAG
+        - HippoRAG2
+        - HyperGraphRAG
+        - Hyper-RAG
+        - LightRAG
+        - Shared Judge or adapter
+        - All external methods
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the current limitation and who it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include artifact paths, compatibility period, and overwrite semantics when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Acceptance checks
+      description: List offline tests, isolated lockfile checks, fixtures, and smoke evidence.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety and compatibility
+      options:
+        - label: Existing experimental outputs will not be moved or overwritten without an explicit migration.
+          required: true
+        - label: The proposal does not require publishing credentials, private URLs, or private datasets.
+          required: true

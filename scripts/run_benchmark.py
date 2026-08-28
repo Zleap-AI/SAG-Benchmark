@@ -10,16 +10,11 @@
 
     # 手动指定结果文件（如果需要评估特定版本的结果）
     python scripts/run_benchmark.py \
-        --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \
+        --results output/<dataset>/<strategy>/<run_id>/search_results.json \
         --dataset musique \
         --k-list 1 2 5 10
-python scripts/run_benchmark.py \
-        --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \
-        --dataset musique \
-        --k-list 1 2 5 10
-
 功能:
-    1. 自动查找或手动加载召回结果文件 (results_*.json)
+    1. 自动查找或手动加载召回结果文件 (search_results.json)
     2. 加载对应数据集的标准答案 (gold_docs)
     3. 计算 Recall@1, @2, @5, @10
     4. 输出详细的统计信息
@@ -61,17 +56,16 @@ def find_latest_results(dataset_name: str, base_dir: Path = None) -> Path:
 
     Args:
         dataset_name: 数据集名称 (hotpotqa, musique, etc.)
-        base_dir: 基础目录，默认为 pipeline/evaluation/outputs
+        base_dir: output 根目录，默认为仓库根目录下的 output
 
     Returns:
         最新结果文件的路径
     """
     if base_dir is None:
-        base_dir = project_root / "pipeline" / "evaluation" / "outputs"
+        base_dir = project_root / "output"
 
-    # 查找所有匹配的结果文件
-    pattern = f"**/results_{dataset_name}.json"
-    result_files = list(base_dir.glob(pattern))
+    dataset_dir = base_dir / dataset_name
+    result_files = list(dataset_dir.glob("**/search_results.json"))
 
     if not result_files:
         raise FileNotFoundError(f"未找到数据集 '{dataset_name}' 的结果文件")
@@ -86,7 +80,7 @@ def load_retrieval_results(results_path: str) -> list[dict[str, Any]]:
     加载召回结果文件
 
     Args:
-        results_path: results_*.json 文件路径
+        results_path: search_results.json 文件路径
 
     Returns:
         召回结果列表
@@ -111,10 +105,7 @@ def load_gold_docs(dataset_name: str) -> list[list[str]]:
     logger.info(f"📚 加载数据集标准答案: {dataset_name}")
 
     # 直接读取数据集 JSON 文件
-    dataset_path = project_root / "pipeline" / "evaluation" / "dataset" / f"{dataset_name}.json"
-    if not dataset_path.exists():
-        # fallback: 兼容旧版路径
-        dataset_path = project_root / "pipeline" / "evaluation" / "dataset" / f"{dataset_name}.json"
+    dataset_path = project_root / "dataset" / f"{dataset_name}.json"
     if not dataset_path.exists():
         raise FileNotFoundError(f"数据集文件不存在: {dataset_path}")
 
@@ -194,7 +185,7 @@ def load_questions(dataset_name: str) -> list[str]:
     Returns:
         提问列表，与 gold_docs 同序、同长
     """
-    dataset_path = project_root / "pipeline" / "evaluation" / "dataset" / f"{dataset_name}.json"
+    dataset_path = project_root / "dataset" / f"{dataset_name}.json"
     if not dataset_path.exists():
         raise FileNotFoundError(f"数据集文件不存在: {dataset_path}")
 
@@ -314,13 +305,13 @@ def print_statistics(stats: RecallStatistics) -> None:
     # 基本统计
     logger.info(f"\n总问题数: {stats.total_questions}")
     logger.info(
-        f"✅ 全部召回: {stats.full_recall_count} 个 ({stats.full_recall_count/stats.total_questions*100:.2f}%)"
+        f"✅ 全部召回: {stats.full_recall_count} 个 ({stats.full_recall_count / stats.total_questions * 100:.2f}%)"
     )
     logger.warning(
-        f"⚠️  部分召回: {stats.partial_recall_count} 个 ({stats.partial_recall_count/stats.total_questions*100:.2f}%)"
+        f"⚠️  部分召回: {stats.partial_recall_count} 个 ({stats.partial_recall_count / stats.total_questions * 100:.2f}%)"
     )
     logger.error(
-        f"❌ 零召回: {stats.zero_recall_count} 个 ({stats.zero_recall_count/stats.total_questions*100:.2f}%)"
+        f"❌ 零召回: {stats.zero_recall_count} 个 ({stats.zero_recall_count / stats.total_questions * 100:.2f}%)"
     )
 
     # Recall@K 指标（按 K 值从小到大排序）
@@ -333,7 +324,7 @@ def print_statistics(stats: RecallStatistics) -> None:
     metrics_with_k.sort(key=lambda x: x[0])  # 按 K 值排序
 
     for k_val, _metric, score in metrics_with_k:
-        logger.info(f"  Recall@{k_val:>2}: {score:.4f} ({score*100:.2f}%)")
+        logger.info(f"  Recall@{k_val:>2}: {score:.4f} ({score * 100:.2f}%)")
 
     logger.info("=" * 80)
 
@@ -396,14 +387,16 @@ def main() -> None:
 
   # 手动指定结果文件（如果需要评估特定版本的结果）
   python scripts/run_benchmark.py \\
-      --results pipeline/evaluation/outputs/SAG/qwen3.6-35b-a3b/musique/20260516_195254/results_musique.json \\
+      --results output/<dataset>/<strategy>/<run_id>/search_results.json \\
       --dataset musique \\
       --k-list 1 2 5 10
         """,
     )
 
     parser.add_argument(
-        "--results", type=str, help="召回结果文件路径 (results_*.json)，不指定则自动查找最新结果"
+        "--results",
+        type=str,
+        help="召回结果文件路径 (search_results.json)，不指定则自动查找最新结果",
     )
 
     parser.add_argument(
@@ -461,7 +454,7 @@ def main() -> None:
         print_statistics(stats)
 
         # 5. 打印 0 召回题目详情（提问 + 标准答案 + 检索返回）
-        #print_zero_recall_details(stats)
+        # print_zero_recall_details(stats)
 
     except Exception as e:
         logger.error(f"\n❌ 错误: {e}")

@@ -1,4 +1,4 @@
-r"""Graph indexing statistics — migrated from external/judge/Evaluation/indexing_eval.py.
+r"""Graph indexing statistics aligned with GraphRAG-Benchmark/Evaluation/indexing_eval.py.
 
 Computes graph metrics (nodes, edges, degree, density, components, clustering, diameter)
 from GraphML, Parquet, pickle, or picklez files.
@@ -27,9 +27,7 @@ def analyze_graph(g: ig.Graph) -> dict[str, float]:
     average_clustering_coefficient = g.transitivity_avglocal_undirected()
     diameter = g.diameter() if g.is_connected() else float("inf")
 
-    component_sizes = [
-        len(component) for component in components if len(component) > 1
-    ]
+    component_sizes = [len(component) for component in components if len(component) > 1]
     if component_sizes:
         average_component_size = sum(component_sizes) / len(component_sizes)
         median_component_size = float(np.median(component_sizes))
@@ -45,9 +43,7 @@ def analyze_graph(g: ig.Graph) -> dict[str, float]:
             else average_component_size
         )
         geometric_mean_component_size = float(
-            np.exp(np.mean(np.log(component_sizes)))
-            if component_sizes
-            else 0
+            np.exp(np.mean(np.log(component_sizes))) if component_sizes else 0
         )
         harmonic_mean_component_size = (
             len(component_sizes) / sum(1.0 / size for size in component_sizes)
@@ -95,9 +91,7 @@ def analyze_graph(g: ig.Graph) -> dict[str, float]:
     }
 
 
-def load_graph_from_parquet(
-    entities_path: str, relationships_path: str
-) -> ig.Graph:
+def load_graph_from_parquet(entities_path: str, relationships_path: str) -> ig.Graph:
     """Load graph from entities.parquet and relationships.parquet."""
     entities_df = pd.read_parquet(entities_path)
     relationships_df = pd.read_parquet(relationships_path)
@@ -178,9 +172,7 @@ def process_graphs_lightrag_fastgraphrag(
     return results
 
 
-def process_graphs_hipporag2(
-    base_path: str, folder_name: str
-) -> list[dict[str, float]]:
+def process_graphs_hipporag2(base_path: str, folder_name: str) -> list[dict[str, float]]:
     """Process HippoRAG2 pickle graphs."""
     results: list[dict[str, float]] = []
     for subdir, _dirs, _files in os.walk(base_path):
@@ -196,9 +188,7 @@ def process_graphs_hipporag2(
     return results
 
 
-def process_graphs_graphml(
-    base_path: str, pattern: str = "*.graphml"
-) -> list[dict[str, float]]:
+def process_graphs_graphml(base_path: str, pattern: str = "*.graphml") -> list[dict[str, float]]:
     """Process generic GraphML files."""
     results: list[dict[str, float]] = []
     for subdir, _dirs, files in os.walk(base_path):

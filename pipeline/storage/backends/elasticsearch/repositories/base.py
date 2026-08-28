@@ -2,19 +2,23 @@
 Elasticsearch Repository 基类
 """
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any
 
 from elasticsearch import AsyncElasticsearch
 
+from pipeline.storage.backends.elasticsearch.active_dim import get_active_embedding_dim
 from pipeline.storage.backends.elasticsearch.index_naming import resolve_index_name
 
 
 class BaseRepository(ABC):
     """Repository 基类"""
 
-    # 子类覆盖为不含维度后缀的 base 索引名
-    BASE_INDEX_NAME: str = ""
+    @property
+    @abstractmethod
+    def BASE_INDEX_NAME(self) -> str:
+        """子类必须覆盖：不含维度后缀的 base 索引名。"""
+        raise NotImplementedError
 
     def __init__(self, es_client: AsyncElasticsearch, embedding_dim: int | None = None):
         """
@@ -22,17 +26,29 @@ class BaseRepository(ABC):
 
         Args:
             es_client: Elasticsearch 异步客户端
-            embedding_dim: 向量维度。None 时读取进程级 active dim
+            embedding_dim: 向量维度。None 时跟随进程级 active dim
                 （见 pipeline.storage.backends.elasticsearch.active_dim），最终 fallback 到 legacy 无后缀索引。
+                显式传入则"钉死"该维度，不再跟随 active dim。
         """
         self.es_client = es_client
-        if embedding_dim is None:
-            from pipeline.storage.backends.elasticsearch.active_dim import get_active_embedding_dim
+        self._embedding_dim = embedding_dim
 
-            embedding_dim = get_active_embedding_dim()
-        self.embedding_dim = embedding_dim
-        # 实例属性覆盖类属性：所有 self.INDEX_NAME 引用点无需修改
-        self.INDEX_NAME = resolve_index_name(self.BASE_INDEX_NAME, embedding_dim)
+    @property
+    def embedding_dim(self) -> int | None:
+        """当前有效维度：显式维度优先，否则跟随进程级 active dim。"""
+        if self._embedding_dim is not None:
+            return self._embedding_dim
+        return get_active_embedding_dim()
+
+    @property
+    def INDEX_NAME(self) -> str:
+        """刻意每次读取重新解析，不在构造时固化。
+
+        Repository 经 facade 单例急切构造，构造时机不受控，active dim 可能在
+        构造之后才由脚本入口设置。构造时固化会导致脑裂：vector 路径读到 _4096
+        后缀索引，而 Repository 永久锁死在 legacy 无后缀索引上。
+        """
+        return resolve_index_name(self.BASE_INDEX_NAME, self.embedding_dim)
 
     async def index_document(
         self, index: str, doc_id: str, document: dict[str, Any], routing: str | None = None

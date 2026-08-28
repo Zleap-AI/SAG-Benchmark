@@ -60,9 +60,9 @@ class QAExactMatch(BaseMetric):
                 - pooled: {"ExactMatch": <样本平均>}
                 - per_example: [{"ExactMatch": <0.0|1.0>}, ...]
         """
-        assert len(gold_answers) == len(
-            predicted_answers
-        ), "Length of gold answers and predicted answers should be the same."
+        assert len(gold_answers) == len(predicted_answers), (
+            "Length of gold answers and predicted answers should be the same."
+        )
 
         per_example: list[dict[str, float]] = []
         total = 0.0
@@ -121,9 +121,9 @@ class QAF1Score(BaseMetric):
                 - pooled: {"F1": <样本平均>}
                 - per_example: [{"F1": <0.0~1.0>}, ...]
         """
-        assert len(gold_answers) == len(
-            predicted_answers
-        ), "Length of gold answers and predicted answers should be the same."
+        assert len(gold_answers) == len(predicted_answers), (
+            "Length of gold answers and predicted answers should be the same."
+        )
 
         per_example: list[dict[str, float]] = []
         total = 0.0

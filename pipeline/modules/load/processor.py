@@ -37,12 +37,13 @@ class DocumentProcessor:
             },
         )
 
-    async def generate_embedding(self, text: str) -> list[float]:
+    async def generate_embedding(self, text: str, instruction: str | None = None) -> list[float]:
         """
         生成文本向量
 
         Args:
             text: 文本内容
+            instruction: query 侧非对称指令（纯文本），仅非对称模型的 query 使用；None=不传
 
         Returns:
             向量列表
@@ -67,7 +68,7 @@ class DocumentProcessor:
 
             api_start = time.perf_counter()
             embedding_client = await get_embedding_client(scenario="general")
-            embedding = await embedding_client.generate(truncated_text)
+            embedding = await embedding_client.generate(truncated_text, instruction=instruction)
             api_time = time.perf_counter() - api_start
 
             total_time = time.perf_counter() - total_start
@@ -75,8 +76,8 @@ class DocumentProcessor:
             logger.info(
                 f"向量生成耗时统计 - "
                 f"总耗时: {total_time:.3f}s, "
-                f"文本截断: {truncate_time:.3f}s ({truncate_time/total_time*100:.1f}%), "
-                f"API调用: {api_time:.3f}s ({api_time/total_time*100:.1f}%), "
+                f"文本截断: {truncate_time:.3f}s ({truncate_time / total_time * 100:.1f}%), "
+                f"API调用: {api_time:.3f}s ({api_time / total_time * 100:.1f}%), "
                 f"向量维度: {len(embedding)}"
             )
 

@@ -13,15 +13,19 @@ class TestCoverageScore:
         from tests.evaluation.judge.conftest import FakeLLM
 
         llm = FakeLLM()
-        llm.set_responses([
-            json.dumps({"facts": ["Paris is the capital of France", "France is in Europe"]}),
-            json.dumps({
-                "classifications": [
-                    {"statement": "Paris is the capital of France", "attributed": 1},
-                    {"statement": "France is in Europe", "attributed": 1},
-                ]
-            }),
-        ])
+        llm.set_responses(
+            [
+                json.dumps({"facts": ["Paris is the capital of France", "France is in Europe"]}),
+                json.dumps(
+                    {
+                        "classifications": [
+                            {"statement": "Paris is the capital of France", "attributed": 1},
+                            {"statement": "France is in Europe", "attributed": 1},
+                        ]
+                    }
+                ),
+            ]
+        )
 
         score = await compute_coverage_score(
             question="What is the capital of France?",
@@ -36,15 +40,19 @@ class TestCoverageScore:
         from tests.evaluation.judge.conftest import FakeLLM
 
         llm = FakeLLM()
-        llm.set_responses([
-            json.dumps({"facts": ["Paris is the capital of France", "France is in Europe"]}),
-            json.dumps({
-                "classifications": [
-                    {"statement": "Paris is the capital of France", "attributed": 1},
-                    {"statement": "France is in Europe", "attributed": 0},
-                ]
-            }),
-        ])
+        llm.set_responses(
+            [
+                json.dumps({"facts": ["Paris is the capital of France", "France is in Europe"]}),
+                json.dumps(
+                    {
+                        "classifications": [
+                            {"statement": "Paris is the capital of France", "attributed": 1},
+                            {"statement": "France is in Europe", "attributed": 0},
+                        ]
+                    }
+                ),
+            ]
+        )
 
         score = await compute_coverage_score(
             question="What is the capital of France?",
@@ -72,14 +80,18 @@ class TestCoverageScore:
         from tests.evaluation.judge.conftest import FakeLLM
 
         llm = FakeLLM()
-        llm.set_responses([
-            json.dumps({"facts": ["Paris is the capital of France"]}),
-            json.dumps({
-                "classifications": [
-                    {"statement": "Paris is the capital of France", "attributed": 1},
-                ]
-            }),
-        ])
+        llm.set_responses(
+            [
+                json.dumps({"facts": ["Paris is the capital of France"]}),
+                json.dumps(
+                    {
+                        "classifications": [
+                            {"statement": "Paris is the capital of France", "attributed": 1},
+                        ]
+                    }
+                ),
+            ]
+        )
 
         result = await compute_coverage_score(
             question="What is the capital of France?",

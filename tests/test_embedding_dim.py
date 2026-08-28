@@ -110,9 +110,11 @@ def test_probe_then_cache_hits(monkeypatch):
     assert r3["dim"] == 4096 and r3["dim_source"] == "cache" and client.calls == 1
 
 
-def test_probe_failure_falls_back_to_env():
+def test_probe_failure_falls_back_to_env(monkeypatch):
     from pipeline.core.config import get_settings
 
+    monkeypatch.setenv("EMBEDDING_DIM", "1024")
+    get_settings.cache_clear()
     settings = get_settings()
     assert settings.embedding_dimensions == 1024, "本测试假设 .env 的 EMBEDDING_DIM=1024"
     r = asyncio.run(ed.resolve_embedding_dim(client=_BoomClient()))

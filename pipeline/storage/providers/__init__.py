@@ -3,7 +3,6 @@
 from pipeline.storage.providers.chunk_text import ElasticsearchChunkTextSearchStore
 from pipeline.storage.providers.database import (
     MySQLDatabaseStore,
-    MySqlDatabaseStore,
     OceanBaseDatabaseStore,
 )
 from pipeline.storage.providers.search import ElasticsearchSearchStore, OceanBaseSearchStore
@@ -14,7 +13,6 @@ __all__ = [
     "ElasticsearchVectorStore",
     "ElasticsearchSearchStore",
     "MySQLDatabaseStore",
-    "MySqlDatabaseStore",
     "OceanBaseDatabaseStore",
     "OceanBaseSearchStore",
     "OceanBaseVectorStore",

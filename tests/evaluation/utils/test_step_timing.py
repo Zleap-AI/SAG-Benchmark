@@ -31,8 +31,7 @@ def _result(
             "stages_with_retry": with_retry,
             "stages_no_retry": no_retry,
             "retry_wasted_by_stage": {
-                stage: with_retry[stage] - no_retry[stage]
-                for stage in SAG2_TIMING_STAGE_ORDER
+                stage: with_retry[stage] - no_retry[stage] for stage in SAG2_TIMING_STAGE_ORDER
             },
             "total_with_retry": sum(with_retry.values()),
             "total_no_retry": sum(no_retry.values()),
@@ -46,8 +45,7 @@ def _result(
             "total": sum(with_retry.values()),
         },
         "event_stats": {
-            key: (index + 1) * event_multiplier
-            for index, key in enumerate(SAG2_EVENT_STATS_KEYS)
+            key: (index + 1) * event_multiplier for index, key in enumerate(SAG2_EVENT_STATS_KEYS)
         },
     }
 
@@ -129,9 +127,10 @@ def test_supplementary_metrics_export_only_cumulative_additive_time_groups():
         "supp_01_time_cum_with_retry",
         "supp_02_time_cum_no_retry",
     ):
-        stages = [metrics[f"{prefix}_{index:02d}_{stage}"] for index, stage in enumerate(
-            SAG2_TIMING_STAGE_ORDER, start=1
-        )]
+        stages = [
+            metrics[f"{prefix}_{index:02d}_{stage}"]
+            for index, stage in enumerate(SAG2_TIMING_STAGE_ORDER, start=1)
+        ]
         assert sum(stages) == pytest.approx(metrics[f"{prefix}_99_total"])
 
     assert not any("_time_batch_" in key or "percall" in key for key in metrics)

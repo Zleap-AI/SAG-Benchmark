@@ -5,7 +5,9 @@ Elasticsearch Document 模型
 """
 
 from pipeline.storage.backends.elasticsearch.documents.entity_vector import EntityVectorDocument
-from pipeline.storage.backends.elasticsearch.documents.event_entity_vector import EventEntityVectorDocument
+from pipeline.storage.backends.elasticsearch.documents.event_entity_vector import (
+    EventEntityVectorDocument,
+)
 from pipeline.storage.backends.elasticsearch.documents.event_vector import EventVectorDocument
 from pipeline.storage.backends.elasticsearch.documents.source_chunk import SourceChunkDocument
 

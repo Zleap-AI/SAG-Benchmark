@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from pipeline.engine.core import pipelineEngine
+from pipeline.engine.core import PipelineEngine
 from pipeline.modules.search.sag2 import SAG2Searcher
 from pipeline.modules.search.searcher import SAGSearcher
 
@@ -37,7 +37,7 @@ async def test_sag_searcher_closes_only_created_sag2_searcher():
 
 @pytest.mark.asyncio
 async def test_pipeline_engine_closes_its_searcher():
-    engine = pipelineEngine.__new__(pipelineEngine)
+    engine = PipelineEngine.__new__(PipelineEngine)
     engine._searcher = SimpleNamespace(aclose=AsyncMock())
 
     await engine.aclose()

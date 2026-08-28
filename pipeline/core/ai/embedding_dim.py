@@ -13,7 +13,7 @@ import hashlib
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -91,8 +91,8 @@ def _entry_is_fresh(entry: dict[str, Any]) -> bool:
     except ValueError:
         return False
     if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    return datetime.now(timezone.utc) - ts < CACHE_TTL
+        ts = ts.replace(tzinfo=UTC)
+    return datetime.now(UTC) - ts < CACHE_TTL
 
 
 def reset_embedding_dim_cache() -> None:
@@ -129,7 +129,9 @@ async def resolve_embedding_dim(
     requested = settings.embedding_request_dimensions
     expected = settings.embedding_dimensions
     force_probe = force_probe or os.getenv("EMBEDDING_DIM_FORCE_PROBE", "").lower() in (
-        "1", "true", "yes",
+        "1",
+        "true",
+        "yes",
     )
 
     key = make_cache_key(base_url, model, requested)
@@ -195,7 +197,7 @@ async def resolve_embedding_dim(
             raise EmbeddingDimMismatchError(msg)
         logger.error(msg + " —— 以服务端实际值为准，请修正 .env")
 
-    probed_at = datetime.now(timezone.utc).isoformat()
+    probed_at = datetime.now(UTC).isoformat()
     _MEM_CACHE[key] = dim
     disk[key] = {
         "base_url": base_url,

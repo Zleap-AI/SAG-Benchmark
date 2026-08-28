@@ -49,7 +49,7 @@ def _install_session(monkeypatch, *results):
 @pytest.mark.parametrize(
     "store_class",
     [
-        database_provider.MySqlDatabaseStore,
+        database_provider.MySQLDatabaseStore,
         database_provider.OceanBaseDatabaseStore,
     ],
 )
@@ -81,7 +81,7 @@ async def test_scope_relation_sql_has_active_filter_order_and_global_limit(monke
         _FakeResult(rows=[("event-1", "entity-1"), ("event-2", "entity-2")]),
     )
 
-    result = await database_provider.MySqlDatabaseStore().get_event_entity_pairs_by_events(
+    result = await database_provider.MySQLDatabaseStore().get_event_entity_pairs_by_events(
         ["event-1", "event-2"],
         source_config_ids=["source-1"],
         limit=2,
@@ -103,7 +103,7 @@ async def test_entity_recall_sql_keeps_existing_no_active_filter_semantics(monke
         _FakeResult(rows=[("event-1", "entity-1")]),
     )
 
-    result = await database_provider.MySqlDatabaseStore().get_event_entity_pairs_by_entities(
+    result = await database_provider.MySQLDatabaseStore().get_event_entity_pairs_by_entities(
         ["entity-1"],
         source_config_ids=["source-1"],
     )
@@ -122,7 +122,7 @@ async def test_entity_recall_without_source_scope_skips_source_event_join(monkey
         _FakeResult(rows=[("event-1", "entity-1")]),
     )
 
-    await database_provider.MySqlDatabaseStore().get_event_entity_pairs_by_entities(
+    await database_provider.MySQLDatabaseStore().get_event_entity_pairs_by_entities(
         ["entity-1"],
     )
 
@@ -147,7 +147,7 @@ async def test_chunk_hydration_keeps_sag2_payload_shape(monkeypatch):
         _FakeResult(scalar_rows=[chunk]),
     )
 
-    result = await database_provider.MySqlDatabaseStore().get_chunks_by_event_ids(
+    result = await database_provider.MySQLDatabaseStore().get_chunks_by_event_ids(
         ["event-1", "event-2"],
     )
 

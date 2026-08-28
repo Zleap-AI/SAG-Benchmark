@@ -165,7 +165,7 @@ async def fix_mysql_grants(root_password: str) -> None:
             async with conn.cursor() as cur:
                 # ── 0. 清理错误 host='%%' 记录 ──────────────────
                 await cur.execute(
-                    f"SELECT COUNT(*) FROM mysql.user " f"WHERE user='{user}' AND host='%%'"
+                    f"SELECT COUNT(*) FROM mysql.user WHERE user='{user}' AND host='%%'"
                 )
                 row = await cur.fetchone()
                 if row and row[0] > 0:
@@ -212,7 +212,7 @@ async def fix_mysql_grants(root_password: str) -> None:
                 # ── 4. 为每个 host 创建用户并授权 ────────────────────────
                 for host in hosts:
                     await cur.execute(
-                        f"CREATE USER IF NOT EXISTS '{user}'@'{host}' " f"IDENTIFIED BY '{pwd}'"
+                        f"CREATE USER IF NOT EXISTS '{user}'@'{host}' IDENTIFIED BY '{pwd}'"
                     )
                     await cur.execute(f"GRANT ALL PRIVILEGES ON `{db}`.* TO '{user}'@'{host}'")
 
@@ -295,15 +295,13 @@ async def _column_exists(table_name: str, column_name: str) -> bool:
     engine = get_engine()
     async with engine.connect() as conn:
         result = await conn.execute(
-            text(
-                """
+            text("""
                 SELECT COUNT(*)
                 FROM information_schema.columns
                 WHERE table_schema = :database_name
                   AND table_name = :table_name
                   AND column_name = :column_name
-                """
-            ),
+                """),
             {
                 "database_name": database_name,
                 "table_name": table_name,
@@ -458,8 +456,7 @@ async def verify_database() -> None:
         print_info(f"默认实体类型共 {len(entity_types)} 个：")
         for et in entity_types:
             print_success(
-                f"{et.type} ({et.name}): "
-                f"weight={et.weight}, threshold={et.similarity_threshold}"
+                f"{et.type} ({et.name}): weight={et.weight}, threshold={et.similarity_threshold}"
             )
     else:
         print_warning("未找到任何实体类型")

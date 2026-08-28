@@ -6,6 +6,7 @@ This directory contains the public technical documentation for SAG Benchmark.
 
 - [Project README](../README.md) — installation, storage profiles, upload, search, and QA benchmark quick start.
 - [Search benchmark guide](search.md) — supported search strategies and every `run_search_benchmark.py` option.
+- [LLM Judge guide](judge.md) — `run_llm_judge.py` subcommands, argument table, metric routing, and output layout.
 - [Architecture overview](architecture.md) — data flow, storage boundaries, and the SAG2 search stages.
 - [v2.0.0 release notes](releases/v2.0.0.md) — scope, search strategies, and compatibility notes for the paper v2 update.
 - [Changelog](../CHANGELOG.md) — version history and release-oriented summaries.

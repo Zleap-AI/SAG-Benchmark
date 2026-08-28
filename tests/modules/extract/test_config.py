@@ -24,22 +24,16 @@ class TestExtractPromptStrategy:
             ExtractBaseConfig(extract_prompt_strategy="simple")
 
     def test_original_without_test_mode_valid(self):
-        config = ExtractBaseConfig(
-            extract_prompt_strategy="original", test_mode=False
-        )
+        config = ExtractBaseConfig(extract_prompt_strategy="original", test_mode=False)
         assert config.extract_prompt_strategy == ExtractPromptStrategy.ORIGINAL
 
     def test_original_with_test_mode_valid(self):
-        config = ExtractBaseConfig(
-            extract_prompt_strategy="original", test_mode=True
-        )
+        config = ExtractBaseConfig(extract_prompt_strategy="original", test_mode=True)
         assert config.extract_prompt_strategy == ExtractPromptStrategy.ORIGINAL
         assert config.test_mode is True
 
     def test_compact_without_test_mode_valid(self):
-        config = ExtractBaseConfig(
-            extract_prompt_strategy="compact", test_mode=False
-        )
+        config = ExtractBaseConfig(extract_prompt_strategy="compact", test_mode=False)
         assert config.extract_prompt_strategy == ExtractPromptStrategy.COMPACT
 
     def test_compact_with_test_mode_raises(self):

@@ -156,9 +156,7 @@ class TestMergePartialResults:
                 {"id": 0, "metrics": {"qa_em": 1.0, "qa_f1": 1.0}},
             ]
         }
-        merged = merge_partial_results(
-            existing, {"qa": new_results}, "qa", {0}, None
-        )
+        merged = merge_partial_results(existing, {"qa": new_results}, "qa", {0}, None)
         # id=0 should be updated, id=1 preserved
         detailed = merged["detailed"]
         by_id = {d["id"]: d for d in detailed}
@@ -180,9 +178,7 @@ class TestMergePartialResults:
                 {"id": 0, "metrics": {"qa_em": 1.0, "rouge_score": 0.9}},
             ]
         }
-        merged = merge_partial_results(
-            existing, {"qa": new_results}, "qa", {0}, ["qa_em"]
-        )
+        merged = merge_partial_results(existing, {"qa": new_results}, "qa", {0}, ["qa_em"])
         detailed = merged["detailed"]
         by_id = {d["id"]: d for d in detailed}
         # qa_em updated, qa_f1 preserved, rouge_score (not in only_metrics) not added
@@ -204,7 +200,5 @@ class TestMergePartialResults:
                 {"id": 1, "metrics": {"qa_em": 1.0}},
             ]
         }
-        merged = merge_partial_results(
-            existing, {"qa": new_results}, "qa", {1}, None
-        )
+        merged = merge_partial_results(existing, {"qa": new_results}, "qa", {1}, None)
         assert len(merged["detailed"]) == 2

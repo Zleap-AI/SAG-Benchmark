@@ -117,9 +117,7 @@ def diagnostic_view_from_raw(
         stage: _safe_average(timing_sums["no_retry"].get(stage, 0.0), completed)
         for stage in SAG2_TIMING_STAGE_ORDER
     }
-    retry_wasted = {
-        stage: with_retry[stage] - no_retry[stage] for stage in SAG2_TIMING_STAGE_ORDER
-    }
+    retry_wasted = {stage: with_retry[stage] - no_retry[stage] for stage in SAG2_TIMING_STAGE_ORDER}
     total_with_retry = sum(with_retry.values())
     total_no_retry = sum(no_retry.values())
 
@@ -188,11 +186,11 @@ def compute_step_timings(ordered_results: list[dict | None]) -> dict[str, Any]:
 
         for key in _ALL_ACCUM_KEYS:
             value = ts.get(key)
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 legacy_sums[key] = legacy_sums.get(key, 0.0) + float(value)
                 legacy_counts[key] = legacy_counts.get(key, 0) + 1
         calls_value = ts.get("step7_llm_calls")
-        if isinstance(calls_value, (int, float)):
+        if isinstance(calls_value, int | float):
             legacy_calls += int(calls_value)
         legacy_completed += 1
 
@@ -207,9 +205,9 @@ def compute_step_timings(ordered_results: list[dict | None]) -> dict[str, Any]:
         for stage in SAG2_TIMING_STAGE_ORDER:
             with_value = stages_with_retry.get(stage, 0.0)
             no_value = stages_no_retry.get(stage, 0.0)
-            if isinstance(with_value, (int, float)):
+            if isinstance(with_value, int | float):
                 timing_sums["with_retry"][stage] += float(with_value)
-            if isinstance(no_value, (int, float)):
+            if isinstance(no_value, int | float):
                 timing_sums["no_retry"][stage] += float(no_value)
             timing_sums["retry_wasted_by_stage"][stage] = (
                 timing_sums["with_retry"][stage] - timing_sums["no_retry"][stage]
@@ -220,17 +218,17 @@ def compute_step_timings(ordered_results: list[dict | None]) -> dict[str, Any]:
             timing_sums["total_with_retry"] - timing_sums["total_no_retry"]
         )
         wall = ts.get("wall_total_observed", 0.0)
-        if isinstance(wall, (int, float)):
+        if isinstance(wall, int | float):
             timing_sums["wall_total_observed"] += float(wall)
 
         prompt = ts.get("step7_prompt_tokens", 0)
         completion = ts.get("step7_completion_tokens", 0)
-        if isinstance(prompt, (int, float)):
+        if isinstance(prompt, int | float):
             token_sums["prompt"] += float(prompt)
-        if isinstance(completion, (int, float)):
+        if isinstance(completion, int | float):
             token_sums["completion"] += float(completion)
         token_sums["total"] = token_sums["prompt"] + token_sums["completion"]
-        if isinstance(calls_value, (int, float)):
+        if isinstance(calls_value, int | float):
             v2_calls += int(calls_value)
 
     if v2_completed:
@@ -287,9 +285,7 @@ def raw_diagnostic_snapshot(view: dict[str, Any]) -> dict[str, Any]:
         },
         "token_sums": dict(view.get("raw_token_sums", {})),
         "completed": int(
-            view.get("raw_completed", 0)
-            if schema_version == 2
-            else view.get("completed", 0)
+            view.get("raw_completed", 0) if schema_version == 2 else view.get("completed", 0)
         ),
         "step7_calls": int(view.get("raw_step7_calls", 0)),
         "legacy_sums": dict(view.get("raw_sums", {})),
@@ -340,9 +336,7 @@ def batch_view_from_cumulative(
             calls,
         )
 
-    batch_sums = _subtract_mapping(
-        current["legacy_sums"], previous_snapshot.get("legacy_sums", {})
-    )
+    batch_sums = _subtract_mapping(current["legacy_sums"], previous_snapshot.get("legacy_sums", {}))
     batch_counts = {
         key: int(value) - int(previous_snapshot.get("legacy_counts", {}).get(key, 0))
         for key, value in current["legacy_counts"].items()
@@ -366,14 +360,14 @@ def batch_view_from_cumulative(
 
 
 def _has_step_timing(timings: dict[str, Any]) -> bool:
-    return bool(timings.get("time")) or bool(timings.get("per_question")) or bool(
-        timings.get("token_per_question")
+    return (
+        bool(timings.get("time"))
+        or bool(timings.get("per_question"))
+        or bool(timings.get("token_per_question"))
     )
 
 
-def _format_time_group(
-    view: dict[str, Any], title: str, retry_mode: str
-) -> list[str]:
+def _format_time_group(view: dict[str, Any], title: str, retry_mode: str) -> list[str]:
     group = view["time"][retry_mode]
     retry_label = "含重试" if retry_mode == "with_retry" else "不含失败重试"
     lines = [f"\n⏱️ {title} - {retry_label} ({view['completed']} 个问题):", "=" * 50]
@@ -391,23 +385,20 @@ def _format_token_group(view: dict[str, Any], title: str) -> list[str]:
     return [
         f"\n🔢 {title} ({token['completed']} 个问题, {token['calls']} 次调用):",
         "=" * 50,
+        ("  sum: prompt={prompt:.0f}, completion={completion:.0f}, total={total:.0f}").format(
+            **token["sum"]
+        ),
         (
-            "  sum: prompt={prompt:.0f}, completion={completion:.0f}, total={total:.0f}"
-        ).format(**token["sum"]),
-        (
-            "  avg/question: prompt={prompt:.2f}, completion={completion:.2f}, "
-            "total={total:.2f}"
+            "  avg/question: prompt={prompt:.2f}, completion={completion:.2f}, total={total:.2f}"
         ).format(**token["avg_per_question"]),
-        (
-            "  avg/call: prompt={prompt:.2f}, completion={completion:.2f}, total={total:.2f}"
-        ).format(**token["avg_per_call"]),
+        ("  avg/call: prompt={prompt:.2f}, completion={completion:.2f}, total={total:.2f}").format(
+            **token["avg_per_call"]
+        ),
         "=" * 50,
     ]
 
 
-def _format_supplementary_lines(
-    cum: dict[str, Any], batch: dict[str, Any] | None
-) -> list[str]:
+def _format_supplementary_lines(cum: dict[str, Any], batch: dict[str, Any] | None) -> list[str]:
     """Format v2 diagnostics in the same order used by MLflow keys."""
 
     if cum.get("schema_version") != 2:
@@ -452,9 +443,7 @@ def _format_step_timing_lines(
             f"  Step7-LLM(含重试): {s7['with_retry']:.2f}s/次  "
             f"Step7-LLM(不含重试): {s7['no_retry']:.2f}s/次  (共 {s7['calls']} 次)"
         )
-    lines.append(
-        f"  总耗时(Σstep平均, Step7不含重试): {timings['total_step7_no_retry']:.2f}s/问题"
-    )
+    lines.append(f"  总耗时(Σstep平均, Step7不含重试): {timings['total_step7_no_retry']:.2f}s/问题")
     if tpq:
         lines.append(
             f"  Step7-Token(每问题): 输入 {tpq.get('step7_prompt_tokens', 0.0):.1f}  "

@@ -1,0 +1,70 @@
+name: External method bug
+description: Report a reproducible failure in an external method or Judge conversion.
+title: "[external/<method>] "
+labels: ["bug", "external"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not upload API keys, private URLs, raw private datasets, or untrusted serialized artifacts.
+  - type: dropdown
+    id: method
+    attributes:
+      label: Method
+      options:
+        - GraphRAG
+        - HippoRAG2
+        - HyperGraphRAG
+        - Hyper-RAG
+        - LightRAG
+        - Shared Judge or adapter
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Repository revision
+      description: Branch and commit SHA; include the affected external uv.lock SHA when relevant.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version, uv version, and service type without credentials or private URLs.
+    validations:
+      required: true
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset and run identity
+      description: Dataset plus source ID, batch ID, mode, and run ID as applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Minimal command
+      description: Provide a copyable command with secrets and private paths replaced by placeholders.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: paths
+    attributes:
+      label: Input and output layout
+      description: Native result path, canonical predictions path, and Judge run path.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs
+      description: Include the shortest relevant traceback; remove credentials, URLs, and dataset content.
+      render: text

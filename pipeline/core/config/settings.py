@@ -7,7 +7,6 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import Optional
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -31,8 +30,8 @@ def resolve_env_file() -> Path:
     return resolved
 
 
-# LLM 可靠性常量（统一默认值，避免多处硬编码）
-DEFAULT_LLM_MAX_RETRIES = 2
+# LLM 可靠性常量（ModelConfig / judge 的兜底默认重试次数，避免多处硬编码）
+DEFAULT_MODEL_MAX_RETRIES = 2
 
 
 class Settings(BaseSettings):
@@ -53,11 +52,11 @@ class Settings(BaseSettings):
         default="mysql_es",
         description="存储方案预设：mysql_es / oceanbase_es / oceanbase_full",
     )
-    database_backend: Optional[str] = Field(
+    database_backend: str | None = Field(
         default=None,
         description="结构化数据库后端：mysql / oceanbase；留空时由 storage_profile 推导",
     )
-    vector_backend: Optional[str] = Field(
+    vector_backend: str | None = Field(
         default=None,
         description="向量/检索后端：elasticsearch / oceanbase；留空时由 storage_profile 推导",
     )
@@ -83,7 +82,9 @@ class Settings(BaseSettings):
     oceanbase_vector_index_type: str = Field(default="HNSW", description="OceanBase向量索引类型")
     oceanbase_vector_index_lib: str = Field(default="VSAG", description="OceanBase向量索引库")
     oceanbase_vector_index_m: int = Field(default=16, description="OceanBase HNSW M参数")
-    oceanbase_vector_index_ef_construction: int = Field(default=200, description="OceanBase HNSW构建参数")
+    oceanbase_vector_index_ef_construction: int = Field(
+        default=200, description="OceanBase HNSW构建参数"
+    )
     oceanbase_vector_search_ef_search: int = Field(
         default=64,
         ge=1,
@@ -135,12 +136,9 @@ class Settings(BaseSettings):
         default=1.0, ge=0.0, le=2.0, description="重复惩罚，1.0表示关闭"
     )
 
-
     # LLM 可靠性参数
     llm_timeout: int = Field(default=300, ge=1, description="LLM超时时间(秒)")
-    llm_max_retries: int = Field(
-        default=DEFAULT_LLM_MAX_RETRIES, ge=0, description="LLM最大重试次数"
-    )
+    llm_max_retries: int = Field(default=1, ge=0, description="LLM最大重试次数")
 
     # ======================
     # Judge LLM 配置（独立于主 LLM，避免评测模型漂移）
@@ -148,13 +146,15 @@ class Settings(BaseSettings):
     judge_llm_api_key: str = Field(default="", description="Judge LLM API密钥")
     judge_llm_model: str = Field(default="", description="Judge LLM模型")
     judge_llm_base_url: str | None = Field(default=None, description="Judge LLM API基础URL")
-    judge_llm_max_async: int = Field(default=4, ge=1, description="Judge LLM最大并发数")
-    judge_llm_timeout: int = Field(default=300, ge=1, description="Judge LLM超时时间(秒)")
-    judge_llm_max_retries: int = Field(
-        default=DEFAULT_LLM_MAX_RETRIES, ge=0, description="Judge LLM最大重试次数"
-    )
+    judge_llm_max_async: int = Field(default=3, ge=1, description="Judge LLM最大并发数")
+    judge_llm_timeout: int = Field(default=180, ge=1, description="Judge LLM超时时间(秒)")
+    judge_llm_max_retries: int = Field(default=3, ge=0, description="Judge LLM最大重试次数")
     judge_llm_enable_thinking: bool = Field(default=False, description="Judge LLM思考模式开关")
-    judge_llm_max_tokens: int = Field(default=8000, ge=1, description="Judge LLM最大输出token数")
+    judge_llm_max_tokens: int | None = Field(
+        default=None,
+        ge=1,
+        description="Judge LLM最大输出token数；None=不限制（对齐 GraphRAG-Benchmark 留空行为）",
+    )
     judge_allow_fallback: bool = Field(
         default=False,
         description="Judge LLM 配置缺失时是否允许 fallback 到主 LLM",
@@ -228,11 +228,11 @@ class Settings(BaseSettings):
     rerank_base_url: str | None = Field(
         default=None, description="Rerank API base URL; fallback to embedding_base_url when empty"
     )
-    rerank_endpoint: Optional[str] = Field(
+    rerank_endpoint: str | None = Field(
         default="/rerank",
         description="Rerank 请求端点路径，拼接到 rerank_base_url 之后（默认 /rerank；"
-                    "若平台路由为 /v1/reranks 等可改为 /reranks；"
-                    "若 rerank_base_url 已含完整端点路径则直接使用、不再拼接）",
+        "若平台路由为 /v1/reranks 等可改为 /reranks；"
+        "若 rerank_base_url 已含完整端点路径则直接使用、不再拼接）",
     )
 
     llm_language: str = Field(
@@ -356,7 +356,7 @@ class Settings(BaseSettings):
 
     @field_validator("database_backend")
     @classmethod
-    def validate_database_backend(cls, v: Optional[str]) -> Optional[str]:
+    def validate_database_backend(cls, v: str | None) -> str | None:
         """验证结构化数据库后端"""
         if v is None or v == "":
             return None
@@ -368,7 +368,7 @@ class Settings(BaseSettings):
 
     @field_validator("vector_backend")
     @classmethod
-    def validate_vector_backend(cls, v: Optional[str]) -> Optional[str]:
+    def validate_vector_backend(cls, v: str | None) -> str | None:
         """验证向量/检索后端"""
         if v is None or v == "":
             return None

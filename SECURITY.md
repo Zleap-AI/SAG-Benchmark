@@ -21,3 +21,16 @@ This project is under active development. Security fixes are evaluated according
 ## Safe reporting practices
 
 The repository includes a credential guard for Git remotes. Run it before publishing changes, and review the complete diff for secrets and machine-specific configuration. Keep `.env` files, generated outputs, local databases, and service credentials untracked.
+
+
+## Trusted artifact boundary
+
+External methods may load Python pickle files, HippoRAG serialized indexes, or
+Hyper-RAG `.hgdb` databases. These formats can execute code or instantiate
+unexpected objects during deserialization. Load them only from a trusted local
+run produced by the same repository checkout and user account.
+
+Do not load artifacts received from issues, pull requests, public URLs, shared
+buckets, or unknown users. Generated paths must remain under the selected
+method's `caches/` or `outputs/` root. Treat an artifact with an unexpected
+owner, symlink, checksum, or path traversal as untrusted and regenerate it.

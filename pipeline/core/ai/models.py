@@ -8,7 +8,7 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
-from pipeline.core.config.settings import DEFAULT_LLM_MAX_RETRIES
+from pipeline.core.config.settings import DEFAULT_MODEL_MAX_RETRIES
 
 
 class LLMProvider(str, Enum):
@@ -72,7 +72,7 @@ class ModelConfig(BaseModel):
 
     # 行为参数（必填，由 factory 注入；默认值仅在 settings 中定义）
     temperature: float = Field(..., ge=0.0, le=2.0, description="温度参数")
-    max_tokens: int = Field(..., ge=1, description="最大输出token数")
+    max_tokens: int | None = Field(default=None, ge=1, description="最大输出token数；None=不限制")
     top_p: float = Field(..., gt=0.0, le=1.0, description="top_p参数（vLLM要求>0）")
     frequency_penalty: float = Field(..., ge=-2.0, le=2.0, description="频率惩罚")
     presence_penalty: float = Field(..., ge=-2.0, le=2.0, description="存在惩罚")
@@ -81,12 +81,14 @@ class ModelConfig(BaseModel):
     # top_k=-1 表示禁用；repetition_penalty=1.0 表示关闭
     top_k: int = Field(default=-1, ge=-1, description="top_k参数，-1表示禁用")
     min_p: float = Field(default=0.0, ge=0.0, le=1.0, description="min_p参数")
-    repetition_penalty: float = Field(default=1.0, ge=0.0, le=2.0, description="重复惩罚，1.0表示关闭")
+    repetition_penalty: float = Field(
+        default=1.0, ge=0.0, le=2.0, description="重复惩罚，1.0表示关闭"
+    )
 
     # 可靠性参数
     timeout: int = Field(default=600, ge=1, description="超时时间（秒）")
     max_retries: int = Field(
-        default=DEFAULT_LLM_MAX_RETRIES,
+        default=DEFAULT_MODEL_MAX_RETRIES,
         ge=0,
         description="最大重试次数",
     )

@@ -13,8 +13,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from pipeline.storage.backends.elasticsearch.documents import REGISTERED_DOCUMENTS
 from pipeline.storage.backends.elasticsearch.client import ElasticsearchClient
+from pipeline.storage.backends.elasticsearch.documents import REGISTERED_DOCUMENTS
 from pipeline.storage.backends.elasticsearch.index_naming import (
     IndexDimMismatchError,
     assert_index_dims,
@@ -186,8 +186,7 @@ async def main() -> None:
             dim_info = await resolve_embedding_dim(force_probe=args.refresh_dim)
             dim = dim_info["dim"]
             print_success(
-                f"embedding 维度: {dim} (来源={dim_info['dim_source']}, "
-                f"model={dim_info['model']})"
+                f"embedding 维度: {dim} (来源={dim_info['dim_source']}, model={dim_info['model']})"
             )
 
         # 3. 创建索引

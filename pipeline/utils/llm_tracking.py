@@ -70,6 +70,24 @@ _ACTIVE_STAGE: ContextVar[str] = ContextVar(
     "pipeline_active_llm_tracking_stage",
     default="UNKNOWN",
 )
+_VERBOSE_LLM: ContextVar[bool] = ContextVar(
+    "pipeline_verbose_llm",
+    default=False,
+)
+
+
+def enable_llm_verbose() -> None:
+    """Enable verbose LLM logging for the current async context.
+
+    When enabled, the full prompt (all messages) and full response content
+    are logged at INFO level before and after every LLM call.
+    """
+    _VERBOSE_LLM.set(True)
+
+
+def is_llm_verbose() -> bool:
+    """Return whether verbose LLM logging is enabled in the current context."""
+    return _VERBOSE_LLM.get()
 
 
 @contextmanager
@@ -120,6 +138,8 @@ def enable_llm_tracking(token_tracker: LLMTokenTracker) -> Callable[[], None]:
 __all__ = [
     "LLMTokenTracker",
     "enable_llm_tracking",
+    "enable_llm_verbose",
+    "is_llm_verbose",
     "llm_tracking_scope",
     "llm_tracking_stage",
     "record_llm_usage",

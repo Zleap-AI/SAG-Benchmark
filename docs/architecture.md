@@ -57,4 +57,31 @@ The stage boundaries make each step testable and allow the search entry point to
 
 ## Configuration and reproducibility
 
-Use `.env.example` as the public configuration template and keep secrets only in an untracked `.env` file. For comparable experiments, pin the dataset, source configuration, embedding model and dimension, strategy options, `k-values`, and output directory. Do not commit generated datasets, benchmark outputs, credentials, or service-specific local configuration.
+Use `.env.example` as the public configuration template and keep secrets only in an untracked `.env` file. For comparable experiments, pin the dataset, source configuration, embedding model and dimension, strategy options, `k-values`, and output directory. Keep generated or private datasets, benchmark outputs, credentials, and service-specific local configuration out of version control; the public fixtures under the repository-root `dataset/` are intentionally tracked.
+
+## Dataset adapter boundary
+
+Judge does not infer a dataset schema from whichever fields happen to be present in a JSON row. The raw-data boundary is explicit:
+
+```text
+--dataset / dataset file
+    -> DatasetResolver
+    -> declared DatasetAdapter
+    -> Pydantic CanonicalGroundTruthSample
+    -> GroundTruthRepository
+    -> conversion / generation / retrieval metrics
+```
+
+The built-in adapters are registered in `pipeline/evaluation/judge/dataset_adapters/defaults.py`:
+
+| Dataset | Adapter | Evidence capability |
+| --- | --- | --- |
+| `hotpotqa` (`test_hotpotqa`) | `HotpotQAAdapter` | yes |
+| `2wikimultihopqa` | `TwoWikiAdapter` | yes; invalid released references are skipped explicitly |
+| `musique` | `MusiqueAdapter` | yes |
+| `narrativeqa` | `NarrativeQAAdapter` | no; `evidence_recall` fails explicitly |
+| `sample` | `SampleAdapter` | yes; smoke-test fixture |
+
+`GroundTruthRepository` is the only application-facing raw-dataset entry point. It resolves aliases and timestamped filenames, validates every row through its adapter, caches canonical samples, and exposes answers/evidence/capabilities to the Judge. Source-project output adapters under `pipeline/evaluation/judge/adapters/` remain a separate boundary: they convert native result files into prediction rows, after which the ground-truth repository performs canonical enrichment.
+
+Adding a dataset requires a new adapter with a descriptor, row-level schema checks, canonical conversion, and tests against representative raw rows. Do not add another field-presence fallback to `dataset_io.py`; unsupported names must raise `UnsupportedDatasetError`, malformed rows must raise `DatasetSchemaError`, and unavailable metrics must raise `DatasetCapabilityError`.

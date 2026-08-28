@@ -65,12 +65,14 @@ class SAG2Runtime:
     def get_rerank_client(self):
         if self._rerank_client is None:
             from pipeline.core.ai.rerank import get_rerank_client
+
             self._rerank_client = get_rerank_client()
         return self._rerank_client
 
     def get_settings(self):
         if self._settings is None:
             from pipeline.core.config import get_settings
+
             self._settings = get_settings()
         return self._settings
 

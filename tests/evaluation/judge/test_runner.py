@@ -1,8 +1,6 @@
 """Tests for Judge runner concurrency and failure isolation."""
 
 import asyncio
-import json
-import math
 
 import pytest
 
@@ -85,55 +83,227 @@ class TestFailureIsolation:
         assert results[1]["ok"] is False
         assert results[2]["ok"] is True
 
+
+class TestProgrammingErrorAbort:
+    """Verify programming errors cancel remaining tasks and abort the run."""
+
     @pytest.mark.asyncio
-    async def test_generation_failure_is_recorded_as_nan(
-        self, tmp_path, monkeypatch
-    ):
-        from pipeline.evaluation.judge import generation
-        from tests.evaluation.judge.conftest import FakeLLM
+    async def test_programming_error_aborts_run(self):
+        """TypeError/KeyError/etc must cancel other tasks and raise JudgeExecutionError."""
+        from pipeline.evaluation.judge.errors import JudgeExecutionError
+        from pipeline.evaluation.judge.models import (
+            EvaluationKind,
+            JudgeSample,
+            SampleEvaluationStatus,
+        )
+        from pipeline.evaluation.judge.runner import JudgeEvaluationRunner
 
-        data_file = tmp_path / "predictions.json"
-        data_file.write_text(
-            json.dumps(
-                [
-                    {
-                        "id": 0,
-                        "question_type": "qa",
-                        "question": "good",
-                        "generated_answer": "a",
-                        "ground_truth": "a",
-                        "context": "c",
-                    },
-                    {
-                        "id": 1,
-                        "question_type": "qa",
-                        "question": "bad",
-                        "generated_answer": "b",
-                        "ground_truth": "b",
-                        "context": "c",
-                    },
-                ]
-            ),
-            encoding="utf-8",
+        class _BrokenEval:
+            kind = EvaluationKind.GENERATION
+            supported_metrics = ("qa_em",)
+
+            async def evaluate(self, sample, llm, metrics, context_top_k=5):
+                if sample.id == 1:
+                    raise TypeError("intentional programming error")
+                from pipeline.evaluation.judge.models import JudgeDetailedResult
+
+                return JudgeDetailedResult(
+                    id=sample.id,
+                    question=sample.question,
+                    ground_truth="",
+                    generated_answer="",
+                    contexts=[],
+                    metrics={"qa_em": 1.0},
+                    llm_intermediate={},
+                    status=SampleEvaluationStatus.SUCCESS,
+                )
+
+        runner = JudgeEvaluationRunner(max_concurrent=1)
+        samples = [
+            JudgeSample(id=0, question="Q0", answer="A0", ground_truth="A0"),
+            JudgeSample(id=1, question="Q1", answer="A1", ground_truth="A1"),
+            JudgeSample(id=2, question="Q2", answer="A2", ground_truth="A2"),
+        ]
+
+        with pytest.raises(JudgeExecutionError):
+            await runner.run(
+                samples=samples,
+                evaluator=_BrokenEval(),
+                llm=None,
+                metrics=("qa_em",),
+            )
+
+
+class TestExpectedFailureIsolation:
+    """Verify expected LLM failures (timeout, connection) are isolated per-sample."""
+
+    @pytest.mark.asyncio
+    async def test_timeout_is_isolated(self):
+        """TimeoutError cannot leave NaN metrics in the final run."""
+        from pipeline.evaluation.judge.models import (
+            EvaluationKind,
+            JudgeSample,
+            SampleEvaluationStatus,
+        )
+        from pipeline.evaluation.judge.runner import JudgeEvaluationRunner
+
+        class _TimeoutEval:
+            kind = EvaluationKind.GENERATION
+            supported_metrics = ("qa_em",)
+
+            async def evaluate(self, sample, llm, metrics, context_top_k=5):
+                if sample.id == 1:
+                    raise TimeoutError("LLM timed out")
+                from pipeline.evaluation.judge.models import JudgeDetailedResult
+
+                return JudgeDetailedResult(
+                    id=sample.id,
+                    question=sample.question,
+                    ground_truth="",
+                    generated_answer="",
+                    contexts=[],
+                    metrics={"qa_em": 1.0},
+                    llm_intermediate={},
+                    status=SampleEvaluationStatus.SUCCESS,
+                )
+
+        runner = JudgeEvaluationRunner(max_concurrent=1)
+        samples = [
+            JudgeSample(id=0, question="Q0", answer="A0", ground_truth="A0"),
+            JudgeSample(id=1, question="Q1", answer="A1", ground_truth="A1"),
+            JudgeSample(id=2, question="Q2", answer="A2", ground_truth="A2"),
+        ]
+
+        summary = await runner.run(
+            samples=samples,
+            evaluator=_TimeoutEval(),
+            llm=None,
+            metrics=("qa_em",),
         )
 
-        async def fake_evaluate_sample(**kwargs):
-            if kwargs["question"] == "bad":
-                raise RuntimeError("simulated")
-            return {
-                "scores": {"qa_em": 1.0},
-                "llm_intermediate": {},
-            }
+        assert summary.successful_samples == 2
+        assert summary.failed_samples == 1
+        assert summary.average_scores == {"qa_em": 1.0}
+        assert summary.metric_valid_counts == {"qa_em": 2}
+        failed = next(
+            item for item in summary.detailed if item.status == SampleEvaluationStatus.SAMPLE_FAILED
+        )
+        assert failed.metrics == {}
+        assert failed.error_type == "TimeoutError"
 
-        monkeypatch.setattr(generation, "evaluate_sample", fake_evaluate_sample)
-        result = await generation.run_generation_eval(
-            str(data_file),
-            FakeLLM(),
-            detailed_output=True,
-            only_metrics=["qa_em"],
+
+@pytest.mark.asyncio
+async def test_evidence_repository_programming_error_aborts():
+    from pipeline.evaluation.judge.errors import JudgeExecutionError
+    from pipeline.evaluation.judge.models import JudgeSample
+    from pipeline.evaluation.judge.retrieval import RetrievalSampleEvaluator
+    from pipeline.evaluation.judge.runner import JudgeEvaluationRunner
+
+    class _BrokenEvidenceRepository:
+        def evidence_map(self, dataset):
+            raise KeyError("broken evidence mapping")
+
+    evaluator = RetrievalSampleEvaluator(
+        evidence_repository=_BrokenEvidenceRepository(),
+        dataset="test",
+    )
+    runner = JudgeEvaluationRunner(max_concurrent=1)
+    sample = JudgeSample(
+        id=0,
+        question="Q",
+        answer="A",
+        ground_truth="A",
+        contexts=["C"],
+    )
+    with pytest.raises(JudgeExecutionError, match="KeyError"):
+        await runner.run(
+            samples=[sample],
+            evaluator=evaluator,
+            llm=None,
+            metrics=("evidence_recall",),
         )
 
-        detailed = {entry["id"]: entry for entry in result["qa"]["detailed"]}
-        assert detailed[0]["metrics"]["qa_em"] == 1.0
-        assert math.isnan(detailed[1]["metrics"]["qa_em"])
-        assert result["qa"]["average_scores"]["qa_em"] == 1.0
+
+@pytest.mark.asyncio
+async def test_checkpoint_resumes_only_missing_samples_without_repeating_llm_calls(tmp_path):
+    from pipeline.evaluation.judge.checkpoint import atomic_write_json
+    from pipeline.evaluation.judge.models import (
+        EvaluationKind,
+        JudgeDetailedResult,
+        JudgeSample,
+        SampleEvaluationStatus,
+    )
+    from pipeline.evaluation.judge.runner import JudgeEvaluationRunner
+
+    class _CountingEvaluator:
+        kind = EvaluationKind.GENERATION
+        supported_metrics = ("qa_em",)
+        default_metrics = ("qa_em",)
+
+        def __init__(self):
+            self.called_ids = []
+
+        async def evaluate(self, sample, llm, metrics, context_top_k=5):
+            self.called_ids.append(sample.id)
+            return JudgeDetailedResult(
+                id=sample.id,
+                seq=sample.seq,
+                question=sample.question,
+                ground_truth=sample.ground_truth,
+                generated_answer=sample.answer,
+                contexts=[],
+                metrics={"qa_em": 1.0},
+                status=SampleEvaluationStatus.SUCCESS,
+            )
+
+    samples = [
+        JudgeSample(id=i, seq=i, question=f"Q{i}", answer="A", ground_truth="A") for i in range(3)
+    ]
+    checkpoint_path = tmp_path / "generation_results.json.partial"
+    atomic_write_json(
+        {
+            "average_scores": {"qa_em": 1.0},
+            "detailed": [
+                {
+                    "id": 0,
+                    "seq": 0,
+                    "question": "Q0",
+                    "ground_truth": "A",
+                    "generated_answer": "A",
+                    "contexts": [],
+                    "metrics": {"qa_em": 1.0},
+                    "status": "success",
+                },
+                {
+                    "id": 1,
+                    "seq": 1,
+                    "question": "Q1",
+                    "ground_truth": "A",
+                    "generated_answer": "A",
+                    "contexts": [],
+                    "metrics": {"qa_em": float("nan")},
+                    "status": "sample_failed",
+                    "error_type": "LLMResponseError",
+                    "error_message": "invalid response",
+                },
+            ],
+        },
+        str(checkpoint_path),
+    )
+
+    evaluator = _CountingEvaluator()
+    summary = await JudgeEvaluationRunner(max_concurrent=1).run(
+        samples=samples,
+        evaluator=evaluator,
+        llm=None,
+        metrics=("qa_em",),
+        checkpoint_path=str(checkpoint_path),
+    )
+
+    assert evaluator.called_ids == [2]
+    assert summary.total_samples == 3
+    assert summary.successful_samples == 2
+    assert summary.failed_samples == 1
+    assert summary.average_scores == {"qa_em": 1.0}
+    assert summary.metric_valid_counts == {"qa_em": 2}
+    assert summary.detailed[1].metrics == {}

@@ -70,20 +70,26 @@ class EmbeddingClient:
             },
         )
 
-    def _create_kwargs(self) -> dict:
+    def _create_kwargs(self, instruction: str | None = None) -> dict:
         """embeddings.create 的可选参数（dimensions 仅在显式配置时透传）"""
-        return {"dimensions": self.dimensions} if self.dimensions else {}
+        kwargs: dict = {"dimensions": self.dimensions} if self.dimensions else {}
+        if instruction:
+            # 只传纯指令文本；"Instruct: ...\nQuery: " 模板由服务端（serve_nvembed.py）拼接，
+            # 客户端不得本地拼前缀，否则会重复拼接。
+            kwargs["extra_body"] = {"instruction": instruction}
+        return kwargs
 
     def _ensure_open(self) -> None:
         if self._closed:
             raise AIError("Embedding client is closed")
 
-    async def generate(self, text: str) -> list[float]:
+    async def generate(self, text: str, instruction: str | None = None) -> list[float]:
         """
         生成文本的embedding向量
 
         Args:
             text: 文本内容
+            instruction: query 侧非对称指令（纯文本），None=不传
 
         Returns:
             embedding向量
@@ -96,7 +102,7 @@ class EmbeddingClient:
             response = await self.client.embeddings.create(
                 input=text,
                 model=self.model,
-                **self._create_kwargs(),
+                **self._create_kwargs(instruction),
             )
             embedding = response.data[0].embedding
 

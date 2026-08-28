@@ -15,6 +15,22 @@
 
 SAG2 事件候选池是一个独立的实验变体：命令行仍使用 `--strategy sag2`，但加上 `--sag2-scope` 后，先按查询相似度构造有界事件候选池，再执行 SAG2 的召回、扩展和重排。它应在实验记录中与 `vector`、`atomic` 等策略并列；`bm25` 也可以直接作为一级检索策略运行。
 
+## 策略与上传模式
+
+| 检索策略 | 所需上传模式 | 数据源模式不符时是否必须重传 |
+| --- | --- | --- |
+| `sag2` | Compact（默认） | 是，用 Compact 重新上传 |
+| `sag2` + `--sag2-scope` | Compact（默认） | 是，同 `sag2` |
+| `atomic` | Atomic（`--atomic`） | 是，用 `--atomic` 重新上传 |
+| `bm25` | 任意模式 | 否，三种模式均可直接运行 |
+| `vector` | 任意模式，推荐 Compact | 否；但 `--no-extraction` 上传的源不含事项，之后要运行 `sag2` 必须用 Compact 重新上传 |
+
+自动查找只按数据集和 `LLM_MODEL` 取最新上传，不区分上传模式；若最新上传的模式与目标策略不符，用 `--source-config-id` 指定匹配的源，或重新上传。
+
+### Vector 与 `--no-extraction`
+
+`--no-extraction` 上传只加载语料并建立索引，跳过事项/实体提取，上传更快、不消耗提取用的 LLM 调用。但该数据源不含事项，无法支撑 `sag2` 与 `atomic` 检索，之后若要运行这些策略必须用对应模式重新上传。仅当实验只包含纯 `vector` 检索时才建议使用。
+
 ## 运行前提
 
 请在仓库根目录运行脚本，并确保项目依赖已经安装。运行前在 `.env` 中配置 LLM、embedding、Elasticsearch/MySQL 等依赖。数据集对应的 `source_info.json` 默认从以下目录按时间戳选择最新上传结果：
@@ -30,28 +46,27 @@ pipeline/evaluation/source/SAG/<LLM_MODEL>/<dataset-name>/<timestamp>/source_inf
 ```bash
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique \
-  --strategy atomic
+  --strategy sag2
 ```
 
 示例：
 
 ```bash
-# SAG2 检索，并发处理 4 道题
+# SAG2 检索，并发 4、每处理 100 题打印一次累积统计（演示偏离默认值 10/5）
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique --strategy sag2 \
   --max-concurrency 4 --bench-size 100
 
-# SAG2 启用事件候选池，并显式设置 rerank 和最终保留数量
+# SAG2 启用事件候选池，候选池大小 k_pool=500（默认 1000）
 uv run python scripts/run_search_benchmark.py \
   --dataset-name hotpotqa --strategy sag2 \
-  --sag2-scope --sag2-event-top-k 500 \
-  --sag2-rerank-top-k 10 --sag2-max-results 10
+  --sag2-scope --sag2-event-top-k 500
 
 # BM25 关键词检索基线
 uv run python scripts/run_search_benchmark.py \
-  --dataset-name musique --strategy bm25 --top-k 10
+  --dataset-name musique --strategy bm25
 
-# 只跑第 0 到 49 题（端点包含）
+# 只跑第 0 到 49 题（端点包含），指标只算 K=1,5,10
 uv run python scripts/run_search_benchmark.py \
   --dataset-name test_hotpotqa --strategy bm25 \
   --limit 0 49 --k-values 1,5,10
@@ -60,8 +75,7 @@ uv run python scripts/run_search_benchmark.py \
 uv run python scripts/run_search_benchmark.py \
   --dataset-name musique --strategy vector \
   --use-mlflow --mlflow-url http://127.0.0.1:5000 \
-  --mlflow-experiment sag-benchmark \
-  --use-mlflow-prompts --mlflow-prompt-alias latest
+  --use-mlflow-prompts
 ```
 
 ## 命令行参数
@@ -74,7 +88,7 @@ uv run python scripts/run_search_benchmark.py \
 | `--sag2-rerank-top-k` | `None`（读取配置，默认 10） | SAG2 rerank 模型保留的最高 K 个结果。不能大于 `--sag2-max-results`。 |
 | `--sag2-max-results` | `None`（读取配置，默认 10） | SAG2 最终返回的事项数；rerank 不足时按 embedding 相似度补齐。 |
 | `--k-values` | `1,2,5,10` | 计算哪些 K 值的指标，逗号分隔，例如 `1,5,10`。 |
-| `--max-concurrency` | `1` | 并发处理的问题数；外部 LLM/ES 服务不稳定时保持 `1`。 |
+| `--max-concurrency` | `10` | 并发处理的问题数；外部服务承载能力较低时可显式调小。 |
 | `--limit` | 不限制 | 一个整数 `N` 表示前 `N` 题；两个整数 `S E` 表示 0-based 且包含端点的题目区间；最多两个整数。 |
 | `--bench-size` | `5` | 每处理 N 道题打印一次累积统计并触发进度回调；它不限制题目总数，也不改变并发度。 |
 | `--sag2-scope` | 关闭 | 开启 SAG2 事件候选池变体；不传则使用普通 SAG2 检索范围。该配置应与 vector、atomic 等策略并列比较。 |
@@ -86,7 +100,7 @@ uv run python scripts/run_search_benchmark.py \
 | `--allow-embedding-mismatch` | 关闭 | 允许当前 embedding 维度与索引维度不一致。仅用于排查问题，不建议用于可比实验。 |
 | `--use-mlflow` | 关闭 | 开启 MLflow 实验记录。 |
 | `--mlflow-url` | `.env` 中的 `MLFLOW_URL` | MLflow Tracking Server 地址；命令行值优先。 |
-| `--mlflow-experiment` | `sag-benchmark` | MLflow 实验名称；实际名称会带本机 IP 前缀。 |
+| `--mlflow-experiment` | `sag-benchmark` | MLflow 实验名称；实际名称会带本机 hostname 前缀。 |
 | `--use-mlflow-prompts` | 关闭 | 从 MLflow Prompt Registry 加载搜索提示词；未注册时回退到代码常量，服务不可达则报错。 |
 | `--mlflow-prompt-alias` | `latest` | 与 `--use-mlflow-prompts` 一起使用的 Prompt Registry alias。 |
 

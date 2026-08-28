@@ -6,7 +6,6 @@ logger = get_logger("evaluation.metrics.retrieval_eval")
 
 
 class RetrievalRecall(BaseMetric):
-
     metric_name: str = "retrieval_recall"
 
     def __init__(self):

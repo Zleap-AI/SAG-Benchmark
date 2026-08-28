@@ -90,7 +90,6 @@ def _force_delete_prompt(client, name: str) -> None:
     client.delete_prompt(name)
 
 
-
 def _collect_parts_from_mlflow(mlflow, alias: str) -> dict[str, str]:
     """从 MLflow 现有分条 prompt（multi_search.<short>@alias）拉取每条最新内容。
 
