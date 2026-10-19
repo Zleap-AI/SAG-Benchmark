@@ -12,7 +12,7 @@
 
 **原 SAG 论文复现入口：[sag/README-CN.md](sag/README-CN.md)**。原方法的安装、数据上传、检索、问答与评测说明保留在独立的 `sag/` 目录。
 
-<video src="https://github.com/Zleap-AI/SAG-Benchmark/raw/refs/heads/main/sag2/assets/SAG2-%E4%B8%AD%E6%96%87.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/439bbb1c-3fd8-41e1-a77b-865e8dce4d48
 
 **目录**
 

@@ -12,7 +12,7 @@
 
 **Original SAG paper reproduction: [sag/README.md](sag/README.md)**. Its installation, upload, retrieval, QA and evaluation instructions remain in the independent `sag/` subproject.
 
-<video src="https://github.com/Zleap-AI/SAG-Benchmark/raw/refs/heads/main/sag2/assets/SAG2-English.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/bcdf9dbf-7535-41d6-bd22-bde0ea824525
 
 **Contents**
 

@@ -15,7 +15,7 @@
 | **SAG2**：BM25、JEV 与词项扩展 | 当前文档；独立的 `sag2/` 子项目 |
 | **原 SAG 论文**：事件、实体与图检索 | **[原 SAG 中文复现指南](../sag/README-CN.md)**；独立的 `sag/` 子项目 |
 
-<video src="https://github.com/Zleap-AI/SAG-Benchmark/raw/refs/heads/main/sag2/assets/SAG2-%E4%B8%AD%E6%96%87.mp4" controls width="100%"></video>
+https://github.com/user-attachments/assets/439bbb1c-3fd8-41e1-a77b-865e8dce4d48
 
 **目录**
 
