@@ -1,0 +1,56 @@
+[
+  {
+    "id": 0,
+    "question": "What is the capital of France?",
+    "answer": "Paris is the capital of France.",
+    "ground_truth": "Paris",
+    "contexts": ["France is a country in Western Europe.", "Paris has been the capital of France since the 10th century."],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 1,
+    "question": "Who wrote Romeo and Juliet?",
+    "answer": "William Shakespeare wrote Romeo and Juliet.",
+    "ground_truth": ["William Shakespeare", "Shakespeare"],
+    "contexts": ["Romeo and Juliet is a tragedy written by William Shakespeare early in his career."],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 2,
+    "question": "What is the boiling point of water?",
+    "answer": "",
+    "ground_truth": "100 degrees Celsius",
+    "contexts": [],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 3,
+    "question": "Describe the theory of relativity.",
+    "answer": "Einstein's theory of relativity explains that space and time are relative.",
+    "ground_truth": "The theory of relativity, developed by Albert Einstein, states that the laws of physics are the same for all non-accelerating observers.",
+    "contexts": [
+      "Albert Einstein developed the theory of relativity in the early 20th century.",
+      "The theory has two parts: special relativity and general relativity.",
+      "Special relativity deals with objects moving at constant speed."
+    ],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  },
+  {
+    "id": 4,
+    "question": "What year did World War II end?",
+    "answer": "World War II ended in 1945.",
+    "ground_truth": "",
+    "contexts": ["World War II was a global war that lasted from 1939 to 1945."],
+    "evidences": [],
+    "source": "test",
+    "question_type": "qa"
+  }
+]

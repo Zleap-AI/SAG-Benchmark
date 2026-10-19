@@ -1,0 +1,77 @@
+{
+  "status": "completed",
+  "question_count": 1000,
+  "candidate_judgments": 100000,
+  "successful_scoring_requests": 1000,
+  "request_totals": {
+    "http_requests": 999,
+    "successful_requests": 999,
+    "failed_requests": 0,
+    "input_tokens": 29352249,
+    "output_tokens": 2103026,
+    "reported_cost_usd": 1.232794458,
+    "attempts_without_usage": 0,
+    "billing_complete": true
+  },
+  "groups": {
+    "all": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.3090833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4860833333333333,
+        "AllEvidence@2": 0.163,
+        "Recall@5": 0.64625,
+        "AllEvidence@5": 0.347,
+        "Recall@10": 0.7310833333333334,
+        "AllEvidence@10": 0.461
+      }
+    },
+    "2": {
+      "n": 518,
+      "metrics": {
+        "Recall@1": 0.38803088803088803,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.5974903474903475,
+        "AllEvidence@2": 0.31467181467181465,
+        "Recall@5": 0.7374517374517374,
+        "AllEvidence@5": 0.5328185328185329,
+        "Recall@10": 0.8204633204633205,
+        "AllEvidence@10": 0.6602316602316602
+      }
+    },
+    "3": {
+      "n": 316,
+      "metrics": {
+        "Recall@1": 0.2542194092827004,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4187763713080168,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.620253164556962,
+        "AllEvidence@5": 0.21835443037974683,
+        "Recall@10": 0.6972573839662447,
+        "AllEvidence@10": 0.34177215189873417
+      }
+    },
+    "4": {
+      "n": 166,
+      "metrics": {
+        "Recall@1": 0.16716867469879518,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.26656626506024095,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.411144578313253,
+        "AllEvidence@5": 0.012048192771084338,
+        "Recall@10": 0.516566265060241,
+        "AllEvidence@10": 0.06626506024096386
+      }
+    }
+  },
+  "logical_usage_including_reused_responses": {
+    "input_tokens": 29381066,
+    "output_tokens": 2105122,
+    "reported_cost_usd": 1.234004772
+  },
+  "reused_responses": 1,
+  "stages": {}
+}

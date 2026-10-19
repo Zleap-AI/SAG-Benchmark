@@ -1,0 +1,9 @@
+{
+  "cold_construction_seconds": 31.3065825200174,
+  "source_records": 11656,
+  "indexed_units": 11656,
+  "sqlite_bytes": 27127808,
+  "offline_model_requests": 0,
+  "offline_model_cost_usd": 0,
+  "index_workers": 8
+}

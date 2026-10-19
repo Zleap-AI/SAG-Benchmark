@@ -1,0 +1,72 @@
+{
+  "key": "bm25",
+  "title": "BM25",
+  "experiment": 1,
+  "state": "reused",
+  "n": 1000,
+  "rows": {},
+  "groups": {
+    "all": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.28525,
+        "Recall@2": 0.37316666666666665,
+        "Recall@5": 0.4746666666666667,
+        "Recall@10": 0.5440833333333333,
+        "AllEvidence@1": 0.0,
+        "AllEvidence@2": 0.045,
+        "AllEvidence@5": 0.122,
+        "AllEvidence@10": 0.174
+      }
+    },
+    "2": {
+      "n": 518,
+      "metrics": {
+        "Recall@1": 0.3532818532818533,
+        "Recall@2": 0.44305019305019305,
+        "Recall@5": 0.5501930501930502,
+        "Recall@10": 0.6167953667953668,
+        "AllEvidence@1": 0.0,
+        "AllEvidence@2": 0.08687258687258688,
+        "AllEvidence@5": 0.22007722007722008,
+        "AllEvidence@10": 0.2972972972972973
+      }
+    },
+    "3": {
+      "n": 316,
+      "metrics": {
+        "Recall@1": 0.24367088607594936,
+        "Recall@2": 0.3343881856540084,
+        "Recall@5": 0.4419831223628692,
+        "Recall@10": 0.5137130801687763,
+        "AllEvidence@1": 0.0,
+        "AllEvidence@2": 0.0,
+        "AllEvidence@5": 0.02531645569620253,
+        "AllEvidence@10": 0.060126582278481014
+      }
+    },
+    "4": {
+      "n": 166,
+      "metrics": {
+        "Recall@1": 0.15210843373493976,
+        "Recall@2": 0.2289156626506024,
+        "Recall@5": 0.30120481927710846,
+        "Recall@10": 0.375,
+        "AllEvidence@1": 0.0,
+        "AllEvidence@2": 0.0,
+        "AllEvidence@5": 0.0,
+        "AllEvidence@10": 0.006024096385542169
+      }
+    }
+  },
+  "usage": {
+    "http_requests": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "judgments": 0
+  },
+  "cost": 0,
+  "environment": "既有归档",
+  "reference": "bm25",
+  "historical": true
+}

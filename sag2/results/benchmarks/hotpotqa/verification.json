@@ -1,0 +1,24 @@
+{
+  "provider": "OpenRouter",
+  "endpoint": "https://openrouter.ai/api/alpha/decisions",
+  "dataset": "hotpotqa",
+  "n": 1000,
+  "full_dataset_verified": true,
+  "metrics": {
+    "Recall@1": 0.483,
+    "Recall@2": 0.936,
+    "Recall@5": 0.9845,
+    "Recall@10": 0.99
+  },
+  "query_identity_model_noul_and_all_scores_verified": true,
+  "all_dpp_orders_and_prior_score_context_verified": true,
+  "per_question_successful_requests_not_increased": true,
+  "new_successful_http_responses": 2995,
+  "raw_http_attempts": 2996,
+  "http500_attempts": 0,
+  "http499_attempts": 1,
+  "timeout_attempts": 0,
+  "source_and_index_hashes_verified": true,
+  "summary_sha256": "194b74ff3745279ae4ecb279f617110f9043e0adb4081d444f8ddd354835dd7e",
+  "new_jev_requests_for_audit": 0
+}

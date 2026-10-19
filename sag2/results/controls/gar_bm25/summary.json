@@ -1,0 +1,77 @@
+{
+  "status": "completed",
+  "question_count": 1000,
+  "candidate_judgments": 0,
+  "successful_scoring_requests": 0,
+  "request_totals": {
+    "http_requests": 0,
+    "successful_requests": 0,
+    "failed_requests": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "reported_cost_usd": 0.0,
+    "attempts_without_usage": 0,
+    "billing_complete": true
+  },
+  "groups": {
+    "all": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.2870833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.375,
+        "AllEvidence@2": 0.045,
+        "Recall@5": 0.4765833333333333,
+        "AllEvidence@5": 0.121,
+        "Recall@10": 0.545,
+        "AllEvidence@10": 0.175
+      }
+    },
+    "2": {
+      "n": 518,
+      "metrics": {
+        "Recall@1": 0.3561776061776062,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.44594594594594594,
+        "AllEvidence@2": 0.08687258687258688,
+        "Recall@5": 0.5521235521235521,
+        "AllEvidence@5": 0.21814671814671815,
+        "Recall@10": 0.6187258687258688,
+        "AllEvidence@10": 0.29922779922779924
+      }
+    },
+    "3": {
+      "n": 316,
+      "metrics": {
+        "Recall@1": 0.24472573839662445,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.33544303797468356,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.44409282700421937,
+        "AllEvidence@5": 0.02531645569620253,
+        "Recall@10": 0.5126582278481012,
+        "AllEvidence@10": 0.060126582278481014
+      }
+    },
+    "4": {
+      "n": 166,
+      "metrics": {
+        "Recall@1": 0.15210843373493976,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.2289156626506024,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.30271084337349397,
+        "AllEvidence@5": 0.0,
+        "Recall@10": 0.37650602409638556,
+        "AllEvidence@10": 0.006024096385542169
+      }
+    }
+  },
+  "logical_usage_including_reused_responses": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "reported_cost_usd": 0
+  },
+  "reused_responses": 0,
+  "stages": {}
+}

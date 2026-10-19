@@ -1,0 +1,482 @@
+{
+  "bootstrap": {
+    "resamples": 2000,
+    "seed": 20261015,
+    "generator": "Python random.Random choices",
+    "unit": "paired question",
+    "multiple_comparison_adjustment": false
+  },
+  "stages": {
+    "bm25": {
+      "all": {
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.2870833333333333,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.375,
+          "AllEvidence@2": 0.045,
+          "Recall@5": 0.4765833333333333,
+          "AllEvidence@5": 0.121,
+          "Recall@10": 0.545,
+          "AllEvidence@10": 0.175
+        }
+      },
+      "2": {
+        "n": 518,
+        "metrics": {
+          "Recall@1": 0.3561776061776062,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.44594594594594594,
+          "AllEvidence@2": 0.08687258687258688,
+          "Recall@5": 0.5521235521235521,
+          "AllEvidence@5": 0.21814671814671815,
+          "Recall@10": 0.6187258687258688,
+          "AllEvidence@10": 0.29922779922779924
+        }
+      },
+      "3": {
+        "n": 316,
+        "metrics": {
+          "Recall@1": 0.24472573839662445,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.33544303797468356,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.44409282700421937,
+          "AllEvidence@5": 0.02531645569620253,
+          "Recall@10": 0.5126582278481012,
+          "AllEvidence@10": 0.060126582278481014
+        }
+      },
+      "4": {
+        "n": 166,
+        "metrics": {
+          "Recall@1": 0.15210843373493976,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.2289156626506024,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.30271084337349397,
+          "AllEvidence@5": 0.0,
+          "Recall@10": 0.37650602409638556,
+          "AllEvidence@10": 0.006024096385542169
+        }
+      }
+    },
+    "h0": {
+      "all": {
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.3113333333333333,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.4679166666666667,
+          "AllEvidence@2": 0.124,
+          "Recall@5": 0.6078333333333333,
+          "AllEvidence@5": 0.266,
+          "Recall@10": 0.6793333333333333,
+          "AllEvidence@10": 0.36
+        }
+      },
+      "2": {
+        "n": 518,
+        "metrics": {
+          "Recall@1": 0.388996138996139,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.5637065637065637,
+          "AllEvidence@2": 0.23938223938223938,
+          "Recall@5": 0.6747104247104247,
+          "AllEvidence@5": 0.40733590733590735,
+          "Recall@10": 0.75,
+          "AllEvidence@10": 0.5231660231660231
+        }
+      },
+      "3": {
+        "n": 316,
+        "metrics": {
+          "Recall@1": 0.2542194092827004,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.41666666666666663,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.6054852320675105,
+          "AllEvidence@5": 0.16772151898734178,
+          "Recall@10": 0.6687763713080168,
+          "AllEvidence@10": 0.2626582278481013
+        }
+      },
+      "4": {
+        "n": 166,
+        "metrics": {
+          "Recall@1": 0.17771084337349397,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.26656626506024095,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.4036144578313253,
+          "AllEvidence@5": 0.012048192771084338,
+          "Recall@10": 0.4789156626506024,
+          "AllEvidence@10": 0.03614457831325301
+        }
+      }
+    },
+    "h1": {
+      "all": {
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.3435,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.6144166666666666,
+          "AllEvidence@2": 0.312,
+          "Recall@5": 0.7789166666666666,
+          "AllEvidence@5": 0.546,
+          "Recall@10": 0.8335833333333333,
+          "AllEvidence@10": 0.631
+        }
+      },
+      "2": {
+        "n": 518,
+        "metrics": {
+          "Recall@1": 0.4295366795366795,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.7731660231660231,
+          "AllEvidence@2": 0.6023166023166023,
+          "Recall@5": 0.8793436293436293,
+          "AllEvidence@5": 0.777992277992278,
+          "Recall@10": 0.9054054054054054,
+          "AllEvidence@10": 0.8243243243243243
+        }
+      },
+      "3": {
+        "n": 316,
+        "metrics": {
+          "Recall@1": 0.28164556962025317,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.5021097046413502,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.7426160337552742,
+          "AllEvidence@5": 0.3924050632911392,
+          "Recall@10": 0.820675105485232,
+          "AllEvidence@10": 0.5443037974683544
+        }
+      },
+      "4": {
+        "n": 166,
+        "metrics": {
+          "Recall@1": 0.1927710843373494,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.3328313253012048,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.5346385542168675,
+          "AllEvidence@5": 0.1144578313253012,
+          "Recall@10": 0.6340361445783133,
+          "AllEvidence@10": 0.1927710843373494
+        }
+      }
+    },
+    "h2": {
+      "all": {
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.343,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.62175,
+          "AllEvidence@2": 0.32,
+          "Recall@5": 0.80675,
+          "AllEvidence@5": 0.59,
+          "Recall@10": 0.8661666666666666,
+          "AllEvidence@10": 0.695
+        }
+      },
+      "2": {
+        "n": 518,
+        "metrics": {
+          "Recall@1": 0.4305019305019305,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.7857142857142857,
+          "AllEvidence@2": 0.6177606177606177,
+          "Recall@5": 0.8967181467181468,
+          "AllEvidence@5": 0.8146718146718147,
+          "Recall@10": 0.9285714285714286,
+          "AllEvidence@10": 0.8706563706563707
+        }
+      },
+      "3": {
+        "n": 316,
+        "metrics": {
+          "Recall@1": 0.28164556962025317,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.5,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.7721518987341772,
+          "AllEvidence@5": 0.439873417721519,
+          "Recall@10": 0.8533755274261604,
+          "AllEvidence@10": 0.6234177215189873
+        }
+      },
+      "4": {
+        "n": 166,
+        "metrics": {
+          "Recall@1": 0.18674698795180722,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.34186746987951805,
+          "AllEvidence@2": 0.0,
+          "Recall@5": 0.5918674698795181,
+          "AllEvidence@5": 0.1746987951807229,
+          "Recall@10": 0.6957831325301205,
+          "AllEvidence@10": 0.28313253012048195
+        }
+      }
+    }
+  },
+  "stage_judgments": {
+    "bm25": 0,
+    "h0": 99925,
+    "h1": 211081,
+    "h2": 331325
+  },
+  "comparisons": {
+    "first_expansion": {
+      "Recall@5": {
+        "difference": 0.17108333333333334,
+        "ci95": [
+          0.15666666666666665,
+          0.18533333333333335
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.15425,
+        "ci95": [
+          0.14091458333333334,
+          0.16808333333333333
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.271,
+        "ci95": [
+          0.242,
+          0.299
+        ]
+      }
+    },
+    "second_expansion": {
+      "Recall@5": {
+        "difference": 0.02783333333333333,
+        "ci95": [
+          0.019664583333333336,
+          0.035668749999999985
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.03258333333333334,
+        "ci95": [
+          0.025166666666666667,
+          0.04016874999999998
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.064,
+        "ci95": [
+          0.047,
+          0.081
+        ]
+      },
+      "by_hops": {
+        "2": {
+          "n": 518,
+          "difference": 0.023166023166023165,
+          "ci95": [
+            0.013513513513513514,
+            0.032818532818532815
+          ]
+        },
+        "3": {
+          "n": 316,
+          "difference": 0.03270042194092827,
+          "ci95": [
+            0.018987341772151903,
+            0.04746835443037975
+          ]
+        },
+        "4": {
+          "n": 166,
+          "difference": 0.061746987951807226,
+          "ci95": [
+            0.04213102409638554,
+            0.08283132530120482
+          ]
+        }
+      }
+    },
+    "matched_budget": {
+      "Recall@5": {
+        "difference": 0.19108333333333336,
+        "ci95": [
+          0.17491458333333335,
+          0.20783333333333334
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.168,
+        "ci95": [
+          0.15283333333333335,
+          0.18333333333333335
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.299,
+        "ci95": [
+          0.269,
+          0.3290249999999999
+        ]
+      }
+    },
+    "context": {
+      "Recall@5": {
+        "difference": 0.14358333333333334,
+        "ci95": [
+          0.12916666666666665,
+          0.15816874999999997
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.10366666666666667,
+        "ci95": [
+          0.09108124999999999,
+          0.11641874999999999
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.173,
+        "ci95": [
+          0.149,
+          0.197
+        ]
+      }
+    },
+    "final_only": {
+      "Recall@5": {
+        "difference": 0.23508333333333334,
+        "ci95": [
+          0.21808125,
+          0.2533375
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.25275,
+        "ci95": [
+          0.23565625,
+          0.27017291666666665
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.399,
+        "ci95": [
+          0.368,
+          0.431
+        ]
+      }
+    },
+    "rm3_vs_one_shot": {
+      "Recall@5": {
+        "difference": -0.005916666666666666,
+        "ci95": [
+          -0.01866875,
+          0.007666666666666668
+        ]
+      },
+      "Recall@10": {
+        "difference": -0.01,
+        "ci95": [
+          -0.02341666666666667,
+          0.003166666666666667
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.012,
+        "ci95": [
+          -0.011,
+          0.035
+        ]
+      }
+    },
+    "gar_vs_one_shot": {
+      "Recall@5": {
+        "difference": 0.03841666666666666,
+        "ci95": [
+          0.02666666666666667,
+          0.05075624999999997
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.05175,
+        "ci95": [
+          0.03966458333333333,
+          0.06450208333333332
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.101,
+        "ci95": [
+          0.078,
+          0.127
+        ]
+      }
+    },
+    "gar_vs_final_lexical": {
+      "Recall@5": {
+        "difference": 0.07458333333333333,
+        "ci95": [
+          0.05740833333333333,
+          0.09283333333333332
+        ]
+      },
+      "Recall@10": {
+        "difference": 0.11766666666666667,
+        "ci95": [
+          0.099,
+          0.13625208333333333
+        ]
+      },
+      "AllEvidence@10": {
+        "difference": 0.165,
+        "ci95": [
+          0.132975,
+          0.198
+        ]
+      }
+    }
+  },
+  "matched_budget_sensitivity": {
+    "n_exact": 984,
+    "n_shortfall": 16,
+    "requested": 331325,
+    "actual": 329194,
+    "full_recall10_exact": 0.8650067750677506,
+    "control_recall10_exact": 0.6988482384823848,
+    "difference": 0.16615853658536586,
+    "ci95": [
+      0.15065845189701899,
+      0.18157181571815717
+    ]
+  },
+  "manifest": {
+    "sources": {
+      "run.py": "6edbbf7922ffa24936e65c2d792c88b7152261416472e9344cb98afc790c2ebd",
+      "sag2.py": "b867a0f26b909069f62aeff7a09fd02376b3a96d4c1d60187733345f99d500ac",
+      "sag2_ablation.py": "43e7fd916456f524af8f913040a83b6f9061b295a27eb3ca6afbd6eece22ef72",
+      "verify.py": "d3ca595a00a6ada8256248549b379584cc2290c369daf7a7a1f572a6df551a1f"
+    },
+    "questions_sha256": "98ed4e21d3076532f6388d42320fb809599c63a0d8dffca8ece5e41922be6b46",
+    "corpus_sha256": "73157a03ce3f0b1a5673dd5dc12bb970c24976dbffc688af9eecdd758c97ffcb",
+    "endpoint": "https://openrouter.ai/api/alpha/decisions",
+    "requested_model": "typesafe/jev-1.13",
+    "expected_model": "typesafe/jev-1.13-20260917",
+    "concurrency": 20,
+    "jev_question_type": "noul",
+    "chunk_chars": 2200,
+    "index_workers": 8,
+    "final_candidate_k": 100,
+    "common_postprocessing": "DPP top10 for all JEV methods; none for lexical-only methods",
+    "matched_budget": "per-question current reference judgments; one fixed BM25 pool; empty context; token-packed without truncation",
+    "historical_cap_file_sha256": "51b10537f635723e93c5c271e19c18cd3f9bfe4592811ec1050493f2e81404f6"
+  },
+  "actual_model": {
+    "actual_model": "typesafe/jev-1.13-20260917"
+  }
+}

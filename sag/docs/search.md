@@ -1,0 +1,134 @@
+# 搜索基准运行说明
+
+本文档对应当前版本的 `scripts/run_search_benchmark.py`。脚本会加载指定数据集，使用一个搜索策略检索每道题的候选片段，并计算 Recall、Precision、F1 等指标。
+
+## 当前支持的策略
+
+`--strategy` 支持以下五个值：
+
+| 策略 | 实现/用途 | 特殊参数 |
+| --- | --- | --- |
+| `atomic` | Atomic 检索与实体扩展，使用 `AtomicConfig` | `--top-k` |
+| `sag` | SAG 图、事件和实体链路检索 | `--sag-*` |
+| `vector` | 纯向量检索，使用 `VectorConfig` | `--top-k` |
+| `bm25` | Elasticsearch BM25 检索，使用 `BM25Config` | `--top-k` |
+| `multi_es` | Elasticsearch优先的事件／实体检索，使用 `MultiConfig` | `--mode fast` / `--mode precise` |
+
+SAG 事件候选池是一个独立的实验变体：命令行仍使用 `--strategy sag`，但加上 `--sag-scope` 后，先按查询相似度构造有界事件候选池，再执行 SAG 的召回、扩展和重排。它应在实验记录中与 `vector`、`atomic` 等策略并列；`bm25` 也可以直接作为一级检索策略运行。
+
+## 策略与上传模式
+
+| 检索策略 | 所需上传模式 | 数据源模式不符时是否必须重传 |
+| --- | --- | --- |
+| `sag` | Compact（默认） | 是，用 Compact 重新上传 |
+| `sag` + `--sag-scope` | Compact（默认） | 是，同 `sag` |
+| `atomic` | Atomic（`--atomic`） | 是，用 `--atomic` 重新上传 |
+| `bm25` | 任意模式 | 否，三种模式均可直接运行 |
+| `vector` | 任意模式，推荐 Compact | 否；但 `--no-extraction` 上传的源不含事项，之后要运行 `sag` 必须用 Compact 重新上传 |
+
+自动查找只按数据集和 `LLM_MODEL` 取最新上传，不区分上传模式；若最新上传的模式与目标策略不符，用 `--source-config-id` 指定匹配的源，或重新上传。
+
+### Vector 与 `--no-extraction`
+
+`--no-extraction` 上传只加载语料并建立索引，跳过事项/实体提取，上传更快、不消耗提取用的 LLM 调用。但该数据源不含事项，无法支撑 `sag` 与 `atomic` 检索，之后若要运行这些策略必须用对应模式重新上传。仅当实验只包含纯 `vector` 检索时才建议使用。
+
+## 运行前提
+
+请在 `SAG-Benchmark/sag/` 目录运行脚本，并确保项目依赖已经安装。运行前在 `.env` 中配置 LLM、embedding、Elasticsearch/MySQL 等依赖。数据集对应的 `source_info.json` 默认从以下目录按时间戳选择最新上传结果：
+
+```text
+pipeline/evaluation/source/SAG/<模型名末段>/<dataset-name>/<timestamp>/source_info.json
+```
+
+如果不希望自动选择，使用 `--source-config-id` 指定确切的 `source_config_id`。脚本会根据 source 信息激活对应的 embedding 维度和物理索引。
+
+## 基本命令
+
+```bash
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique \
+  --strategy sag
+```
+
+示例：
+
+```bash
+# SAG 检索，并发 4、每处理 100 题打印一次累积统计（演示偏离默认值 10/5）
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique --strategy sag \
+  --max-concurrency 4 --bench-size 100
+
+# SAG 启用事件候选池，候选池大小 k_pool=500（默认 1000）
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name hotpotqa --strategy sag \
+  --sag-scope --sag-event-top-k 500
+
+# BM25 关键词检索基线
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique --strategy bm25
+
+# 只跑第 0 到 49 题（端点包含），指标只算 K=1,5,10
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name test_hotpotqa --strategy bm25 \
+  --limit 0 49 --k-values 1,5,10
+
+# 使用 MLflow 记录实验，并从 Prompt Registry 读取搜索提示词
+uv run python scripts/run_search_benchmark.py \
+  --dataset-name musique --strategy vector \
+  --use-mlflow --mlflow-url http://127.0.0.1:5000 \
+  --use-mlflow-prompts
+```
+
+## 命令行参数
+
+| 参数 | 默认值/取值 | 使用方法 |
+| --- | --- | --- |
+| `--dataset-name` | 必填 | 数据集名称，例如 `musique`、`hotpotqa`、`test_hotpotqa`。 |
+| `--strategy` | 必填 | 支持 `atomic`、`sag`、`vector`、`bm25`、`multi_es`。 |
+| `--top-k` | `10` | 通用候选数量；对 SAG 之外的策略直接限制最终检索结果，对 SAG 用作默认 section 上限。 |
+| `--sag-rerank-top-k` | `None`（读取配置，默认 10） | SAG rerank 模型保留的最高 K 个结果。不能大于 `--sag-max-results`。 |
+| `--sag-max-results` | `None`（读取配置，默认 10） | SAG 最终返回的事项数；rerank 不足时按 embedding 相似度补齐。 |
+| `--k-values` | `1,2,5,10` | 计算哪些 K 值的指标，逗号分隔，例如 `1,5,10`。 |
+| `--max-concurrency` | `10` | 并发处理的问题数；外部服务承载能力较低时可显式调小。 |
+| `--limit` | 不限制 | 一个整数 `N` 表示前 `N` 题；两个整数 `S E` 表示 0-based 且包含端点的题目区间；最多两个整数。 |
+| `--bench-size` | `5` | 每处理 N 道题打印一次累积统计并触发进度回调；它不限制题目总数，也不改变并发度。 |
+| `--sag-scope` | 关闭 | 开启 SAG 事件候选池变体；不传则使用普通 SAG 检索范围。该配置应与 vector、atomic 等策略并列比较。 |
+| `--sag-event-top-k` | `1000` | 候选池大小 `k_pool`：在 SAG scope 中按 query 相似度选取的事件数量，例如 `500`。 |
+| `--sag-bootstrap-entity-limit` | `0` | 初始化时加载的 event-entity 关系上限；`0` 表示不限制。 |
+| `--sag-no-event-content` | 关闭 | 不把事件正文保留在内存候选全集中；只在需要降低内存时开启。 |
+| `--output-dir` | `output/<dataset>/<strategy>/<timestamp>/` | 指定输出目录；不传时按默认路径和当前时间戳创建。 |
+| `--source-config-id` | 自动查找 | 直接指定 source 配置 ID，跳过最新 `source_info.json` 查找。 |
+| `--allow-embedding-mismatch` | 关闭 | 允许当前 embedding 维度与索引维度不一致。仅用于排查问题，不建议用于可比实验。 |
+| `--use-mlflow` | 关闭 | 开启 MLflow 实验记录。 |
+| `--mlflow-url` | `.env` 中的 `MLFLOW_URL` | MLflow Tracking Server 地址；命令行值优先。 |
+| `--mlflow-experiment` | `sag-benchmark` | MLflow 实验名称；实际名称会带本机 hostname 前缀。 |
+| `--use-mlflow-prompts` | 关闭 | 从 MLflow Prompt Registry 加载搜索提示词；未注册时回退到代码常量，服务不可达则报错。 |
+| `--mlflow-prompt-alias` | `latest` | 与 `--use-mlflow-prompts` 一起使用的 Prompt Registry alias。 |
+
+### SAG 参数关系
+
+`--sag-rerank-top-k` 是 rerank 阶段上限，`--sag-max-results` 是最终返回数量；前者不能大于后者。若不显式设置，两者读取 SAG 配置（当前默认均为 10）。`--sag-scope` 打开后，再用 `--sag-event-top-k`、`--sag-bootstrap-entity-limit` 和 `--sag-no-event-content` 控制事件候选全集的规模和内存内容。
+
+## 输出文件
+
+默认目录为：
+
+```text
+output/<dataset-name>/<strategy>/<timestamp>/
+```
+
+也可以用 `--output-dir` 指定。目录内主要有：
+
+- `run.log`：本次运行日志。
+- `search_results.json`：逐题检索结果，每条记录包含 `question_index`、`question` 和 `retrieved_docs`；后者对应脚本内部的 `sections`（`title\ncontent` 字符串列表）。
+- `benchmark_results.json`：最终指标和运行元数据，包含 `metrics`、`statistics`、`timings`、`search_diagnostics`、`llm_token_usage`、`metadata` 等字段。
+
+`metadata` 会记录数据集、策略、`top_k`、`k_values`、题目数、搜索耗时和时间戳；开启 MLflow 后还会记录命令、实际配置、source_config_id 和输出目录。
+
+新实验优先使用 `sag`。
+
+## 指标与复现实验注意事项
+
+脚本会按 `--k-values` 计算 Precision@K、Recall@K、F1@K，并输出完整召回、部分召回、零召回和成功检索数量等统计。比较不同实验时应固定数据集、source_config_id、embedding 模型/维度、策略参数和 `k-values`。
+
+不要在正式对比实验中使用 `--allow-embedding-mismatch`；它会放宽索引维度校验，结果可能不可比。

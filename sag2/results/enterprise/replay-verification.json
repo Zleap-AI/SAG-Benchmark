@@ -1,0 +1,71 @@
+{
+  "status": "verified",
+  "questions": 470,
+  "changed_questions": 0,
+  "new_jev_requests": 0,
+  "network_attempts": 0,
+  "exact_local_baseline_candidate_comparison": true,
+  "same_top10_documents_and_order_as_us": true,
+  "same_recall_as_us": true,
+  "cross_platform_float_tolerance": 1e-10,
+  "local_baseline_candidate_float_tolerance": 0,
+  "recall": {
+    "sag2": {
+      "Recall@1": 0.6304989868287741,
+      "Recall@2": 0.7168194866599122,
+      "Recall@5": 0.7774121918270854,
+      "Recall@10": 0.811016548463357
+    },
+    "bm25": {
+      "Recall@1": 0.41774822695035463,
+      "Recall@2": 0.5097635933806146,
+      "Recall@5": 0.6006585612968591,
+      "Recall@10": 0.6782235731171902
+    }
+  },
+  "by_category": {
+    "basic": {
+      "checked": 175,
+      "passed": 175,
+      "different": 0
+    },
+    "semantic": {
+      "checked": 125,
+      "passed": 125,
+      "different": 0
+    },
+    "intra_document_reasoning": {
+      "checked": 40,
+      "passed": 40,
+      "different": 0
+    },
+    "project_related": {
+      "checked": 40,
+      "passed": 40,
+      "different": 0
+    },
+    "constrained": {
+      "checked": 30,
+      "passed": 30,
+      "different": 0
+    },
+    "conflicting_info": {
+      "checked": 20,
+      "passed": 20,
+      "different": 0
+    },
+    "completeness": {
+      "checked": 20,
+      "passed": 20,
+      "different": 0
+    },
+    "miscellaneous": {
+      "checked": 20,
+      "passed": 20,
+      "different": 0
+    }
+  },
+  "extension_sha256": "c1c8ca193ad2f5449ccf8443c93955c942e7f256298685a828e804179f510a2f",
+  "production_code_changed": false,
+  "cached_responses": 1421
+}

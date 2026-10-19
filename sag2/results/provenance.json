@@ -1,0 +1,137 @@
+{
+  "metadata": [
+    {
+      "kind": "metadata",
+      "collection": "controls/sag2_h2",
+      "filename": "summary.json",
+      "source": "controls/sag2_h2/summary.json",
+      "source_sha256": "602644ef706a4d6d2962b55d1dd6fbfcb2bce5179dadb054ff63272468a3ecb5",
+      "sha256": "cf4c5869bfd5c3e0cb0de9cc8883f238a02d9894b32ef50d91fa1fc35199c6ad"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/bm25_jev_matched_budget",
+      "filename": "summary.json",
+      "source": "controls/bm25_jev_matched_budget/summary.json",
+      "source_sha256": "c0496782e067726908789bdcb0fb8c460927c0ad1a649f90d7e4d256d2c9ce05",
+      "sha256": "7a53965aa9a8ba3d14fd45b994fa9c34698b488d06a3bc3fb8fd34bcf75a7c2c"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/sag2_no_context",
+      "filename": "summary.json",
+      "source": "controls/sag2_no_context/summary.json",
+      "source_sha256": "a942f417fc51dc98ee6e5c72c08efd8ab4724dbd16b36f81227f3257ab18747d",
+      "sha256": "94cb26c598c93997228817eb78a08992211ced8fcb7bfba2e955fe89e4a7ddcd"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/lexical_final_jev",
+      "filename": "summary.json",
+      "source": "controls/lexical_final_jev/summary.json",
+      "source_sha256": "0cf8dfc4237487577087ff218915cac8135bb454209201d2377d0f5dc37f9b01",
+      "sha256": "3bc7ae2b440d5da99b415a3cc8ff3a2d96e8563f09a01363bc4d72210d1ebea4"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/rm3",
+      "filename": "summary.json",
+      "source": "controls/rm3/summary.json",
+      "source_sha256": "3dd6ae061488e94f9b2a583d5d8f79fe3f1f4d22a0ab66ba2f268a8c05bb063a",
+      "sha256": "3cfd5a85c69bfb3392a3b29514430f79f56c1cd1a2dc3d2ea2bf4a0f5a72b36f"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/rm3_final_jev",
+      "filename": "summary.json",
+      "source": "controls/rm3_final_jev/summary.json",
+      "source_sha256": "4b63fc97e0e1449c3022dee8284cdc38557a3a0b9ad137d053145d9c4cf1a81c",
+      "sha256": "8b3361b6fea0a3a901935845d8bc06fd982b1a964f928081c965a0a855c12035"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/gar_bm25",
+      "filename": "summary.json",
+      "source": "controls/gar_bm25/summary.json",
+      "source_sha256": "b7b16023cb32ca271f019b3138e8f19b3e4a861c6772bf9dfed1027dfe71ad90",
+      "sha256": "61761bbb19c3b7bd4a9fc032cd6d95b3a50219fe53a4c6c136038ff8eb593b19"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls/gar_bm25_final_jev",
+      "filename": "summary.json",
+      "source": "controls/gar_bm25_final_jev/summary.json",
+      "source_sha256": "1ffd1ee06da2d4af9151719b98b323e128a2fdf2c68cfe20749b7df45740aee6",
+      "sha256": "ede5124de8d145212174b1c91192d48de7e987b12689daf913f7c45a6c138f79"
+    },
+    {
+      "kind": "metadata",
+      "collection": "benchmarks/hotpotqa",
+      "filename": "summary.json",
+      "source": "benchmarks/hotpotqa/summary.json",
+      "source_sha256": "194b74ff3745279ae4ecb279f617110f9043e0adb4081d444f8ddd354835dd7e",
+      "sha256": "cae92e76575488cdab5793938725989ed18b0eae929e8fe8e18eabb14ff5945e"
+    },
+    {
+      "kind": "metadata",
+      "collection": "benchmarks/hotpotqa",
+      "filename": "verification.json",
+      "source": "benchmarks/hotpotqa/verification.json",
+      "source_sha256": "fedf6c3d37d62139345500c38e7ed2198bb88b07b3c2a4efc598ba8cb224e4e8",
+      "sha256": "fedf6c3d37d62139345500c38e7ed2198bb88b07b3c2a4efc598ba8cb224e4e8"
+    },
+    {
+      "kind": "metadata",
+      "collection": "benchmarks/2wikimultihopqa",
+      "filename": "summary.json",
+      "source": "benchmarks/2wikimultihopqa/summary.json",
+      "source_sha256": "9599bfb69876f47e4582e310c2c0dcdd318ba341347705ec1cc6ebc4644e5e92",
+      "sha256": "23e546c72c583051b9ae26dc303656e905ca303f77e224f621086e1c7b706143"
+    },
+    {
+      "kind": "metadata",
+      "collection": "benchmarks/2wikimultihopqa",
+      "filename": "verification.json",
+      "source": "benchmarks/2wikimultihopqa/verification.json",
+      "source_sha256": "5dc099ea7a1b24586877315df69bb1f6ac13b2e0dbaf20f973a17374e9c63e96",
+      "sha256": "5dc099ea7a1b24586877315df69bb1f6ac13b2e0dbaf20f973a17374e9c63e96"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls",
+      "filename": "index-cost.json",
+      "source": "controls/index-cost.json",
+      "source_sha256": "4cf89f312385fa91c358e9e6cc7a585cbff25008653138af24130026e50d57b0",
+      "sha256": "1e0b32fbbd474d311fc16c5f4d4c743b245943e16784eb8de569488f8d3427ca"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls",
+      "filename": "cost-100.json",
+      "source": "controls/cost-100.json",
+      "source_sha256": "a3bd0f35121c3ba876e28d9047bc053ab4b84d4be09f81d1d28d58ff7fa08870",
+      "sha256": "59c01d1bc35c4e0832d718d7946481b651ba280d672ba383ce6a2be05540f18e"
+    },
+    {
+      "kind": "metadata",
+      "collection": "controls",
+      "filename": "gar-graph-cost.json",
+      "source": "controls/gar-graph-cost.json",
+      "source_sha256": "556dada58caa544ca203ab96bb09adb68853d88a8bf3483e8bb4982a93cc91fa",
+      "sha256": "f6e92ce1544c264cd6ab9116d3365be4d644f61878714300855ef04a927dfdaa"
+    }
+  ],
+  "record_counts": {
+    "controls/sag2_h2": 1000,
+    "controls/bm25_jev_matched_budget": 1000,
+    "controls/sag2_no_context": 1000,
+    "controls/lexical_final_jev": 1000,
+    "controls/rm3": 1000,
+    "controls/rm3_final_jev": 1000,
+    "controls/gar_bm25": 1000,
+    "controls/gar_bm25_final_jev": 1000,
+    "benchmarks/hotpotqa": 1000,
+    "benchmarks/2wikimultihopqa": 1000
+  },
+  "hashes": "sha256 checks the published file; source_sha256 identifies the original metadata before export. Per-question source_record_sha256 identifies the original result record."
+}

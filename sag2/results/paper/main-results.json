@@ -1,0 +1,227 @@
+{
+  "baseline_source": "https://arxiv.org/abs/2606.15971",
+  "baseline_source_sha256": "9433efcf92138afc0e29ed770ff8771fcdc7041c5f250057753064872031910c",
+  "rows": [
+    {
+      "name": "BM25",
+      "origin": "fixed lexical reference",
+      "values": [
+        "28.53",
+        "37.32",
+        "47.47",
+        "54.41",
+        "40.10",
+        "57.93",
+        "67.05",
+        "71.50",
+        "39.75",
+        "57.95",
+        "74.40",
+        "86.90"
+      ]
+    },
+    {
+      "name": "Contriever",
+      "origin": "SAG, Table 4",
+      "values": [
+        "24.50",
+        "33.54",
+        "45.32",
+        "53.58",
+        "34.40",
+        "48.60",
+        "59.25",
+        "65.20",
+        "39.30",
+        "57.45",
+        "74.85",
+        "82.75"
+      ]
+    },
+    {
+      "name": "BGE-Large-EN-v1.5",
+      "origin": "SAG, Table 4",
+      "values": [
+        "29.42",
+        "41.68",
+        "56.32",
+        "64.08",
+        "41.48",
+        "62.28",
+        "69.83",
+        "73.75",
+        "45.45",
+        "76.20",
+        "89.20",
+        "93.35"
+      ]
+    },
+    {
+      "name": "GTE-Qwen2-7B",
+      "origin": "SAG, Table 4",
+      "values": [
+        "35.19",
+        "48.06",
+        "61.92",
+        "70.80",
+        "43.45",
+        "65.58",
+        "74.18",
+        "78.63",
+        "46.40",
+        "73.95",
+        "88.45",
+        "93.55"
+      ]
+    },
+    {
+      "name": "GritLM-7B",
+      "origin": "SAG, Table 4",
+      "values": [
+        "34.86",
+        "50.70",
+        "66.22",
+        "75.19",
+        "41.85",
+        "66.23",
+        "75.62",
+        "79.40",
+        "46.40",
+        "81.15",
+        "93.40",
+        "97.20"
+      ]
+    },
+    {
+      "name": "NV-Embed-v2",
+      "origin": "SAG, Table 4",
+      "values": [
+        "34.02",
+        "51.08",
+        "68.84",
+        "77.27",
+        "43.23",
+        "68.93",
+        "77.00",
+        "80.75",
+        "46.90",
+        "85.55",
+        "95.25",
+        "97.70"
+      ]
+    },
+    {
+      "name": "HippoRAG 2",
+      "origin": "SAG, Table 4",
+      "values": [
+        "30.65",
+        "49.52",
+        "65.13",
+        "73.76",
+        "42.38",
+        "76.55",
+        "90.35",
+        "93.40",
+        "44.40",
+        "78.35",
+        "94.35",
+        "97.15"
+      ]
+    },
+    {
+      "name": "SAG (Ours)",
+      "origin": "SAG, Table 4",
+      "values": [
+        "36.82",
+        "63.62",
+        "80.36",
+        "83.37",
+        "43.81",
+        "83.93",
+        "93.34",
+        "93.57",
+        "47.80",
+        "91.55",
+        "96.50",
+        "97.70"
+      ]
+    },
+    {
+      "name": "SAG2 (Ours)",
+      "origin": "verified completed evaluation",
+      "values": [
+        "34.30",
+        "62.18",
+        "80.68",
+        "86.62",
+        "43.55",
+        "85.50",
+        "97.35",
+        "97.43",
+        "48.30",
+        "93.60",
+        "98.45",
+        "99.00"
+      ]
+    }
+  ],
+  "current_sources": {
+    "2wikimultihopqa": {
+      "n": 1000,
+      "corpus_passages": 6119,
+      "metrics": {
+        "Recall@1": 0.4355,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.855,
+        "AllEvidence@2": 0.713,
+        "Recall@5": 0.9735,
+        "AllEvidence@5": 0.929,
+        "Recall@10": 0.97425,
+        "AllEvidence@10": 0.931
+      },
+      "source": "benchmarks/2wikimultihopqa",
+      "summary_sha256": "9599bfb69876f47e4582e310c2c0dcdd318ba341347705ec1cc6ebc4644e5e92",
+      "provider": "OpenRouter",
+      "model": "typesafe/jev-1.13-20260917",
+      "verified_from_question_records": true
+    },
+    "hotpotqa": {
+      "n": 1000,
+      "corpus_passages": 9811,
+      "metrics": {
+        "Recall@1": 0.483,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.936,
+        "AllEvidence@2": 0.876,
+        "Recall@5": 0.9845,
+        "AllEvidence@5": 0.97,
+        "Recall@10": 0.99,
+        "AllEvidence@10": 0.981
+      },
+      "source": "benchmarks/hotpotqa",
+      "summary_sha256": "194b74ff3745279ae4ecb279f617110f9043e0adb4081d444f8ddd354835dd7e",
+      "provider": "OpenRouter",
+      "model": "typesafe/jev-1.13-20260917",
+      "verified_from_question_records": true
+    },
+    "musique": {
+      "n": 1000,
+      "corpus_passages": 11656,
+      "metrics": {
+        "Recall@1": 0.34299999999999964,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.6217500000000001,
+        "AllEvidence@2": 0.32,
+        "Recall@5": 0.8067499999999995,
+        "AllEvidence@5": 0.59,
+        "Recall@10": 0.8661666666666661,
+        "AllEvidence@10": 0.695
+      },
+      "source": "controls/sag2_h2",
+      "summary_sha256": "602644ef706a4d6d2962b55d1dd6fbfcb2bce5179dadb054ff63272468a3ecb5",
+      "provider": "OpenRouter",
+      "model": "typesafe/jev-1.13-20260917",
+      "verified_from_question_records": true
+    }
+  }
+}

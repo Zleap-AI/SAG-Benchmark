@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "Please cite the SAG2 paper when using this implementation."
+title: "SAG2: Embedding-Free Multi-Hop Retrieval with BM25 and JEV"
+authors:
+  - family-names: Wu
+    given-names: Yuchao
+    affiliation: Zleap AI
+type: software
+license: MIT

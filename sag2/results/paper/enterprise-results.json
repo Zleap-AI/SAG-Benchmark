@@ -1,0 +1,193 @@
+{
+  "source": "results/enterprise",
+  "source_summary_sha256": "d197e312acce2249d0092138ab534fa8d494874d553b03c464948d034fa95675",
+  "corpus_documents": 511962,
+  "questions": 500,
+  "scored_questions": 470,
+  "excluded_no_gold": 30,
+  "metrics": {
+    "overall": {
+      "Recall@1": 0.6304989868287745,
+      "Recall@2": 0.7168194866599115,
+      "Recall@5": 0.7774121918270855,
+      "Recall@10": 0.811016548463357
+    },
+    "basic": {
+      "Recall@1": 0.7828571428571428,
+      "Recall@2": 0.8342857142857143,
+      "Recall@5": 0.8571428571428571,
+      "Recall@10": 0.8685714285714285
+    },
+    "semantic": {
+      "Recall@1": 0.472,
+      "Recall@2": 0.536,
+      "Recall@5": 0.544,
+      "Recall@10": 0.584
+    },
+    "intra_document_reasoning": {
+      "Recall@1": 0.9,
+      "Recall@2": 0.95,
+      "Recall@5": 1.0,
+      "Recall@10": 1.0
+    },
+    "project_related": {
+      "Recall@1": 0.2438888888888889,
+      "Recall@2": 0.4197222222222222,
+      "Recall@5": 0.6984722222222222,
+      "Recall@10": 0.835763888888889
+    },
+    "constrained": {
+      "Recall@1": 0.75,
+      "Recall@2": 0.9166666666666666,
+      "Recall@5": 0.9666666666666667,
+      "Recall@10": 0.9666666666666667
+    },
+    "conflicting_info": {
+      "Recall@1": 0.5,
+      "Recall@2": 0.825,
+      "Recall@5": 0.925,
+      "Recall@10": 0.925
+    },
+    "completeness": {
+      "Recall@1": 0.1539484126984127,
+      "Recall@2": 0.30581349206349207,
+      "Recall@5": 0.5972420634920634,
+      "Recall@10": 0.762361111111111
+    },
+    "miscellaneous": {
+      "Recall@1": 0.95,
+      "Recall@2": 0.95,
+      "Recall@5": 1.0,
+      "Recall@10": 1.0
+    }
+  },
+  "counts": {
+    "overall": 470,
+    "basic": 175,
+    "semantic": 125,
+    "intra_document_reasoning": 40,
+    "project_related": 40,
+    "constrained": 30,
+    "conflicting_info": 20,
+    "completeness": 20,
+    "miscellaneous": 20
+  },
+  "reference_comparison": [
+    {
+      "category": "basic",
+      "label": "Basic (175)",
+      "values_percent": [
+        77.7,
+        48.6,
+        61.7,
+        86.85714285714286
+      ]
+    },
+    {
+      "category": "semantic",
+      "label": "Semantic (125)",
+      "values_percent": [
+        43.2,
+        24.8,
+        29.6,
+        58.4
+      ]
+    },
+    {
+      "category": "intra_document_reasoning",
+      "label": "Intra-Doc Reasoning (40)",
+      "values_percent": [
+        90.0,
+        57.5,
+        75.0,
+        100.0
+      ]
+    },
+    {
+      "category": "project_related",
+      "label": "Project Related (40)",
+      "values_percent": [
+        65.5,
+        49.2,
+        43.2,
+        83.5763888888889
+      ]
+    },
+    {
+      "category": "constrained",
+      "label": "Constrained (30)",
+      "values_percent": [
+        85.0,
+        83.3,
+        78.3,
+        96.66666666666667
+      ]
+    },
+    {
+      "category": "conflicting_info",
+      "label": "Conflicting Info (20)",
+      "values_percent": [
+        82.5,
+        55.0,
+        72.5,
+        92.5
+      ]
+    },
+    {
+      "category": "completeness",
+      "label": "Completeness (20)",
+      "values_percent": [
+        46.5,
+        33.4,
+        59.0,
+        76.2361111111111
+      ]
+    },
+    {
+      "category": "miscellaneous",
+      "label": "Miscellaneous (20)",
+      "values_percent": [
+        90.0,
+        75.0,
+        100.0,
+        100.0
+      ]
+    },
+    {
+      "category": "high_level",
+      "label": "High Level (10)",
+      "values_percent": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "category": "info_not_found",
+      "label": "Info Not Found (20)",
+      "values_percent": [
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    {
+      "category": "overall",
+      "label": "Overall (470 labeled)",
+      "values_percent": [
+        68.4,
+        46.0,
+        55.8,
+        81.1016548463357
+      ]
+    }
+  ],
+  "paper": "https://arxiv.org/html/2605.05253v2",
+  "benchmark": "https://github.com/onyx-dot-app/EnterpriseRAG-Bench",
+  "metric": "macro-average document recall; first 10 unique source IDs",
+  "verified_question_identity": true,
+  "verified_all_470_against_gold_ids": true,
+  "no_new_model_requests": true
+}

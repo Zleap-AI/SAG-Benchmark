@@ -1,0 +1,28 @@
+{
+  "method": "Agentic SAG2",
+  "dataset": "2wikimultihopqa",
+  "question_count": 1000,
+  "metrics": {
+    "Recall@1": 0.44075,
+    "Recall@2": 0.88,
+    "Recall@5": 0.99875,
+    "Recall@10": 0.99875
+  },
+  "complete_at_10": 997,
+  "costs": {
+    "sol_api_equivalent_usd": 21.7545224,
+    "jev_equivalent_usd": 4.33760082,
+    "total_equivalent_usd": 26.09212322,
+    "jev_recorded_new_usd": 4.33760082
+  },
+  "llm_usage_including_recorded_failures": {
+    "input_tokens": 34118033,
+    "cached_input_tokens": 26978944,
+    "output_tokens": 477845,
+    "reasoning_output_tokens": 122219
+  },
+  "jev_usage": {
+    "input_tokens": 103276210,
+    "output_tokens": 6340366
+  }
+}

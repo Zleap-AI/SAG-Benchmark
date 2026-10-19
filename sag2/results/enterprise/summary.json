@@ -1,0 +1,253 @@
+{
+  "phase": "complete",
+  "completed": 470,
+  "total": 470,
+  "failed": 0,
+  "failures": {},
+  "by_category": {
+    "overall": {
+      "total_questions": 500,
+      "eligible_questions": 470,
+      "completed_questions": 470,
+      "failed_questions": 0,
+      "not_applicable_questions": 30,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.6304989868287741,
+          "Recall@2": 0.7168194866599122,
+          "Recall@5": 0.7774121918270854,
+          "Recall@10": 0.811016548463357
+        },
+        "bm25": {
+          "Recall@1": 0.41774822695035463,
+          "Recall@2": 0.5097635933806146,
+          "Recall@5": 0.6006585612968591,
+          "Recall@10": 0.6782235731171902
+        }
+      }
+    },
+    "basic": {
+      "total_questions": 175,
+      "eligible_questions": 175,
+      "completed_questions": 175,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.7828571428571428,
+          "Recall@2": 0.8342857142857143,
+          "Recall@5": 0.8571428571428571,
+          "Recall@10": 0.8685714285714285
+        },
+        "bm25": {
+          "Recall@1": 0.5028571428571429,
+          "Recall@2": 0.5942857142857143,
+          "Recall@5": 0.6742857142857143,
+          "Recall@10": 0.76
+        }
+      }
+    },
+    "semantic": {
+      "total_questions": 125,
+      "eligible_questions": 125,
+      "completed_questions": 125,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.472,
+          "Recall@2": 0.536,
+          "Recall@5": 0.544,
+          "Recall@10": 0.584
+        },
+        "bm25": {
+          "Recall@1": 0.184,
+          "Recall@2": 0.224,
+          "Recall@5": 0.296,
+          "Recall@10": 0.384
+        }
+      }
+    },
+    "intra_document_reasoning": {
+      "total_questions": 40,
+      "eligible_questions": 40,
+      "completed_questions": 40,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.9,
+          "Recall@2": 0.95,
+          "Recall@5": 1.0,
+          "Recall@10": 1.0
+        },
+        "bm25": {
+          "Recall@1": 0.775,
+          "Recall@2": 0.875,
+          "Recall@5": 0.975,
+          "Recall@10": 0.975
+        }
+      }
+    },
+    "project_related": {
+      "total_questions": 40,
+      "eligible_questions": 40,
+      "completed_questions": 40,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.24388888888888888,
+          "Recall@2": 0.4197222222222222,
+          "Recall@5": 0.6984722222222223,
+          "Recall@10": 0.835763888888889
+        },
+        "bm25": {
+          "Recall@1": 0.18368055555555557,
+          "Recall@2": 0.27166666666666667,
+          "Recall@5": 0.4615972222222222,
+          "Recall@10": 0.6109027777777778
+        }
+      }
+    },
+    "constrained": {
+      "total_questions": 30,
+      "eligible_questions": 30,
+      "completed_questions": 30,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.75,
+          "Recall@2": 0.9166666666666666,
+          "Recall@5": 0.9666666666666667,
+          "Recall@10": 0.9666666666666667
+        },
+        "bm25": {
+          "Recall@1": 0.6166666666666667,
+          "Recall@2": 0.8,
+          "Recall@5": 0.9,
+          "Recall@10": 0.9
+        }
+      }
+    },
+    "conflicting_info": {
+      "total_questions": 20,
+      "eligible_questions": 20,
+      "completed_questions": 20,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.5,
+          "Recall@2": 0.825,
+          "Recall@5": 0.925,
+          "Recall@10": 0.925
+        },
+        "bm25": {
+          "Recall@1": 0.475,
+          "Recall@2": 0.775,
+          "Recall@5": 0.825,
+          "Recall@10": 0.875
+        }
+      }
+    },
+    "completeness": {
+      "total_questions": 20,
+      "eligible_questions": 20,
+      "completed_questions": 20,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.1539484126984127,
+          "Recall@2": 0.30581349206349207,
+          "Recall@5": 0.5972420634920634,
+          "Recall@10": 0.762361111111111
+        },
+        "bm25": {
+          "Recall@1": 0.09972222222222223,
+          "Recall@2": 0.2111111111111111,
+          "Recall@5": 0.417281746031746,
+          "Recall@10": 0.5414484126984127
+        }
+      }
+    },
+    "miscellaneous": {
+      "total_questions": 20,
+      "eligible_questions": 20,
+      "completed_questions": 20,
+      "failed_questions": 0,
+      "not_applicable_questions": 0,
+      "recall": {
+        "sag2": {
+          "Recall@1": 0.95,
+          "Recall@2": 0.95,
+          "Recall@5": 1.0,
+          "Recall@10": 1.0
+        },
+        "bm25": {
+          "Recall@1": 0.85,
+          "Recall@2": 0.9,
+          "Recall@5": 0.9,
+          "Recall@10": 0.95
+        }
+      }
+    },
+    "high_level": {
+      "total_questions": 10,
+      "eligible_questions": 0,
+      "completed_questions": 0,
+      "failed_questions": 0,
+      "not_applicable_questions": 10,
+      "recall": {
+        "sag2": {
+          "Recall@1": null,
+          "Recall@2": null,
+          "Recall@5": null,
+          "Recall@10": null
+        },
+        "bm25": {
+          "Recall@1": null,
+          "Recall@2": null,
+          "Recall@5": null,
+          "Recall@10": null
+        }
+      }
+    },
+    "info_not_found": {
+      "total_questions": 20,
+      "eligible_questions": 0,
+      "completed_questions": 0,
+      "failed_questions": 0,
+      "not_applicable_questions": 20,
+      "recall": {
+        "sag2": {
+          "Recall@1": null,
+          "Recall@2": null,
+          "Recall@5": null,
+          "Recall@10": null
+        },
+        "bm25": {
+          "Recall@1": null,
+          "Recall@2": null,
+          "Recall@5": null,
+          "Recall@10": null
+        }
+      }
+    }
+  },
+  "http": {
+    "http_active": 0,
+    "http_started": 248,
+    "peak_http": 1,
+    "statuses": {
+      "200": 248
+    }
+  },
+  "seconds_this_invocation": 2012.4552355589985,
+  "reported_cost_usd": 2.967623526,
+  "actual_models": [
+    "typesafe/jev-1.13-20260917"
+  ]
+}

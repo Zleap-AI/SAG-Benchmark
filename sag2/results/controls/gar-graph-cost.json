@@ -1,0 +1,8 @@
+{
+  "source_count": 11656,
+  "new_source_queries": 11656,
+  "seconds_this_invocation": 314.73596002801787,
+  "graph_bytes": 4366336,
+  "neighbors": 8,
+  "signature": "[1,\"73157a03ce3f0b1a5673dd5dc12bb970c24976dbffc688af9eecdd758c97ffcb\",8,\"full_body_query_no_80_word_cap\",\"bm25_columns_2_2_1\"]"
+}

@@ -1,0 +1,892 @@
+{
+  "variants": {
+    "sag2_h2": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 331325,
+      "successful_scoring_requests": 3000,
+      "request_totals": {
+        "http_requests": 2997,
+        "successful_requests": 2997,
+        "failed_requests": 0,
+        "input_tokens": 102908808,
+        "output_tokens": 6959895,
+        "reported_cost_usd": 4.3221699360000025,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.343,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.62175,
+            "AllEvidence@2": 0.32,
+            "Recall@5": 0.80675,
+            "AllEvidence@5": 0.59,
+            "Recall@10": 0.8661666666666666,
+            "AllEvidence@10": 0.695
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.4305019305019305,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.7857142857142857,
+            "AllEvidence@2": 0.6177606177606177,
+            "Recall@5": 0.8967181467181468,
+            "AllEvidence@5": 0.8146718146718147,
+            "Recall@10": 0.9285714285714286,
+            "AllEvidence@10": 0.8706563706563707
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.28164556962025317,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.7721518987341772,
+            "AllEvidence@5": 0.439873417721519,
+            "Recall@10": 0.8533755274261604,
+            "AllEvidence@10": 0.6234177215189873
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.18674698795180722,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.34186746987951805,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.5918674698795181,
+            "AllEvidence@5": 0.1746987951807229,
+            "Recall@10": 0.6957831325301205,
+            "AllEvidence@10": 0.28313253012048195
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 103009024,
+        "output_tokens": 6966868,
+        "reported_cost_usd": 4.326379008
+      },
+      "reused_responses": 3,
+      "stages": {
+        "bm25": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.2870833333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.375,
+            "AllEvidence@2": 0.045,
+            "Recall@5": 0.4765833333333333,
+            "AllEvidence@5": 0.121,
+            "Recall@10": 0.545,
+            "AllEvidence@10": 0.175
+          }
+        },
+        "h0": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.3113333333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4679166666666667,
+            "AllEvidence@2": 0.124,
+            "Recall@5": 0.6078333333333333,
+            "AllEvidence@5": 0.266,
+            "Recall@10": 0.6793333333333333,
+            "AllEvidence@10": 0.36
+          }
+        },
+        "h1": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.3435,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.6144166666666666,
+            "AllEvidence@2": 0.312,
+            "Recall@5": 0.7789166666666666,
+            "AllEvidence@5": 0.546,
+            "Recall@10": 0.8335833333333333,
+            "AllEvidence@10": 0.631
+          }
+        },
+        "h2": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.343,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.62175,
+            "AllEvidence@2": 0.32,
+            "Recall@5": 0.80675,
+            "AllEvidence@5": 0.59,
+            "Recall@10": 0.8661666666666666,
+            "AllEvidence@10": 0.695
+          }
+        }
+      }
+    },
+    "bm25_jev_matched_budget": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 329194,
+      "successful_scoring_requests": 1989,
+      "request_totals": {
+        "http_requests": 1985,
+        "successful_requests": 1985,
+        "failed_requests": 0,
+        "input_tokens": 94614161,
+        "output_tokens": 6921312,
+        "reported_cost_usd": 3.973794762000009,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.30641666666666667,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4658333333333333,
+            "AllEvidence@2": 0.139,
+            "Recall@5": 0.6156666666666666,
+            "AllEvidence@5": 0.291,
+            "Recall@10": 0.6981666666666666,
+            "AllEvidence@10": 0.396
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.3841698841698842,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5685328185328186,
+            "AllEvidence@2": 0.26833976833976836,
+            "Recall@5": 0.6824324324324325,
+            "AllEvidence@5": 0.44015444015444016,
+            "Recall@10": 0.7586872586872587,
+            "AllEvidence@10": 0.5521235521235521
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.24894514767932485,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.40295358649789026,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.6191983122362869,
+            "AllEvidence@5": 0.1930379746835443,
+            "Recall@10": 0.7014767932489451,
+            "AllEvidence@10": 0.3227848101265823
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.17319277108433734,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.26506024096385544,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.4006024096385542,
+            "AllEvidence@5": 0.012048192771084338,
+            "Recall@10": 0.5030120481927711,
+            "AllEvidence@10": 0.04819277108433735
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 94748504,
+        "output_tokens": 6930963,
+        "reported_cost_usd": 3.979437168
+      },
+      "reused_responses": 4,
+      "stages": {},
+      "budget_matching": {
+        "requested_judgments": 331325,
+        "actual_judgments": 329194
+      }
+    },
+    "sag2_no_context": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 330990,
+      "successful_scoring_requests": 3000,
+      "request_totals": {
+        "http_requests": 2024,
+        "successful_requests": 1998,
+        "failed_requests": 26,
+        "input_tokens": 69523739,
+        "output_tokens": 4853117,
+        "reported_cost_usd": 2.919997037999994,
+        "attempts_without_usage": 26,
+        "billing_complete": false
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.312,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.48041666666666666,
+            "AllEvidence@2": 0.162,
+            "Recall@5": 0.6631666666666667,
+            "AllEvidence@5": 0.372,
+            "Recall@10": 0.7625,
+            "AllEvidence@10": 0.522
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.39285714285714285,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5945945945945946,
+            "AllEvidence@2": 0.3127413127413127,
+            "Recall@5": 0.7519305019305019,
+            "AllEvidence@5": 0.555984555984556,
+            "Recall@10": 0.8436293436293436,
+            "AllEvidence@10": 0.7104247104247104
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.25316455696202533,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4071729957805907,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.6413502109704641,
+            "AllEvidence@5": 0.2468354430379747,
+            "Recall@10": 0.7436708860759493,
+            "AllEvidence@10": 0.4240506329113924
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.1716867469879518,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.2635542168674699,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.42771084337349397,
+            "AllEvidence@5": 0.03614457831325301,
+            "Recall@10": 0.5451807228915663,
+            "AllEvidence@10": 0.12048192771084337
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 98284052,
+        "output_tokens": 6961107,
+        "reported_cost_usd": 4.127930184
+      },
+      "reused_responses": 1002,
+      "stages": {
+        "bm25": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.2870833333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.375,
+            "AllEvidence@2": 0.045,
+            "Recall@5": 0.4765833333333333,
+            "AllEvidence@5": 0.121,
+            "Recall@10": 0.545,
+            "AllEvidence@10": 0.175
+          }
+        },
+        "h0": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.3113333333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4679166666666667,
+            "AllEvidence@2": 0.124,
+            "Recall@5": 0.6078333333333333,
+            "AllEvidence@5": 0.266,
+            "Recall@10": 0.6793333333333333,
+            "AllEvidence@10": 0.36
+          }
+        },
+        "h1": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.30641666666666667,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.48341666666666666,
+            "AllEvidence@2": 0.162,
+            "Recall@5": 0.66325,
+            "AllEvidence@5": 0.371,
+            "Recall@10": 0.7630833333333333,
+            "AllEvidence@10": 0.518
+          }
+        },
+        "h2": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.312,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.48041666666666666,
+            "AllEvidence@2": 0.162,
+            "Recall@5": 0.6631666666666667,
+            "AllEvidence@5": 0.372,
+            "Recall@10": 0.7625,
+            "AllEvidence@10": 0.522
+          }
+        }
+      }
+    },
+    "lexical_final_jev": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 98836,
+      "successful_scoring_requests": 1000,
+      "request_totals": {
+        "http_requests": 997,
+        "successful_requests": 997,
+        "failed_requests": 0,
+        "input_tokens": 30162688,
+        "output_tokens": 2076614,
+        "reported_cost_usd": 1.2668328960000004,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.3123333333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4543333333333333,
+            "AllEvidence@2": 0.128,
+            "Recall@5": 0.5716666666666667,
+            "AllEvidence@5": 0.255,
+            "Recall@10": 0.6134166666666666,
+            "AllEvidence@10": 0.296
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.38803088803088803,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5511583011583011,
+            "AllEvidence@2": 0.2471042471042471,
+            "Recall@5": 0.665057915057915,
+            "AllEvidence@5": 0.41312741312741313,
+            "Recall@10": 0.7036679536679536,
+            "AllEvidence@10": 0.4594594594594595
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.26054852320675104,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.399789029535865,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.5179324894514767,
+            "AllEvidence@5": 0.11708860759493671,
+            "Recall@10": 0.5559071729957805,
+            "AllEvidence@10": 0.1550632911392405
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.1746987951807229,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.2560240963855422,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.3825301204819277,
+            "AllEvidence@5": 0.024096385542168676,
+            "Recall@10": 0.44126506024096385,
+            "AllEvidence@10": 0.05421686746987952
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 30250370,
+        "output_tokens": 2082923,
+        "reported_cost_usd": 1.27051554
+      },
+      "reused_responses": 3,
+      "stages": {}
+    },
+    "rm3": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 0,
+      "successful_scoring_requests": 0,
+      "request_totals": {
+        "http_requests": 0,
+        "successful_requests": 0,
+        "failed_requests": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "reported_cost_usd": 0.0,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.21791666666666665,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.285,
+            "AllEvidence@2": 0.039,
+            "Recall@5": 0.3969166666666667,
+            "AllEvidence@5": 0.098,
+            "Recall@10": 0.47833333333333333,
+            "AllEvidence@10": 0.157
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.2982625482625483,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.38513513513513514,
+            "AllEvidence@2": 0.07528957528957529,
+            "Recall@5": 0.4942084942084942,
+            "AllEvidence@5": 0.18532818532818532,
+            "Recall@10": 0.582046332046332,
+            "AllEvidence@10": 0.28378378378378377
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.14451476793248944,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.18670886075949367,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.3280590717299578,
+            "AllEvidence@5": 0.006329113924050633,
+            "Recall@10": 0.40295358649789026,
+            "AllEvidence@10": 0.03164556962025317
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.10692771084337349,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.15963855421686746,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.22439759036144577,
+            "AllEvidence@5": 0.0,
+            "Recall@10": 0.29819277108433734,
+            "AllEvidence@10": 0.0
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "reported_cost_usd": 0
+      },
+      "reused_responses": 0,
+      "stages": {}
+    },
+    "rm3_final_jev": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 100000,
+      "successful_scoring_requests": 1000,
+      "request_totals": {
+        "http_requests": 999,
+        "successful_requests": 999,
+        "failed_requests": 0,
+        "input_tokens": 28754148,
+        "output_tokens": 2103022,
+        "reported_cost_usd": 1.2076742159999987,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.30875,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.45758333333333334,
+            "AllEvidence@2": 0.141,
+            "Recall@5": 0.6019166666666667,
+            "AllEvidence@5": 0.298,
+            "Recall@10": 0.6693333333333333,
+            "AllEvidence@10": 0.372
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.39575289575289574,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5752895752895753,
+            "AllEvidence@2": 0.2722007722007722,
+            "Recall@5": 0.6978764478764479,
+            "AllEvidence@5": 0.4613899613899614,
+            "Recall@10": 0.7673745173745173,
+            "AllEvidence@10": 0.5598455598455598
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.23734177215189872,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.37763713080168776,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.5685654008438819,
+            "AllEvidence@5": 0.17721518987341772,
+            "Recall@10": 0.6244725738396624,
+            "AllEvidence@10": 0.2468354430379747
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.17319277108433734,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.24246987951807228,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.36596385542168675,
+            "AllEvidence@5": 0.018072289156626505,
+            "Recall@10": 0.44879518072289154,
+            "AllEvidence@10": 0.024096385542168676
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 28784112,
+        "output_tokens": 2105107,
+        "reported_cost_usd": 1.208932704
+      },
+      "reused_responses": 1,
+      "stages": {}
+    },
+    "gar_bm25": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 0,
+      "successful_scoring_requests": 0,
+      "request_totals": {
+        "http_requests": 0,
+        "successful_requests": 0,
+        "failed_requests": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "reported_cost_usd": 0.0,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.2870833333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.375,
+            "AllEvidence@2": 0.045,
+            "Recall@5": 0.4765833333333333,
+            "AllEvidence@5": 0.121,
+            "Recall@10": 0.545,
+            "AllEvidence@10": 0.175
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.3561776061776062,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.44594594594594594,
+            "AllEvidence@2": 0.08687258687258688,
+            "Recall@5": 0.5521235521235521,
+            "AllEvidence@5": 0.21814671814671815,
+            "Recall@10": 0.6187258687258688,
+            "AllEvidence@10": 0.29922779922779924
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.24472573839662445,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.33544303797468356,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.44409282700421937,
+            "AllEvidence@5": 0.02531645569620253,
+            "Recall@10": 0.5126582278481012,
+            "AllEvidence@10": 0.060126582278481014
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.15210843373493976,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.2289156626506024,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.30271084337349397,
+            "AllEvidence@5": 0.0,
+            "Recall@10": 0.37650602409638556,
+            "AllEvidence@10": 0.006024096385542169
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "reported_cost_usd": 0
+      },
+      "reused_responses": 0,
+      "stages": {}
+    },
+    "gar_bm25_final_jev": {
+      "status": "completed",
+      "question_count": 1000,
+      "candidate_judgments": 100000,
+      "successful_scoring_requests": 1000,
+      "request_totals": {
+        "http_requests": 999,
+        "successful_requests": 999,
+        "failed_requests": 0,
+        "input_tokens": 29352249,
+        "output_tokens": 2103026,
+        "reported_cost_usd": 1.232794458,
+        "attempts_without_usage": 0,
+        "billing_complete": true
+      },
+      "groups": {
+        "all": {
+          "n": 1000,
+          "metrics": {
+            "Recall@1": 0.3090833333333333,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4860833333333333,
+            "AllEvidence@2": 0.163,
+            "Recall@5": 0.64625,
+            "AllEvidence@5": 0.347,
+            "Recall@10": 0.7310833333333334,
+            "AllEvidence@10": 0.461
+          }
+        },
+        "2": {
+          "n": 518,
+          "metrics": {
+            "Recall@1": 0.38803088803088803,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.5974903474903475,
+            "AllEvidence@2": 0.31467181467181465,
+            "Recall@5": 0.7374517374517374,
+            "AllEvidence@5": 0.5328185328185329,
+            "Recall@10": 0.8204633204633205,
+            "AllEvidence@10": 0.6602316602316602
+          }
+        },
+        "3": {
+          "n": 316,
+          "metrics": {
+            "Recall@1": 0.2542194092827004,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.4187763713080168,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.620253164556962,
+            "AllEvidence@5": 0.21835443037974683,
+            "Recall@10": 0.6972573839662447,
+            "AllEvidence@10": 0.34177215189873417
+          }
+        },
+        "4": {
+          "n": 166,
+          "metrics": {
+            "Recall@1": 0.16716867469879518,
+            "AllEvidence@1": 0.0,
+            "Recall@2": 0.26656626506024095,
+            "AllEvidence@2": 0.0,
+            "Recall@5": 0.411144578313253,
+            "AllEvidence@5": 0.012048192771084338,
+            "Recall@10": 0.516566265060241,
+            "AllEvidence@10": 0.06626506024096386
+          }
+        }
+      },
+      "logical_usage_including_reused_responses": {
+        "input_tokens": 29381066,
+        "output_tokens": 2105122,
+        "reported_cost_usd": 1.234004772
+      },
+      "reused_responses": 1,
+      "stages": {}
+    }
+  },
+  "scope": "Eight full MuSiQue controls reported in the paper.",
+  "verification": {
+    "all_complete": true,
+    "variant_count": 8,
+    "questions_per_variant": 1000,
+    "variants": [
+      {
+        "variant": "bm25_jev_matched_budget",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.30641666666666667,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.4658333333333333,
+          "AllEvidence@2": 0.139,
+          "Recall@5": 0.6156666666666666,
+          "AllEvidence@5": 0.291,
+          "Recall@10": 0.6981666666666666,
+          "AllEvidence@10": 0.396
+        },
+        "judgments": 329194,
+        "recorded_cost": 3.973794762000009,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "gar_bm25",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.2870833333333333,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.375,
+          "AllEvidence@2": 0.045,
+          "Recall@5": 0.4765833333333333,
+          "AllEvidence@5": 0.121,
+          "Recall@10": 0.545,
+          "AllEvidence@10": 0.175
+        },
+        "judgments": 0,
+        "recorded_cost": 0.0,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "gar_bm25_final_jev",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.3090833333333333,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.4860833333333333,
+          "AllEvidence@2": 0.163,
+          "Recall@5": 0.64625,
+          "AllEvidence@5": 0.347,
+          "Recall@10": 0.7310833333333334,
+          "AllEvidence@10": 0.461
+        },
+        "judgments": 100000,
+        "recorded_cost": 1.232794458,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "lexical_final_jev",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.3123333333333333,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.4543333333333333,
+          "AllEvidence@2": 0.128,
+          "Recall@5": 0.5716666666666667,
+          "AllEvidence@5": 0.255,
+          "Recall@10": 0.6134166666666666,
+          "AllEvidence@10": 0.296
+        },
+        "judgments": 98836,
+        "recorded_cost": 1.2668328960000004,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "rm3",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.21791666666666665,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.285,
+          "AllEvidence@2": 0.039,
+          "Recall@5": 0.3969166666666667,
+          "AllEvidence@5": 0.098,
+          "Recall@10": 0.47833333333333333,
+          "AllEvidence@10": 0.157
+        },
+        "judgments": 0,
+        "recorded_cost": 0.0,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "rm3_final_jev",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.30875,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.45758333333333334,
+          "AllEvidence@2": 0.141,
+          "Recall@5": 0.6019166666666667,
+          "AllEvidence@5": 0.298,
+          "Recall@10": 0.6693333333333333,
+          "AllEvidence@10": 0.372
+        },
+        "judgments": 100000,
+        "recorded_cost": 1.2076742159999987,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "sag2_h2",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.343,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.62175,
+          "AllEvidence@2": 0.32,
+          "Recall@5": 0.80675,
+          "AllEvidence@5": 0.59,
+          "Recall@10": 0.8661666666666666,
+          "AllEvidence@10": 0.695
+        },
+        "judgments": 331325,
+        "recorded_cost": 4.3221699360000025,
+        "billing_complete": true,
+        "all_checks_passed": true,
+        "triggered": 0
+      },
+      {
+        "variant": "sag2_no_context",
+        "n": 1000,
+        "metrics": {
+          "Recall@1": 0.312,
+          "AllEvidence@1": 0.0,
+          "Recall@2": 0.48041666666666666,
+          "AllEvidence@2": 0.162,
+          "Recall@5": 0.6631666666666667,
+          "AllEvidence@5": 0.372,
+          "Recall@10": 0.7625,
+          "AllEvidence@10": 0.522
+        },
+        "judgments": 330990,
+        "recorded_cost": 2.919997037999994,
+        "billing_complete": false,
+        "all_checks_passed": true,
+        "triggered": 0
+      }
+    ],
+    "paper_modified": false,
+    "cost_100_verified": true
+  }
+}

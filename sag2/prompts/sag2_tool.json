@@ -1,0 +1,51 @@
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "A concise query using grounded names to resolve a specific missing relationship."
+    },
+    "confirmed_relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "subject",
+          "relation",
+          "object",
+          "evidence_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "unresolved_relations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "query",
+    "confirmed_relations",
+    "unresolved_relations"
+  ],
+  "additionalProperties": false
+}

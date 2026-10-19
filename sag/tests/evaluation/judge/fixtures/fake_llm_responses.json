@@ -1,0 +1,53 @@
+{
+  "statement_generation": {
+    "question": "What is the capital of France?",
+    "answer": "Paris is the capital of France.",
+    "llm_response": {
+      "content": "[\"Paris is the capital of France\", \"Paris is a city\"]",
+      "parsed": ["Paris is the capital of France", "Paris is a city"]
+    }
+  },
+  "correctness_classification": {
+    "question": "What is the capital of France?",
+    "answer_stmts": ["Paris is the capital of France"],
+    "gt_stmts": ["Paris is the capital of France"],
+    "llm_response": {
+      "content": "{\"TP\": [{\"statement\": \"Paris is the capital of France\", \"reason\": \"Exact match\"}], \"FP\": [], \"FN\": []}",
+      "parsed": {"TP": [{"statement": "Paris is the capital of France", "reason": "Exact match"}], "FP": [], "FN": []}
+    }
+  },
+  "fact_extraction": {
+    "question": "What is the capital of France?",
+    "reference": "Paris is the capital of France. It is known for the Eiffel Tower.",
+    "llm_response": {
+      "content": "{\"facts\": [\"Paris is the capital of France\", \"It is known for the Eiffel Tower\"]}",
+      "parsed": {"facts": ["Paris is the capital of France", "It is known for the Eiffel Tower"]}
+    }
+  },
+  "fact_coverage": {
+    "question": "What is the capital of France?",
+    "response": "Paris is the capital of France.",
+    "facts": ["Paris is the capital of France", "It is known for the Eiffel Tower"],
+    "llm_response": {
+      "content": "{\"classifications\": [{\"statement\": \"Paris is the capital of France\", \"attributed\": 1}, {\"statement\": \"It is known for the Eiffel Tower\", \"reason\": \"Not found\", \"attributed\": 0}]}",
+      "parsed": {"classifications": [{"statement": "Paris is the capital of France", "attributed": 1}, {"statement": "It is known for the Eiffel Tower", "reason": "Not found", "attributed": 0}]}
+    }
+  },
+  "context_relevance": {
+    "question": "What is the capital of France?",
+    "context": "France is a country in Western Europe.",
+    "llm_responses": [
+      {"content": "{\"rating\": 1}", "parsed": {"rating": 1}},
+      {"content": "{\"rating\": 1}", "parsed": {"rating": 1}}
+    ]
+  },
+  "evidence_recall": {
+    "question": "What is the capital of France?",
+    "context": "Paris is the capital of France.",
+    "evidence": ["Paris is the capital of France.", "Paris has the Eiffel Tower."],
+    "llm_response": {
+      "content": "{\"classifications\": [{\"statement\": \"Paris is the capital of France.\", \"reason\": \"Found in context\", \"attributed\": 1}, {\"statement\": \"Paris has the Eiffel Tower.\", \"reason\": \"Not in context\", \"attributed\": 0}]}",
+      "parsed": [{"statement": "Paris is the capital of France.", "reason": "Found in context", "attributed": 1}, {"statement": "Paris has the Eiffel Tower.", "reason": "Not in context", "attributed": 0}]
+    }
+  }
+}

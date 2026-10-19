@@ -1,0 +1,352 @@
+[
+  {
+    "question_id": "qst_0471",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What is Redwood Inference's mission statement?",
+    "expected_doc_ids": [],
+    "gold_answer": "Make high-performance, reliable LLM inference accessible to every engineering team.",
+    "answer_facts": [
+      "Redwood Inference's mission is to make high-performance, reliable LLM inference accessible to every engineering team."
+    ]
+  },
+  {
+    "question_id": "qst_0472",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What is the company's thesis about where competitive advantage shifts as LLM ecosystems expand?",
+    "expected_doc_ids": [],
+    "gold_answer": "As LLM capabilities and open model ecosystems expand, competitive advantage shifts from model ownership to serving: latency, cost, reliability, deployment flexibility, and operational tooling.",
+    "answer_facts": [
+      "As LLM capabilities and open model ecosystems expand, competitive advantage shifts from model ownership to serving.",
+      "In the expanded LLM ecosystem, serving advantages include latency, cost, reliability, deployment flexibility, and operational tooling."
+    ]
+  },
+  {
+    "question_id": "qst_0473",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What security-oriented features are highlighted for Redwood Private deployments?",
+    "expected_doc_ids": [],
+    "gold_answer": "Redwood Private highlights a private control plane in a customer-managed VPC or on-prem (including air-gapped options), customer-managed networking, key management integrations (KMS/HSM), and audit logs.",
+    "answer_facts": [
+      "Redwood Private offers a private control plane deployed in a customer-managed VPC or on-premises environment, including air-gapped options",
+      "Redwood Private supports customer-managed networking",
+      "Redwood Private integrates with key management systems such as KMS and HSM",
+      "Redwood Private provides audit logs"
+    ]
+  },
+  {
+    "question_id": "qst_0474",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "Which serving-runtime optimizations are explicitly called out as part of Redwood's inference engine design?",
+    "expected_doc_ids": [],
+    "gold_answer": "Modern attention optimizations; continuous batching; KV cache management (including prefix/KV caching); quantization-friendly execution paths; and architecture/sequence-length/hardware-aware optimized kernel selection.",
+    "answer_facts": [
+      "Redwood explicitly includes modern attention optimizations in its inference engine design.",
+      "Redwood explicitly includes continuous batching in its inference engine design.",
+      "Redwood explicitly includes KV cache management, including prefix or KV caching, in its inference engine design.",
+      "Redwood explicitly includes quantization-friendly execution paths in its inference engine design.",
+      "Redwood explicitly includes optimized kernel selection that is aware of architecture, sequence length, and hardware in its inference engine design."
+    ]
+  },
+  {
+    "question_id": "qst_0475",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What policy dimensions can Redwood's smart routing use to route requests?",
+    "expected_doc_ids": [],
+    "gold_answer": "Latency, cost, region, and customer tier.",
+    "answer_facts": [
+      "Redwoods smart routing can use latency as a policy dimension to route requests",
+      "Redwoods smart routing can use cost as a policy dimension to route requests",
+      "Redwoods smart routing can use region as a policy dimension to route requests",
+      "Redwoods smart routing can use customer tier as a policy dimension to route requests"
+    ]
+  },
+  {
+    "question_id": "qst_0476",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What is the stated differentiation around reliability and graceful degradation in Redwood's platform?",
+    "expected_doc_ids": [],
+    "gold_answer": "Redwood differentiates with built-in reliability and graceful degradation: automatic fallback to compatible model variants, regions, or capacity tiers to keep applications online when capacity is constrained or issues occur.",
+    "answer_facts": [
+      "Redwood differentiates its platform with built-in reliability and graceful degradation",
+      "Redwood provides automatic fallback to compatible model variants, regions, or capacity tiers",
+      "The automatic fallback is intended to keep applications online when capacity is constrained or issues occur"
+    ]
+  },
+  {
+    "question_id": "qst_0477",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What are the four main revenue streams in Redwood Inference's business model?",
+    "expected_doc_ids": [],
+    "gold_answer": "Usage-based pricing for the hosted API, reserved capacity contracts for Dedicated, enterprise licensing and support fees for Private deployments, and add-ons such as advanced observability retention, compliance packages, and premium SLAs.",
+    "answer_facts": [
+      "Redwood Inference has a usage-based pricing revenue stream for its hosted API",
+      "Redwood Inference has a revenue stream from reserved capacity contracts for Dedicated",
+      "Redwood Inference has a revenue stream from enterprise licensing and support fees for Private deployments",
+      "Redwood Inference has a revenue stream from add-ons such as advanced observability retention, compliance packages, and premium SLAs"
+    ]
+  },
+  {
+    "question_id": "qst_0478",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What add-on categories are mentioned for Redwood's commercial offering?",
+    "expected_doc_ids": [],
+    "gold_answer": "Advanced observability retention, compliance packages, premium SLAs",
+    "answer_facts": [
+      "Redwood commercial offering mentions an add-on category of advanced observability retention",
+      "Redwood commercial offering mentions add-on compliance packages",
+      "Redwood commercial offering mentions add-on premium SLAs"
+    ]
+  },
+  {
+    "question_id": "qst_0479",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What triggers Redwood's expansion from PLG-led adoption to sales-assisted enterprise for Dedicated and Private?",
+    "expected_doc_ids": [],
+    "gold_answer": "Redwood expands from PLG-led adoption to sales-assisted enterprise when customer usage reaches thresholds or when customers require stronger security controls and SLA-backed, predictable capacity for Dedicated and Private deployments.",
+    "answer_facts": [
+      "Redwood expands from PLG-led adoption to sales-assisted enterprise when customer usage reaches certain thresholds.",
+      "Redwood expands from PLG-led adoption to sales-assisted enterprise when customers require stronger security controls.",
+      "Redwood expands from PLG-led adoption to sales-assisted enterprise when customers require SLA-backed predictable capacity for Dedicated and Private deployments."
+    ]
+  },
+  {
+    "question_id": "qst_0480",
+    "question_type": "high_level",
+    "source_types": [],
+    "question": "What are the major departments listed in the company's high-level organization?",
+    "expected_doc_ids": [],
+    "gold_answer": "Engineering; Product; Developer experience; Research/Applied ML; Go-to-market; Security and compliance; Customer support and success",
+    "answer_facts": [
+      "The major departments include Engineering, Product, Developer experience, Research/Applied ML, Go-to-market, Security and compliance, and Customer support and success."
+    ]
+  },
+  {
+    "question_id": "qst_0481",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the hot-route capacity protection rollout in us-east, which specific enterprise accounts were on the initial allowlist, and what were the exact per-route-group budget values (RPS, estimated TPS, and concurrency) configured for each of those accounts?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0482",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "What exact queue-depth threshold and prefill/decode interleaving-ratio cutoffs are currently configured in production to allow FP8 attention in **decode** on H100 hosted pools (i.e., the scheduler interaction guardrail mentioned in the FP8/INT8 kernel auto-selection heuristics)?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0483",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the admin activity chronicle's daily Merkle-root anchoring, which public blockchain network do we anchor to and what smart contract address is used, and how should an auditor verify the anchor end-to-end?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0484",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "What is the complete mapping of `billing_tag` → Finance GL code (and cost center owner) used for chargebacks in the Eval Budget Ledger, and where is that mapping source-of-truth maintained?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0485",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "In the CSRL \"delayed_with_handover\" admission response, what is the exact queue token format (encoding + required fields) and what signing/validation mechanism is used to prevent cross-tenant or cross-region replay?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0486",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "How do we compute and invoice the **per-request CO2e** for Hosted API usage (including the region-specific carbon intensity factors and any cache-hit adjustments), and where is that CO2e exposed in the customer Usage API/export schema?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0487",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "When a streaming resume attempt fails with HTTP 409 (checkpoint mismatch), what is the full JSON schema of the server's error payload (including any `resume_details` fields), and how is the `kv_crc` value inside v2 resume tokens computed?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0488",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "When we use the GPU firmware operator to do a BIOS/firmware rollout, what BIOS settings are included in Redwood's \"safe mode boot\" profile for A100/H100 nodes (e.g., Secure Boot, Above 4G decoding, Resizable BAR), and what are the default values for each?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0489",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "In the `observability-pack` status page component registry, what Slack channel is listed as the ownership contact for the **Hosted API - Streaming (us-east)** component?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0490",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For enterprise private deployments, what numeric BGP community value(s) correspond to the \"redwood-shield\" policy, and what are the standard MED/local-preference values we set when failing over from Direct Connect/Interconnect to the VPN during an interconnect flap?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0491",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the Adaptive Prefetch Hint Layer, what exact canonicalization rules and cryptographic signing algorithm are used to generate/verify the `signature` field in the `X-RW-Prefetch-Hint` header (including key rotation cadence and the endpoint/mechanism clients use to fetch verification keys)?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0492",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the \"microburst insurance\" negotiated SLA bundles, what's the default burst surcharge charged when burst capacity units are consumed, and which GL account should that surcharge be posted to?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0493",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "What are the exact Azure Marketplace metering dimension names and units we use for Hosted API (input tokens, output tokens, embeddings, rerank), and what rounding/aggregation policy do we apply when reporting usage to Azure?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0494",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "In the runtime telemetry sampling/cost-aware profiling policy, what are the exact TEU (trace-equivalent-unit) weight multipliers for full-span traces vs kernel-level detailed traces vs payload captures, and where are those numeric constants defined in the sampling policy repo?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0495",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the Remote-first Pilot, what are the exact preferred vendors and model SKUs for the standing desk converter loaners, and which of those vendors can ship to Canada with delivery in under 48 hours?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0496",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "Does Incident Bot v2 support sending its incident context cards (deploy/config diff/saturation + pinned escalation context) to Microsoft Teams via an incoming webhook/Adaptive Cards, and if so what's the required payload schema and idempotency/retry behavior for updates?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0497",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "When the Security Risk Committee reviews a high-risk control exception (e.g., risk rating above 7), what quorum is required for the vote to be valid, and how are tie votes resolved?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0498",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "In the batching SLO tier benchmark methodology, what are the exact Redwood metering coefficients (e.g., USD per GPU-second and any per-token factors) used to compute the \"estimated $/1K generated tokens,\" and where are those coefficients sourced from?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0499",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "For the `profiling.signals` Kafka topic used by trace-orch and fidelity-proxy, what are the current production settings (partition count and message retention time), and where can I find the approval/change record for the most recent update?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  },
+  {
+    "question_id": "qst_0500",
+    "question_type": "info_not_found",
+    "source_types": [],
+    "question": "When a high-risk production change requires Change Advisory Board (CAB) approval, what quorum is required and what's the tie-break process if the CAB can't reach consensus-and who has final decision authority?",
+    "expected_doc_ids": [],
+    "gold_answer": "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable.",
+    "answer_facts": [
+      "The answer must state at some point that the query is not fully answerable from available documents or caveat the provided information with why it does not fully address the query. The answer may present relevant and related information to be helpful to the user however it must clearly also mention that at least some aspects are not found or answered. The answer may also simply state that the query is not answerable from the documents, this is perfectly acceptable."
+    ]
+  }
+]

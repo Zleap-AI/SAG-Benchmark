@@ -1,0 +1,28 @@
+{
+  "method": "Agentic SAG2",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "high",
+  "max_sag2_calls": 3,
+  "atomic_expansions": 1,
+  "return_k": 20,
+  "final_k": 10,
+  "concurrency": 20,
+  "datasets": {
+    "musique": {
+      "questions_sha256": "c1bb1db99c55e2416e377366b70c87b6ec3a3c9e8781ef82c9a57a08dd0a46c4",
+      "summary_sha256": "4cebbddfbc43c811fd5f95e5316840dd4a8174562b95d55c1fb0aa8c1e872fab",
+      "corpus_sha256": "73157a03ce3f0b1a5673dd5dc12bb970c24976dbffc688af9eecdd758c97ffcb"
+    },
+    "hotpotqa": {
+      "questions_sha256": "cac4c5267c8687bed2f3b6414cac70ca1c304f395cc1c135c9f0437e155ad677",
+      "summary_sha256": "295a1e98f26d29d8f19a1ae4e3fda70916fcca4abd9b450ccbfc3f96acad7643",
+      "corpus_sha256": "9333647b922382776cd2cb02893b390d77984df85a91bfa8be411284978aca7d"
+    },
+    "2wikimultihopqa": {
+      "questions_sha256": "4628489d8162b34dd3fff21d00fb92e176621e45fa1965135e153756fa821eec",
+      "summary_sha256": "9998e892ec4c1430e28fbf2affcbb89906e5e3b16277e54a6f29429b6fe75f08",
+      "corpus_sha256": "9d6e352952aafb18dab22bf8195039461321a44a949df902ae83bce134ad238a"
+    }
+  },
+  "evaluation_harness": "Native MCP (Codex CLI)"
+}

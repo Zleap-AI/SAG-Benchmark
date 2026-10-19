@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="337" viewBox="0 0 1800 337">
+<rect width="100%" height="100%" fill="white"/>
+<rect x="28" y="230" width="1744" height="50" fill="#E9F2FA"/>
+<line x1="28" y1="24" x2="1772" y2="24" stroke="#222222" stroke-width="2.2"/>
+<line x1="28" y1="129" x2="1772" y2="129" stroke="#222222" stroke-width="1.15"/>
+<line x1="28" y1="183.5" x2="1772" y2="183.5" stroke="#D2D6DA" stroke-width="0.65"/>
+<line x1="28" y1="230" x2="1772" y2="230" stroke="#C4CCD4" stroke-width="0.7"/>
+<line x1="28" y1="281" x2="1772" y2="281" stroke="#222222" stroke-width="2.2"/>
+<line x1="358" y1="90" x2="358" y2="280" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="47" y="110.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">Method</text>
+<text x="603.3333333333334" y="58.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">MuSiQue</text>
+<line x1="384.0" y1="82" x2="822.6666666666667" y2="82" stroke="#222222" stroke-width="0.9"/>
+<text x="435.8333333333333" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@1</text>
+<text x="435.8333333333333" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">36.82</text>
+<line x1="407.30833333333334" y1="169.16923828125" x2="464.3583333333333" y2="169.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="435.8333333333333" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">34.30</text>
+<text x="435.8333333333333" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">38.21</text>
+<text x="547.5" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@2</text>
+<text x="547.5" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">63.62</text>
+<line x1="518.975" y1="169.16923828125" x2="576.025" y2="169.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="547.5" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">62.18</text>
+<text x="547.5" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">71.99</text>
+<text x="659.1666666666667" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@5</text>
+<text x="659.1666666666667" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">80.36</text>
+<text x="659.1666666666667" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">80.68</text>
+<line x1="630.6416666666668" y1="216.16923828125" x2="687.6916666666667" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="659.1666666666667" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">92.20</text>
+<text x="770.8333333333334" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@10</text>
+<text x="770.8333333333334" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">83.37</text>
+<text x="770.8333333333334" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">86.62</text>
+<line x1="742.3083333333334" y1="216.16923828125" x2="799.3583333333333" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="770.8333333333334" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">95.39</text>
+<text x="1076.0" y="58.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">2WikiMultiHopQA</text>
+<line x1="856.6666666666667" y1="82" x2="1295.3333333333335" y2="82" stroke="#222222" stroke-width="0.9"/>
+<line x1="839.6666666666667" y1="90" x2="839.6666666666667" y2="280" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="908.5000000000001" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@1</text>
+<text x="908.5000000000001" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">43.81</text>
+<line x1="879.9750000000001" y1="169.16923828125" x2="937.0250000000001" y2="169.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="908.5000000000001" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">43.55</text>
+<text x="908.5000000000001" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">44.08</text>
+<text x="1020.1666666666667" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@2</text>
+<text x="1020.1666666666667" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">83.93</text>
+<text x="1020.1666666666667" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">85.50</text>
+<line x1="991.6416666666668" y1="216.16923828125" x2="1048.6916666666668" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1020.1666666666667" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">88.00</text>
+<text x="1131.8333333333335" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@5</text>
+<text x="1131.8333333333335" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">93.34</text>
+<text x="1131.8333333333335" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">97.35</text>
+<line x1="1103.3083333333334" y1="216.16923828125" x2="1160.3583333333336" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1131.8333333333335" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">99.88</text>
+<text x="1243.5" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@10</text>
+<text x="1243.5" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">93.57</text>
+<text x="1243.5" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">97.43</text>
+<line x1="1214.975" y1="216.16923828125" x2="1272.025" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1243.5" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">99.88</text>
+<text x="1548.6666666666667" y="58.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">HotpotQA</text>
+<line x1="1329.3333333333335" y1="82" x2="1768.0000000000002" y2="82" stroke="#222222" stroke-width="0.9"/>
+<line x1="1312.3333333333335" y1="90" x2="1312.3333333333335" y2="280" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="1381.1666666666667" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@1</text>
+<text x="1381.1666666666667" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">47.80</text>
+<text x="1381.1666666666667" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">48.30</text>
+<line x1="1352.6416666666667" y1="216.16923828125" x2="1409.6916666666668" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1381.1666666666667" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">49.10</text>
+<text x="1492.8333333333335" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@2</text>
+<text x="1492.8333333333335" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">91.55</text>
+<text x="1492.8333333333335" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">93.60</text>
+<line x1="1464.3083333333334" y1="216.16923828125" x2="1521.3583333333336" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1492.8333333333335" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">96.45</text>
+<text x="1604.5000000000002" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@5</text>
+<text x="1604.5000000000002" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">96.50</text>
+<text x="1604.5000000000002" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">98.45</text>
+<line x1="1575.9750000000001" y1="216.16923828125" x2="1633.0250000000003" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1604.5000000000002" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">99.30</text>
+<text x="1716.166666666667" y="111.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">R@10</text>
+<text x="1716.166666666667" y="165.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">97.70</text>
+<text x="1716.166666666667" y="212.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">99.00</text>
+<line x1="1687.6416666666669" y1="216.16923828125" x2="1744.691666666667" y2="216.16923828125" stroke="#222222" stroke-width="1.05"/>
+<text x="1716.166666666667" y="259.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">99.65</text>
+<text x="47" y="165.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">SAG</text>
+<text x="47" y="212.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">SAG2</text>
+<text x="47" y="259.767822265625" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">Agentic SAG2 (Ours)</text>
+<text x="30" y="318.2978515625" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="18" font-weight="400" fill="#444444">Recall (%); 1,000 questions per dataset. Bold: best; underline: second best.</text>
+</svg>

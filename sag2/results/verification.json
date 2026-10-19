@@ -1,0 +1,153 @@
+{
+  "status": "passed",
+  "network_requests": 0,
+  "verified": {
+    "2wikimultihopqa": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.4355,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.855,
+        "AllEvidence@2": 0.713,
+        "Recall@5": 0.9735,
+        "AllEvidence@5": 0.929,
+        "Recall@10": 0.97425,
+        "AllEvidence@10": 0.931
+      }
+    },
+    "hotpotqa": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.483,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.936,
+        "AllEvidence@2": 0.876,
+        "Recall@5": 0.9845,
+        "AllEvidence@5": 0.97,
+        "Recall@10": 0.99,
+        "AllEvidence@10": 0.981
+      }
+    },
+    "musique": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.343,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.62175,
+        "AllEvidence@2": 0.32,
+        "Recall@5": 0.80675,
+        "AllEvidence@5": 0.59,
+        "Recall@10": 0.8661666666666666,
+        "AllEvidence@10": 0.695
+      }
+    },
+    "sag2_h2": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.343,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.62175,
+        "AllEvidence@2": 0.32,
+        "Recall@5": 0.80675,
+        "AllEvidence@5": 0.59,
+        "Recall@10": 0.8661666666666666,
+        "AllEvidence@10": 0.695
+      }
+    },
+    "bm25_jev_matched_budget": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.30641666666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4658333333333333,
+        "AllEvidence@2": 0.139,
+        "Recall@5": 0.6156666666666666,
+        "AllEvidence@5": 0.291,
+        "Recall@10": 0.6981666666666666,
+        "AllEvidence@10": 0.396
+      }
+    },
+    "sag2_no_context": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.312,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.48041666666666666,
+        "AllEvidence@2": 0.162,
+        "Recall@5": 0.6631666666666667,
+        "AllEvidence@5": 0.372,
+        "Recall@10": 0.7625,
+        "AllEvidence@10": 0.522
+      }
+    },
+    "lexical_final_jev": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.3123333333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4543333333333333,
+        "AllEvidence@2": 0.128,
+        "Recall@5": 0.5716666666666667,
+        "AllEvidence@5": 0.255,
+        "Recall@10": 0.6134166666666666,
+        "AllEvidence@10": 0.296
+      }
+    },
+    "rm3": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.21791666666666665,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.285,
+        "AllEvidence@2": 0.039,
+        "Recall@5": 0.3969166666666667,
+        "AllEvidence@5": 0.098,
+        "Recall@10": 0.47833333333333333,
+        "AllEvidence@10": 0.157
+      }
+    },
+    "rm3_final_jev": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.30875,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.45758333333333334,
+        "AllEvidence@2": 0.141,
+        "Recall@5": 0.6019166666666667,
+        "AllEvidence@5": 0.298,
+        "Recall@10": 0.6693333333333333,
+        "AllEvidence@10": 0.372
+      }
+    },
+    "gar_bm25": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.2870833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.375,
+        "AllEvidence@2": 0.045,
+        "Recall@5": 0.4765833333333333,
+        "AllEvidence@5": 0.121,
+        "Recall@10": 0.545,
+        "AllEvidence@10": 0.175
+      }
+    },
+    "gar_bm25_final_jev": {
+      "questions": 1000,
+      "metrics": {
+        "Recall@1": 0.3090833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4860833333333333,
+        "AllEvidence@2": 0.163,
+        "Recall@5": 0.64625,
+        "AllEvidence@5": 0.347,
+        "Recall@10": 0.7310833333333334,
+        "AllEvidence@10": 0.461
+      }
+    },
+    "enterprise": {
+      "questions": 470,
+      "excluded_without_gold": 30
+    }
+  }
+}

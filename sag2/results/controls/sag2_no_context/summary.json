@@ -1,0 +1,130 @@
+{
+  "status": "completed",
+  "question_count": 1000,
+  "candidate_judgments": 330990,
+  "successful_scoring_requests": 3000,
+  "request_totals": {
+    "http_requests": 2024,
+    "successful_requests": 1998,
+    "failed_requests": 26,
+    "input_tokens": 69523739,
+    "output_tokens": 4853117,
+    "reported_cost_usd": 2.919997037999994,
+    "attempts_without_usage": 26,
+    "billing_complete": false
+  },
+  "groups": {
+    "all": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.312,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.48041666666666666,
+        "AllEvidence@2": 0.162,
+        "Recall@5": 0.6631666666666667,
+        "AllEvidence@5": 0.372,
+        "Recall@10": 0.7625,
+        "AllEvidence@10": 0.522
+      }
+    },
+    "2": {
+      "n": 518,
+      "metrics": {
+        "Recall@1": 0.39285714285714285,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.5945945945945946,
+        "AllEvidence@2": 0.3127413127413127,
+        "Recall@5": 0.7519305019305019,
+        "AllEvidence@5": 0.555984555984556,
+        "Recall@10": 0.8436293436293436,
+        "AllEvidence@10": 0.7104247104247104
+      }
+    },
+    "3": {
+      "n": 316,
+      "metrics": {
+        "Recall@1": 0.25316455696202533,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4071729957805907,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.6413502109704641,
+        "AllEvidence@5": 0.2468354430379747,
+        "Recall@10": 0.7436708860759493,
+        "AllEvidence@10": 0.4240506329113924
+      }
+    },
+    "4": {
+      "n": 166,
+      "metrics": {
+        "Recall@1": 0.1716867469879518,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.2635542168674699,
+        "AllEvidence@2": 0.0,
+        "Recall@5": 0.42771084337349397,
+        "AllEvidence@5": 0.03614457831325301,
+        "Recall@10": 0.5451807228915663,
+        "AllEvidence@10": 0.12048192771084337
+      }
+    }
+  },
+  "logical_usage_including_reused_responses": {
+    "input_tokens": 98284052,
+    "output_tokens": 6961107,
+    "reported_cost_usd": 4.127930184
+  },
+  "reused_responses": 1002,
+  "stages": {
+    "bm25": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.2870833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.375,
+        "AllEvidence@2": 0.045,
+        "Recall@5": 0.4765833333333333,
+        "AllEvidence@5": 0.121,
+        "Recall@10": 0.545,
+        "AllEvidence@10": 0.175
+      }
+    },
+    "h0": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.3113333333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4679166666666667,
+        "AllEvidence@2": 0.124,
+        "Recall@5": 0.6078333333333333,
+        "AllEvidence@5": 0.266,
+        "Recall@10": 0.6793333333333333,
+        "AllEvidence@10": 0.36
+      }
+    },
+    "h1": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.30641666666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.48341666666666666,
+        "AllEvidence@2": 0.162,
+        "Recall@5": 0.66325,
+        "AllEvidence@5": 0.371,
+        "Recall@10": 0.7630833333333333,
+        "AllEvidence@10": 0.518
+      }
+    },
+    "h2": {
+      "n": 1000,
+      "metrics": {
+        "Recall@1": 0.312,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.48041666666666666,
+        "AllEvidence@2": 0.162,
+        "Recall@5": 0.6631666666666667,
+        "AllEvidence@5": 0.372,
+        "Recall@10": 0.7625,
+        "AllEvidence@10": 0.522
+      }
+    }
+  }
+}

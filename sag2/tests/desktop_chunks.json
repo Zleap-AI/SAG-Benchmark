@@ -1,0 +1,525 @@
+{
+  "desktop_commit": "3c303880ea7eb1e565662caac84d6c0685ee6f16",
+  "cases": [
+    {
+      "name": "zh-long-overlap",
+      "path": "guide.md",
+      "target": 512,
+      "source": "# 发布指南\n## 生产环境\n完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件。超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子。只有满足上述条件才能发布。",
+      "expected": [
+        {
+          "heading": "发布指南 / 生产环境",
+          "content": "完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件。",
+          "spans": [
+            [
+              15,
+              416
+            ]
+          ]
+        },
+        {
+          "heading": "发布指南 / 生产环境",
+          "content": "完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件完整条件。超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子。",
+          "spans": [
+            [
+              15,
+              1017
+            ]
+          ]
+        },
+        {
+          "heading": "发布指南 / 生产环境",
+          "content": "超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子超长句子。只有满足上述条件才能发布。",
+          "spans": [
+            [
+              416,
+              1030
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "english-quoted",
+      "path": "guide.md",
+      "target": 512,
+      "source": "# Deployment\nThe release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The number is 3.14. “Release now!” Final check.",
+      "expected": [
+        {
+          "heading": "Deployment",
+          "content": "The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. ",
+          "spans": [
+            [
+              13,
+              429
+            ]
+          ]
+        },
+        {
+          "heading": "Deployment",
+          "content": "The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. ",
+          "spans": [
+            [
+              377,
+              845
+            ]
+          ]
+        },
+        {
+          "heading": "Deployment",
+          "content": "The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. ",
+          "spans": [
+            [
+              793,
+              1261
+            ]
+          ]
+        },
+        {
+          "heading": "Deployment",
+          "content": "The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. The release must use the current production policy. ",
+          "spans": [
+            [
+              1209,
+              1677
+            ]
+          ]
+        },
+        {
+          "heading": "Deployment",
+          "content": "The release must use the current production policy. The number is 3.14. “Release now!” Final check.",
+          "spans": [
+            [
+              1625,
+              1724
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "paragraphs-and-headings",
+      "path": "guide.md",
+      "target": 512,
+      "source": "---\ntitle: skipped\n---\n# A\nA policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. \n\nSecond paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. \n## B\nDo not copy A.\n",
+      "expected": [
+        {
+          "heading": "A",
+          "content": "A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. ",
+          "spans": [
+            [
+              27,
+              445
+            ]
+          ]
+        },
+        {
+          "heading": "A",
+          "content": "A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. A policy sentence. ",
+          "spans": [
+            [
+              369,
+              692
+            ]
+          ]
+        },
+        {
+          "heading": "A",
+          "content": "A policy sentence. A policy sentence. A policy sentence. A policy sentence. \n\nSecond paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. ",
+          "spans": [
+            [
+              616,
+              692
+            ],
+            [
+              694,
+              1108
+            ]
+          ]
+        },
+        {
+          "heading": "A",
+          "content": "Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. Second paragraph. ",
+          "spans": [
+            [
+              1036,
+              1414
+            ]
+          ]
+        },
+        {
+          "heading": "A / B",
+          "content": "Do not copy A.",
+          "spans": [
+            [
+              1420,
+              1434
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "plain-crlf",
+      "path": "notes.txt",
+      "target": 512,
+      "source": "  每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。\r\nLast sentence.  \r\n",
+      "expected": [
+        {
+          "heading": "",
+          "content": "  每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。",
+          "spans": [
+            [
+              0,
+              422
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。",
+          "spans": [
+            [
+              350,
+              842
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。",
+          "spans": [
+            [
+              770,
+              1262
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。每个完整句子都需要保留。\r\nLast sentence.  \r\n",
+          "spans": [
+            [
+              1190,
+              1462
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "fenced-code",
+      "path": "guide.md",
+      "target": 400,
+      "source": "# API\nBefore code.\n```rs\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\n```\nAfter code.",
+      "expected": [
+        {
+          "heading": "API",
+          "content": "Before code.",
+          "spans": [
+            [
+              6,
+              18
+            ]
+          ]
+        },
+        {
+          "heading": "API",
+          "content": "Before code.\n\n```rs\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\n",
+          "spans": [
+            [
+              6,
+              18
+            ],
+            [
+              19,
+              331
+            ]
+          ]
+        },
+        {
+          "heading": "API",
+          "content": "let value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\n",
+          "spans": [
+            [
+              259,
+              637
+            ]
+          ]
+        },
+        {
+          "heading": "API",
+          "content": "let value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\n",
+          "spans": [
+            [
+              565,
+              943
+            ]
+          ]
+        },
+        {
+          "heading": "API",
+          "content": "let value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\nlet value = 123;\r\n```\n\nAfter code.",
+          "spans": [
+            [
+              871,
+              1108
+            ],
+            [
+              1109,
+              1120
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "source-code",
+      "path": "module.py",
+      "target": 512,
+      "source": "# Not a heading\r\nx = \"长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本\"\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\n",
+      "expected": [
+        {
+          "heading": "",
+          "content": "# Not a heading\r\n",
+          "spans": [
+            [
+              0,
+              17
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "# Not a heading\r\nx = \"长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本\"\r\n",
+          "spans": [
+            [
+              0,
+              775
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "x = \"长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本长文本\"\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\n",
+          "spans": [
+            [
+              17,
+              1205
+            ]
+          ]
+        },
+        {
+          "heading": "",
+          "content": "return x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\nreturn x\r\n",
+          "spans": [
+            [
+              1125,
+              1375
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unicode-small",
+      "path": "guide.md",
+      "target": 4,
+      "source": "# Small\n😀中文甲乙。\n\nNext sentence.",
+      "expected": [
+        {
+          "heading": "Small",
+          "content": "😀中文甲乙。",
+          "spans": [
+            [
+              8,
+              14
+            ]
+          ]
+        },
+        {
+          "heading": "Small",
+          "content": "Next sentence.",
+          "spans": [
+            [
+              16,
+              30
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "missing-heading-level",
+      "path": "guide.md",
+      "target": 512,
+      "source": "### 深层\n这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。\n# 新章节\n结束。",
+      "expected": [
+        {
+          "heading": "深层",
+          "content": "这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。",
+          "spans": [
+            [
+              7,
+              437
+            ]
+          ]
+        },
+        {
+          "heading": "深层",
+          "content": "这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。",
+          "spans": [
+            [
+              357,
+              867
+            ]
+          ]
+        },
+        {
+          "heading": "深层",
+          "content": "这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。这是本节的完整句子。",
+          "spans": [
+            [
+              787,
+              1007
+            ]
+          ]
+        },
+        {
+          "heading": "新章节",
+          "content": "结束。",
+          "spans": [
+            [
+              1014,
+              1017
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "empty",
+      "path": "guide.md",
+      "target": 512,
+      "source": "",
+      "expected": []
+    },
+    {
+      "name": "only-headings",
+      "path": "guide.md",
+      "target": 512,
+      "source": "# A\n## B\n",
+      "expected": []
+    },
+    {
+      "name": "benchmark-default-2200",
+      "path": "guide.md",
+      "target": 2200,
+      "source": "# Guide\n## Production\nA complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. \n\n完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。",
+      "expected": [
+        {
+          "heading": "Guide / Production",
+          "content": "A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. ",
+          "spans": [
+            [
+              22,
+              2128
+            ]
+          ]
+        },
+        {
+          "heading": "Guide / Production",
+          "content": "A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. ",
+          "spans": [
+            [
+              2050,
+              4234
+            ]
+          ]
+        },
+        {
+          "heading": "Guide / Production",
+          "content": "A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. ",
+          "spans": [
+            [
+              4156,
+              6340
+            ]
+          ]
+        },
+        {
+          "heading": "Guide / Production",
+          "content": "A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. A complete production policy sentence. ",
+          "spans": [
+            [
+              6262,
+              8212
+            ]
+          ]
+        },
+        {
+          "heading": "Guide / Production",
+          "content": "A complete production policy sentence. A complete production policy sentence. \n\n完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。",
+          "spans": [
+            [
+              8134,
+              8212
+            ],
+            [
+              8214,
+              10326
+            ]
+          ]
+        },
+        {
+          "heading": "Guide / Production",
+          "content": "完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。完整的授权条件不能遗漏。",
+          "spans": [
+            [
+              10254,
+              10614
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "benchmark-overlong-sentence",
+      "path": "guide.md",
+      "target": 2200,
+      "source": "# 完整性\n前置条件。完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句。最后的结论。",
+      "expected": [
+        {
+          "heading": "完整性",
+          "content": "前置条件。",
+          "spans": [
+            [
+              6,
+              11
+            ]
+          ]
+        },
+        {
+          "heading": "完整性",
+          "content": "前置条件。完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句。",
+          "spans": [
+            [
+              6,
+              2812
+            ]
+          ]
+        },
+        {
+          "heading": "完整性",
+          "content": "完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句完整长句。最后的结论。",
+          "spans": [
+            [
+              11,
+              2818
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

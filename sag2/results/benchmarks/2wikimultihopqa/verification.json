@@ -1,0 +1,24 @@
+{
+  "provider": "OpenRouter",
+  "endpoint": "https://openrouter.ai/api/alpha/decisions",
+  "dataset": "2wikimultihopqa",
+  "n": 1000,
+  "full_dataset_verified": true,
+  "metrics": {
+    "Recall@1": 0.4355,
+    "Recall@2": 0.855,
+    "Recall@5": 0.9735,
+    "Recall@10": 0.97425
+  },
+  "query_identity_model_noul_and_all_scores_verified": true,
+  "all_dpp_orders_and_prior_score_context_verified": true,
+  "per_question_successful_requests_not_increased": true,
+  "new_successful_http_responses": 2999,
+  "raw_http_attempts": 2999,
+  "http500_attempts": 0,
+  "http499_attempts": 0,
+  "timeout_attempts": 0,
+  "source_and_index_hashes_verified": true,
+  "summary_sha256": "9599bfb69876f47e4582e310c2c0dcdd318ba341347705ec1cc6ebc4644e5e92",
+  "new_jev_requests_for_audit": 0
+}

@@ -1,0 +1,24 @@
+[project]
+name = "graphrag-external"
+version = "0.1.0"
+description = "SAG-Benchmark external method: Microsoft GraphRAG (global/local search)"
+requires-python = ">=3.10,<3.13"  # graphrag 不支持 3.13+，需 python 3.10-3.12
+dependencies = [
+    # Microsoft GraphRAG 引擎（含 fnllm 等传递依赖）
+    "graphrag==2.0.0",
+    # Step 脚本运行时依赖
+    "python-dotenv>=1.0",
+    "pandas>=2.0",
+    "pyarrow>=15.0,<16.0",  # 跟随 graphrag==2.0.0 约束（3.12 有 wheel）
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]   # pycodestyle + pyflakes + isort
+ignore = ["E501"]                # 行长由 formatter 控制
+
+[tool.ruff.lint.isort]
+known-first-party = ["graphrag_benchmark"]

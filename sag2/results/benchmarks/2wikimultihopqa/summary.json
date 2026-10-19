@@ -1,0 +1,33 @@
+{
+  "dataset": "2wikimultihopqa",
+  "n": 1000,
+  "total_questions": 1000,
+  "complete_dataset": true,
+  "metrics": {
+    "Recall@1": 0.4355,
+    "Recall@2": 0.855,
+    "Recall@5": 0.9735,
+    "Recall@10": 0.97425
+  },
+  "pipeline_successful_requests": 2999,
+  "successful_request_count_distribution": {
+    "3": 999,
+    "2": 1
+  },
+  "per_question_request_increases": [],
+  "new_successful_http_responses": 2999,
+  "raw_http_attempts": 2999,
+  "http500_attempts": 0,
+  "timeout_attempts": 0,
+  "model": "typesafe/jev-1.13-20260917",
+  "request_model": "typesafe/jev-1.13",
+  "provider": "OpenRouter",
+  "endpoint": "https://openrouter.ai/api/alpha/decisions",
+  "question_type": "noul",
+  "concurrency": 20,
+  "input_tokens": 107348480,
+  "output_tokens": 6799037,
+  "response_cost_usd": 4.50863616,
+  "scoring_elapsed_seconds": 1520.4762505873805,
+  "http499_attempts": 0
+}

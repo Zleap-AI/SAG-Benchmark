@@ -1,0 +1,55 @@
+{
+  "type": "object",
+  "properties": {
+    "ranked_ids": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "minItems": 10,
+      "maxItems": 10
+    },
+    "confirmed_relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "object": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "subject",
+          "relation",
+          "object",
+          "evidence_ids"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "unresolved_relations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "ranked_ids",
+    "confirmed_relations",
+    "unresolved_relations"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="796" viewBox="0 0 1800 796">
+<rect width="100%" height="100%" fill="white"/>
+<text x="28" y="34.229248046875" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="27" font-weight="700" fill="#111111">(a) Token consumption (million tokens)</text>
+<rect x="28" y="310" width="1744" height="48" fill="#E9F2FA"/>
+<line x1="28" y1="54" x2="1772" y2="54" stroke="#222222" stroke-width="2.2"/>
+<line x1="28" y1="162" x2="1772" y2="162" stroke="#222222" stroke-width="1.15"/>
+<line x1="28" y1="217" x2="1772" y2="217" stroke="#C4CCD4" stroke-width="0.7"/>
+<line x1="28" y1="264" x2="1772" y2="264" stroke="#D2D6DA" stroke-width="0.65"/>
+<line x1="28" y1="311" x2="1772" y2="311" stroke="#C4CCD4" stroke-width="0.7"/>
+<line x1="28" y1="358" x2="1772" y2="358" stroke="#222222" stroke-width="2.2"/>
+<line x1="358" y1="120" x2="358" y2="358" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="47" y="144.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">Method / model</text>
+<text x="47" y="198.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">SAG2 - Jev</text>
+<text x="47" y="245.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">Agentic SAG2 - Jev</text>
+<text x="47" y="292.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">Agentic SAG2 - Sol</text>
+<text x="47" y="339.767822265625" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">Agentic SAG2 - Total</text>
+<text x="603.3333333333334" y="91.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">MuSiQue</text>
+<line x1="384.0" y1="115" x2="822.6666666666667" y2="115" stroke="#222222" stroke-width="0.9"/>
+<text x="491.6666666666667" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Input</text>
+<text x="491.6666666666667" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">103.009</text>
+<text x="491.6666666666667" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">163.076</text>
+<text x="491.6666666666667" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">47.823</text>
+<text x="491.6666666666667" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">210.899</text>
+<text x="715.0" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Output</text>
+<text x="715.0" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">6.967</text>
+<text x="715.0" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">10.306</text>
+<text x="715.0" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">0.743</text>
+<text x="715.0" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">11.049</text>
+<text x="1076.0" y="91.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">2WikiMultiHopQA</text>
+<line x1="856.6666666666667" y1="115" x2="1295.3333333333335" y2="115" stroke="#222222" stroke-width="0.9"/>
+<line x1="839.6666666666667" y1="120" x2="839.6666666666667" y2="358" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="964.3333333333334" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Input</text>
+<text x="964.3333333333334" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">107.348</text>
+<text x="964.3333333333334" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">103.276</text>
+<text x="964.3333333333334" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">34.118</text>
+<text x="964.3333333333334" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">137.394</text>
+<text x="1187.6666666666667" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Output</text>
+<text x="1187.6666666666667" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">6.799</text>
+<text x="1187.6666666666667" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">6.340</text>
+<text x="1187.6666666666667" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">0.478</text>
+<text x="1187.6666666666667" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">6.818</text>
+<text x="1548.6666666666667" y="91.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">HotpotQA</text>
+<line x1="1329.3333333333335" y1="115" x2="1768.0000000000002" y2="115" stroke="#222222" stroke-width="0.9"/>
+<line x1="1312.3333333333335" y1="120" x2="1312.3333333333335" y2="358" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="1437.0000000000002" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Input</text>
+<text x="1437.0000000000002" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">105.909</text>
+<text x="1437.0000000000002" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">92.251</text>
+<text x="1437.0000000000002" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">31.547</text>
+<text x="1437.0000000000002" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">123.797</text>
+<text x="1660.3333333333335" y="144.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Output</text>
+<text x="1660.3333333333335" y="198.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">6.770</text>
+<text x="1660.3333333333335" y="245.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">5.751</text>
+<text x="1660.3333333333335" y="292.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">0.508</text>
+<text x="1660.3333333333335" y="339.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">6.259</text>
+<text x="28" y="410.229248046875" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="27" font-weight="700" fill="#111111">(b) Cost (USD; equivalent API cost)</text>
+<rect x="28" y="593" width="1744" height="49" fill="#E9F2FA"/>
+<line x1="28" y1="430" x2="1772" y2="430" stroke="#222222" stroke-width="2.2"/>
+<line x1="28" y1="538" x2="1772" y2="538" stroke="#222222" stroke-width="1.15"/>
+<line x1="28" y1="593" x2="1772" y2="593" stroke="#C4CCD4" stroke-width="0.7"/>
+<line x1="28" y1="642" x2="1772" y2="642" stroke="#222222" stroke-width="2.2"/>
+<line x1="358" y1="496" x2="358" y2="642" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="47" y="520.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">Method</text>
+<text x="47" y="574.96923828125" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">SAG2</text>
+<text x="47" y="621.767822265625" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">Agentic SAG2 (Ours)</text>
+<text x="603.3333333333334" y="467.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">MuSiQue</text>
+<line x1="384.0" y1="491" x2="822.6666666666667" y2="491" stroke="#222222" stroke-width="0.9"/>
+<text x="454.44444444444446" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Jev</text>
+<text x="454.44444444444446" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">4.326</text>
+<text x="454.44444444444446" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">6.849</text>
+<text x="603.3333333333334" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Sol</text>
+<text x="603.3333333333334" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">--</text>
+<text x="603.3333333333334" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">33.457</text>
+<text x="752.2222222222222" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Total</text>
+<text x="752.2222222222222" y="574.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">4.326</text>
+<text x="752.2222222222222" y="621.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">40.306</text>
+<text x="1076.0" y="467.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">2WikiMultiHopQA</text>
+<line x1="856.6666666666667" y1="491" x2="1295.3333333333335" y2="491" stroke="#222222" stroke-width="0.9"/>
+<line x1="839.6666666666667" y1="496" x2="839.6666666666667" y2="642" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="927.1111111111112" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Jev</text>
+<text x="927.1111111111112" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">4.509</text>
+<text x="927.1111111111112" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">4.338</text>
+<text x="1076.0" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Sol</text>
+<text x="1076.0" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">--</text>
+<text x="1076.0" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">21.755</text>
+<text x="1224.888888888889" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Total</text>
+<text x="1224.888888888889" y="574.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">4.509</text>
+<text x="1224.888888888889" y="621.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">26.092</text>
+<text x="1548.6666666666667" y="467.685546875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="28" font-weight="400" fill="#111111">HotpotQA</text>
+<line x1="1329.3333333333335" y1="491" x2="1768.0000000000002" y2="491" stroke="#222222" stroke-width="0.9"/>
+<line x1="1312.3333333333335" y1="496" x2="1312.3333333333335" y2="642" stroke="#A6AEB6" stroke-width="0.8"/>
+<text x="1399.7777777777778" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Jev</text>
+<text x="1399.7777777777778" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">4.448</text>
+<text x="1399.7777777777778" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">3.875</text>
+<text x="1548.6666666666667" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Sol</text>
+<text x="1548.6666666666667" y="574.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">--</text>
+<text x="1548.6666666666667" y="621.96923828125" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="400" fill="#111111">20.249</text>
+<text x="1697.5555555555557" y="520.73046875" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="24" font-weight="400" fill="#111111">Total</text>
+<text x="1697.5555555555557" y="574.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">4.448</text>
+<text x="1697.5555555555557" y="621.767822265625" text-anchor="middle" font-family="Times New Roman,Times,serif" font-size="25" font-weight="700" fill="#111111">24.123</text>
+<text x="30" y="686.53662109375" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="19" font-weight="400" fill="#444444">Each dataset contains 1,000 questions. Input includes cached tokens; output includes reasoning tokens.</text>
+<text x="30" y="714.53662109375" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="19" font-weight="400" fill="#444444">Totals include Jev calls reused from prior runs. Sol costs use standard API rates; execution used Codex allowance.</text>
+<text x="30" y="742.53662109375" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="19" font-weight="400" fill="#444444">All datasets: $90.522 equivalent total cost; $12.307 observed new Jev cost. Includes the recorded failed Sol attempt.</text>
+<text x="30" y="770.53662109375" text-anchor="start" font-family="Times New Roman,Times,serif" font-size="19" font-weight="400" fill="#444444">Sol cached input / reasoning (M), in column order: 36.643 / 0.146; 26.979 / 0.122; 25.222 / 0.131.</text>
+</svg>

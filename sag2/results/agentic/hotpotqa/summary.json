@@ -1,0 +1,28 @@
+{
+  "method": "Agentic SAG2",
+  "dataset": "hotpotqa",
+  "question_count": 1000,
+  "metrics": {
+    "Recall@1": 0.491,
+    "Recall@2": 0.9645,
+    "Recall@5": 0.993,
+    "Recall@10": 0.9965
+  },
+  "complete_at_10": 994,
+  "costs": {
+    "sol_api_equivalent_usd": 20.248778,
+    "jev_equivalent_usd": 3.87453465,
+    "total_equivalent_usd": 24.12331265,
+    "jev_recorded_new_usd": 3.87453465
+  },
+  "llm_usage_including_recorded_failures": {
+    "input_tokens": 31546591,
+    "cached_input_tokens": 25221760,
+    "output_tokens": 507694,
+    "reasoning_output_tokens": 131497
+  },
+  "jev_usage": {
+    "input_tokens": 92250825,
+    "output_tokens": 5751115
+  }
+}

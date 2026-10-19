@@ -1,0 +1,516 @@
+{
+  "evaluation": "Final reranker comparisons; no intermediate failed runs",
+  "source_summary_sha256": "b174d63406ba63a9f4a6ba173552c2281fdbaf00b26ccd8da24d68e2dc4892e9",
+  "experiments": {
+    "qwen_three": {
+      "model": "qwen3-rerank",
+      "dataset": "musique",
+      "protocol": "expanded",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.22641666666666665,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.3475,
+        "AllEvidence@2": 0.062,
+        "Recall@5": 0.5555,
+        "AllEvidence@5": 0.238,
+        "Recall@10": 0.7160833333333334,
+        "AllEvidence@10": 0.446
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 2,
+      "final_dpp": true,
+      "source_summary_sha256": "805592ea7e9d3b26aec08b0e8b0ea424c53ad1228bbe5ed5044809d75fb5cc8d",
+      "source_verification_sha256": "c72f59ad1c8d5e5ffe03ee02cb7217675b8bbbef426536f189ec0674a0c0c1ce",
+      "source_verification": {
+        "completed_questions": 1000,
+        "scoring_rounds": 3000,
+        "verified_request_payloads": 2997,
+        "original_text_verified": true,
+        "native_score_index_mapping_verified": true,
+        "metrics_recomputed": true,
+        "frozen_engine_hashes_verified": true,
+        "jev_requests": 0,
+        "http_statuses": {
+          "200": 2697
+        },
+        "measured_peak_concurrency": 20
+      },
+      "records": "qwen_three.jsonl",
+      "records_sha256": "2d275ce38789ad14e00444131b4c24678b2daa1712d0776a48f6fe637d76aa3e"
+    },
+    "qwen_single": {
+      "model": "qwen3-rerank",
+      "dataset": "musique",
+      "protocol": "single",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.3165833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4544166666666667,
+        "AllEvidence@2": 0.113,
+        "Recall@5": 0.6016666666666667,
+        "AllEvidence@5": 0.244,
+        "Recall@10": 0.6688333333333334,
+        "AllEvidence@10": 0.325
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 0,
+      "final_dpp": false,
+      "source_summary_sha256": "34468ab1607eae16a2dd2f199c68e30245d5b3507a67766d6501a3b5b16c1a61",
+      "source_verification_sha256": "6f2895f0bce07b517c4acb5560eeaf4ebaffe230a936169aeaecb9fc5ff4f0ea",
+      "source_verification": {
+        "questions": 1000,
+        "unique_requests": 999,
+        "one_request_per_question": true,
+        "raw_question_verified": true,
+        "raw_documents_verified": true,
+        "native_order_unchanged": true,
+        "no_expansion": true,
+        "no_dpp": true,
+        "metrics_recomputed": true
+      },
+      "records": "qwen_single.jsonl",
+      "records_sha256": "00f2c88933af05aeab34ba42ee902a298e6a1e05c565fb7fa736d71b26441f7b"
+    },
+    "qwen_small_three": {
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "dataset": "musique",
+      "protocol": "expanded",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.2566666666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4080833333333333,
+        "AllEvidence@2": 0.093,
+        "Recall@5": 0.6254166666666666,
+        "AllEvidence@5": 0.321,
+        "Recall@10": 0.74175,
+        "AllEvidence@10": 0.484
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 2,
+      "final_dpp": true,
+      "source_summary_sha256": "8920205cb064b91bb4799dffc7804a37305d7a1462cda0d04a237c0d1a0b4106",
+      "source_verification_sha256": "f804cf5a953aa4835590771e199734c1939a6645f05268317194e1ff43da2c6e",
+      "source_verification": {
+        "completed_questions": 1000,
+        "scoring_rounds": 3000,
+        "verified_request_payloads": 2997,
+        "original_text_verified": true,
+        "native_score_index_mapping_verified": true,
+        "metrics_recomputed": true,
+        "frozen_engine_hashes_verified": true,
+        "jev_requests": 0,
+        "http_statuses": {
+          "200": 2997,
+          "429": 1116
+        },
+        "measured_peak_concurrency": 20,
+        "correct_instruction_field_verified": true,
+        "exact_candidate_order_verified": true
+      },
+      "records": null
+    },
+    "jina_three": {
+      "model": "jina-reranker-v3.5",
+      "dataset": "musique",
+      "protocol": "expanded",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.31025,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.50375,
+        "AllEvidence@2": 0.156,
+        "Recall@5": 0.6560833333333334,
+        "AllEvidence@5": 0.346,
+        "Recall@10": 0.72125,
+        "AllEvidence@10": 0.438
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 2,
+      "final_dpp": true,
+      "source_summary_sha256": "23e012464f3070e06f9253522e070066ef24da4cb851da33d22163dea3172a13",
+      "source_verification_sha256": "111c3afdce4565cc330b8523d33ed6c3d11652e0f1a3ddca128cff7e7e803c0a",
+      "source_verification": {
+        "completed_questions": 1000,
+        "scoring_rounds": 2999,
+        "verified_request_payloads": 2996,
+        "original_text_verified": true,
+        "native_score_index_mapping_verified": true,
+        "fixed_cosine_score_mapping_verified": true,
+        "metrics_recomputed": true,
+        "frozen_engine_hashes_verified": true,
+        "jev_requests": 0,
+        "http_statuses": {
+          "200": 2996
+        },
+        "measured_peak_concurrency": 20,
+        "criterion_in_query_verified": true,
+        "exact_candidate_order_verified": true
+      },
+      "records": "jina_three.jsonl",
+      "records_sha256": "87b679de7b9f6f36fba457ac364b8b557f8f264b45aa3d8dda56260253054c4b"
+    },
+    "jina_2wiki": {
+      "model": "jina-reranker-v3.5",
+      "dataset": "2wikimultihopqa",
+      "protocol": "expanded",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.431,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.7015,
+        "AllEvidence@2": 0.411,
+        "Recall@5": 0.808,
+        "AllEvidence@5": 0.557,
+        "Recall@10": 0.8695,
+        "AllEvidence@10": 0.679
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 2,
+      "final_dpp": true,
+      "source_summary_sha256": "20c69c0ce67c1d26a9deb38b7e2efb19b86e245b4266e7d50af639cf35bdaf80",
+      "source_verification_sha256": "fa10958df046ed6a5f14c3e7588bb70042e95551eaae672935ea04e48cc3a40d",
+      "source_verification": {
+        "completed_questions": 1000,
+        "scoring_rounds": 3000,
+        "verified_request_payloads": 3000,
+        "original_text_verified": true,
+        "native_score_index_mapping_verified": true,
+        "fixed_cosine_score_mapping_verified": true,
+        "metrics_recomputed": true,
+        "frozen_engine_hashes_verified": true,
+        "jev_requests": 0,
+        "http_statuses": {
+          "200": 3000
+        },
+        "measured_peak_concurrency": 20,
+        "criterion_in_query_verified": true,
+        "exact_candidate_order_verified": true
+      },
+      "records": "jina_2wiki.jsonl",
+      "records_sha256": "5f73a7786bc02be9f380b6019ae4e5eac86c631c4eb2b2ea4d5014efd5af4df2",
+      "retrieval_source_sha256": "77cedfeef1c89bc5c1f8bb627652793f1d250195a99d98bd79d8f1f7955da421"
+    },
+    "jina_hotpot": {
+      "model": "jina-reranker-v3.5",
+      "dataset": "hotpotqa",
+      "protocol": "expanded",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.4675,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.8555,
+        "AllEvidence@2": 0.728,
+        "Recall@5": 0.9435,
+        "AllEvidence@5": 0.896,
+        "Recall@10": 0.97,
+        "AllEvidence@10": 0.943
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 2,
+      "final_dpp": true,
+      "source_summary_sha256": "04e395f4d0a8cba35e6c6bf134f9f3215f223ce15f3d5d441430552d0808c64d",
+      "source_verification_sha256": "22d4a658f544ea96cd6096e116c2171c8c2cd748aeec3aa1a019654793f9829f",
+      "source_verification": {
+        "completed_questions": 1000,
+        "scoring_rounds": 2998,
+        "verified_request_payloads": 2998,
+        "original_text_verified": true,
+        "native_score_index_mapping_verified": true,
+        "fixed_cosine_score_mapping_verified": true,
+        "metrics_recomputed": true,
+        "frozen_engine_hashes_verified": true,
+        "jev_requests": 0,
+        "http_statuses": {
+          "200": 2998
+        },
+        "measured_peak_concurrency": 20,
+        "criterion_in_query_verified": true,
+        "exact_candidate_order_verified": true
+      },
+      "records": "jina_hotpot.jsonl",
+      "records_sha256": "c651be3d39791c81b3b6f671298abdd265655f49517be245da9d40686812ccab",
+      "retrieval_source_sha256": "2a26a8e1c8d594fe47185c552ec618a06dfd3e0401f794eac0d71998c355481b"
+    },
+    "jina_single": {
+      "model": "jina-reranker-v3.5",
+      "dataset": "musique",
+      "protocol": "single",
+      "question_count": 1000,
+      "metrics": {
+        "Recall@1": 0.3500833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.52175,
+        "AllEvidence@2": 0.169,
+        "Recall@5": 0.6304166666666666,
+        "AllEvidence@5": 0.288,
+        "Recall@10": 0.67425,
+        "AllEvidence@10": 0.347
+      },
+      "provider": "302",
+      "local_full_evaluation": false,
+      "expansions": 0,
+      "final_dpp": false,
+      "source_summary_sha256": "daed6c5cace0b9e4db0b3fb87c682486ca2d45e6870bec5ab779ec7e1a794569",
+      "source_verification_sha256": "3cde603caed1c08fee984e507df4d8314ccdabc25f30bdaa30ccee210462196e",
+      "source_verification": {
+        "questions": 1000,
+        "unique_requests": 999,
+        "one_request_per_question": true,
+        "standard_prefix_and_raw_question_verified": true,
+        "raw_documents_verified": true,
+        "native_order_unchanged": true,
+        "no_expansion": true,
+        "no_dpp": true,
+        "metrics_recomputed": true
+      },
+      "records": "jina_single.jsonl",
+      "records_sha256": "286caa8584b9bdd00e4dad58ba48baa1f28e89affef7302e3910eace814369f1"
+    }
+  },
+  "musique": [
+    {
+      "method": "BM25",
+      "metrics": {
+        "Recall@1": 0.2870833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.375,
+        "AllEvidence@2": 0.045,
+        "Recall@5": 0.4765833333333333,
+        "AllEvidence@5": 0.121,
+        "Recall@10": 0.545,
+        "AllEvidence@10": 0.175
+      }
+    },
+    {
+      "method": "BM25＋Qwen 单轮",
+      "metrics": {
+        "Recall@1": 0.3165833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4544166666666667,
+        "AllEvidence@2": 0.113,
+        "Recall@5": 0.6016666666666667,
+        "AllEvidence@5": 0.244,
+        "Recall@10": 0.6688333333333334,
+        "AllEvidence@10": 0.325
+      }
+    },
+    {
+      "method": "BM25＋Jina 单轮",
+      "metrics": {
+        "Recall@1": 0.3500833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.52175,
+        "AllEvidence@2": 0.169,
+        "Recall@5": 0.6304166666666666,
+        "AllEvidence@5": 0.288,
+        "Recall@10": 0.67425,
+        "AllEvidence@10": 0.347
+      }
+    },
+    {
+      "method": "SAG2＋Qwen 三轮",
+      "metrics": {
+        "Recall@1": 0.22641666666666665,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.3475,
+        "AllEvidence@2": 0.062,
+        "Recall@5": 0.5555,
+        "AllEvidence@5": 0.238,
+        "Recall@10": 0.7160833333333334,
+        "AllEvidence@10": 0.446
+      }
+    },
+    {
+      "method": "SAG2＋Qwen 0.6B 三轮",
+      "metrics": {
+        "Recall@1": 0.2566666666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.4080833333333333,
+        "AllEvidence@2": 0.093,
+        "Recall@5": 0.6254166666666666,
+        "AllEvidence@5": 0.321,
+        "Recall@10": 0.74175,
+        "AllEvidence@10": 0.484
+      }
+    },
+    {
+      "method": "SAG2＋Jina 三轮",
+      "metrics": {
+        "Recall@1": 0.31025,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.50375,
+        "AllEvidence@2": 0.156,
+        "Recall@5": 0.6560833333333334,
+        "AllEvidence@5": 0.346,
+        "Recall@10": 0.72125,
+        "AllEvidence@10": 0.438
+      }
+    },
+    {
+      "method": "SAG2＋Jev 基线",
+      "metrics": {
+        "Recall@1": 0.3424166666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.6234166666666666,
+        "AllEvidence@2": 0.321,
+        "Recall@5": 0.8059166666666666,
+        "AllEvidence@5": 0.58,
+        "Recall@10": 0.8660833333333333,
+        "AllEvidence@10": 0.69
+      }
+    }
+  ],
+  "datasets": [
+    {
+      "dataset": "MuSiQue",
+      "bm25": {
+        "Recall@1": 0.2870833333333333,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.375,
+        "AllEvidence@2": 0.045,
+        "Recall@5": 0.4765833333333333,
+        "AllEvidence@5": 0.121,
+        "Recall@10": 0.545,
+        "AllEvidence@10": 0.175
+      },
+      "jev_baseline": {
+        "Recall@1": 0.3424166666666667,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.6234166666666666,
+        "AllEvidence@2": 0.321,
+        "Recall@5": 0.8059166666666666,
+        "AllEvidence@5": 0.58,
+        "Recall@10": 0.8660833333333333,
+        "AllEvidence@10": 0.69
+      },
+      "jina_three": {
+        "Recall@1": 0.31025,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.50375,
+        "AllEvidence@2": 0.156,
+        "Recall@5": 0.6560833333333334,
+        "AllEvidence@5": 0.346,
+        "Recall@10": 0.72125,
+        "AllEvidence@10": 0.438
+      },
+      "jina_minus_jev": {
+        "Recall@1": -0.0321666666666667,
+        "Recall@2": -0.1196666666666666,
+        "Recall@5": -0.1498333333333332,
+        "Recall@10": -0.1448333333333333,
+        "AllEvidence@10": -0.252
+      }
+    },
+    {
+      "dataset": "2WikiMultiHopQA",
+      "bm25": {
+        "Recall@1": 0.4025,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.58175,
+        "AllEvidence@2": 0.229,
+        "Recall@5": 0.67075,
+        "AllEvidence@5": 0.343,
+        "Recall@10": 0.71575,
+        "AllEvidence@10": 0.415
+      },
+      "jev_baseline": {
+        "Recall@1": 0.4355,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.855,
+        "AllEvidence@2": 0.713,
+        "Recall@5": 0.9735,
+        "AllEvidence@5": 0.929,
+        "Recall@10": 0.97425,
+        "AllEvidence@10": 0.931
+      },
+      "jina_three": {
+        "Recall@1": 0.431,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.7015,
+        "AllEvidence@2": 0.411,
+        "Recall@5": 0.808,
+        "AllEvidence@5": 0.557,
+        "Recall@10": 0.8695,
+        "AllEvidence@10": 0.679
+      },
+      "jina_minus_jev": {
+        "Recall@1": -0.0045,
+        "Recall@2": -0.1535,
+        "Recall@5": -0.1655,
+        "Recall@10": -0.10475,
+        "AllEvidence@10": -0.252
+      }
+    },
+    {
+      "dataset": "HotpotQA",
+      "bm25": {
+        "Recall@1": 0.3975,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.5805,
+        "AllEvidence@2": 0.259,
+        "Recall@5": 0.7445,
+        "AllEvidence@5": 0.521,
+        "Recall@10": 0.8695,
+        "AllEvidence@10": 0.744
+      },
+      "jev_baseline": {
+        "Recall@1": 0.483,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.936,
+        "AllEvidence@2": 0.876,
+        "Recall@5": 0.9845,
+        "AllEvidence@5": 0.97,
+        "Recall@10": 0.99,
+        "AllEvidence@10": 0.981
+      },
+      "jina_three": {
+        "Recall@1": 0.4675,
+        "AllEvidence@1": 0.0,
+        "Recall@2": 0.8555,
+        "AllEvidence@2": 0.728,
+        "Recall@5": 0.9435,
+        "AllEvidence@5": 0.896,
+        "Recall@10": 0.97,
+        "AllEvidence@10": 0.943
+      },
+      "jina_minus_jev": {
+        "Recall@1": -0.0155,
+        "Recall@2": -0.0805,
+        "Recall@5": -0.041,
+        "Recall@10": -0.02,
+        "AllEvidence@10": -0.038
+      }
+    }
+  ],
+  "ablation_deltas": {
+    "qwen_three_minus_single": {
+      "Recall@1": -0.09016666666666664,
+      "Recall@2": -0.1069166666666667,
+      "Recall@5": -0.0461666666666667,
+      "Recall@10": 0.04725,
+      "AllEvidence@10": 0.121
+    },
+    "jina_three_minus_single": {
+      "Recall@1": -0.0398333333333333,
+      "Recall@2": -0.018,
+      "Recall@5": 0.0256666666666668,
+      "Recall@10": 0.047,
+      "AllEvidence@10": 0.091
+    }
+  },
+  "notes": [
+    "Full retrieval scores were obtained through 302; they are not claims of local-backend parity.",
+    "Qwen qwen3-rerank is a provider model ID; its parameter count was not established.",
+    "Qwen 0.6B retains a verified aggregate; its per-question export is not available locally.",
+    "Single vs expanded changes instruction, query context and final DPP as well as expansion count."
+  ]
+}

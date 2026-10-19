@@ -1,0 +1,10 @@
+accelerate
+aioboto3
+aiohttp
+numpy
+nano-vectordb
+openai
+tenacity
+tiktoken
+xxhash
+hypergraph-db

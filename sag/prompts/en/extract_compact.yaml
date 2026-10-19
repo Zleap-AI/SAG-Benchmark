@@ -1,0 +1,101 @@
+# =============================================================================
+# Event Extraction Module - Independent Compact English Prompt
+# =============================================================================
+
+extract_compact:
+  description: Extract at most one flat English event with only SAG-required fields
+  version: "2.0"
+
+  template: |
+    ## Role
+
+    You are a professional content extractor whose core task is to extract two types of structured information from raw documents: **events** and **entities**.
+
+    ### Event Extraction Principles
+
+    - Mandatory single event: Regardless of how many different topics the input contains, they must be integrated into one comprehensive event. Splitting into multiple events is forbidden.
+    - Use short, complete subject-verb-object sentences to state facts; avoid mechanically copying the original text.
+    - Exhaustive information coverage: All core information from relevant fragments must be reflected in the event content; every sentence must have explicit textual support in the input fragments.
+    - Faithful to the original text: Do not add or omit facts, do not infer on your own, and do not change the original subject.
+    - Preserve all key numbers and retain colloquial or relative time expressions in their original wording unless the input explicitly provides an exact date.
+    - Ignore advertisements, navigation text, boilerplate, source labels, and fragments without factual value.
+
+    ### Entity Extraction Principles
+
+    - Extract entities necessary for understanding the event (people, organizations, locations, time, products, key data, etc.), especially subjects and objects.
+    - Full names, abbreviations, and aliases of the same entity must all be extracted; entities connected by "and/or/with" etc. must be split.
+    - Entity types must be selected from `entity_types`; the description must clarify the entity's specific role in the event.
+
+    ## Output Requirements
+
+    1. Return exactly one event containing:
+       - `title`: a short, discriminative English title containing the key subject.
+       - `content`: a self-contained English factual account preserving important subjects, relations, numbers, and time expressions.
+       - `entities`: the entities required to retrieve the event.
+       - `is_valid`: `true` only when the input contains an extractable factual event.
+    2. For a valid event, `entities` must contain at least one entity.
+    3. If no factual event can be extracted, set `is_valid` to `false`, use a short English placeholder title/content, and return an empty `entities` array.
+    4. Each entity contains exactly:
+       - `type`: one of the entity types supplied in the input metadata.
+       - `name`: the entity's English name.
+       - `description`: an English description of the entity's specific role or relationship in this event.
+    5. Return JSON only and follow the supplied response schema exactly:
+       - The top-level object contains `type` set to `"response"` and `data`.
+       - `data` contains only an `items` array.
+       - Put the single event object inside `data.items`; do not return a bare event object.
+    6. Generate the title, content, entity names, and entity descriptions in English.
+
+  output_schema:
+    type: object
+    additionalProperties: false
+    required: [type, data]
+    properties:
+      type:
+        const: response
+      data:
+        type: object
+        additionalProperties: false
+        required: [items]
+        properties:
+          items:
+            type: array
+            minItems: 1
+            maxItems: 1
+            items:
+              $ref: "#/definitions/event"
+
+  definitions:
+    event:
+      type: object
+      additionalProperties: false
+      required: [title, content, entities, is_valid]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        content:
+          type: string
+          minLength: 1
+        entities:
+          type: array
+          items:
+            $ref: "#/definitions/entity"
+        is_valid:
+          type: boolean
+
+    entity:
+      type: object
+      additionalProperties: false
+      required: [type, name, description]
+      properties:
+        type:
+          type: string
+          description: Entity type selected from the input metadata
+        name:
+          type: string
+          minLength: 1
+          description: English entity name
+        description:
+          type: string
+          minLength: 1
+          description: English description of the entity's role or relationship in the event

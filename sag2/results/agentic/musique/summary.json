@@ -1,0 +1,29 @@
+{
+  "method": "Agentic SAG2",
+  "dataset": "musique",
+  "question_count": 1000,
+  "metrics": {
+    "Recall@1": 0.38208333333333333,
+    "Recall@2": 0.7199166666666666,
+    "Recall@5": 0.922,
+    "Recall@10": 0.9539166666666666
+  },
+  "complete_at_10": 891,
+  "costs": {
+    "sol_api_equivalent_usd": 33.4570496,
+    "jev_equivalent_usd": 6.8491836,
+    "total_equivalent_usd": 40.3062332,
+    "jev_recorded_new_usd": 4.09517493
+  },
+  "llm_usage_including_recorded_failures": {
+    "input_tokens": 47822738,
+    "cached_input_tokens": 36643456,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 743414,
+    "reasoning_output_tokens": 145671
+  },
+  "jev_usage": {
+    "input_tokens": 163075800,
+    "output_tokens": 10305855
+  }
+}
