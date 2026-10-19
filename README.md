@@ -1,16 +1,29 @@
-<p align="center"><img src="sag2/assets/logo.svg" alt="Zleap AI" width="220" /></p>
+<p align="center">
+  <img src="sag2/assets/logo.svg" alt="Zleap AI" width="180" />
+</p>
 
-# SAG2
+<h1 align="center">SAG2</h1>
 
-> Companion benchmark reproduction repository for the SAG2 paper, with code, data and instructions for reproducing its experiments. For the SAG2 application, see [SAG-Wiki](https://github.com/Zleap-AI/SAG-Wiki).
+<p align="center">
+  <strong>English</strong> · <a href="README-CN.md">简体中文</a>
+</p>
 
-**English** | [简体中文](README-CN.md)
+<p align="center">
+  <a href="https://arxiv.org/abs/2610.22588"><img alt="Paper: arXiv:2610.22588" src="https://img.shields.io/badge/paper-arXiv%3A2610.22588-18181b" /></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-18181b" /></a>
+</p>
 
-**Paper:** [SAG2: Embedding-Free Multi-Hop Retrieval with BM25 and JEV (arXiv:2610.22588)](https://arxiv.org/abs/2610.22588)
+<p align="center"><strong>Embedding-free multi-hop evidence retrieval.</strong></p>
 
-**SAG2: embedding-free multi-hop evidence retrieval.** SQLite FTS5, BM25 and JEV follow **question → passages → terms → new passages** at query time. Indexing builds a local lexical index. Agentic SAG2 and local reranking are optional extensions.
+<p align="center">
+  The companion benchmark repository for the SAG2 paper. SQLite FTS5, BM25 and JEV connect source evidence at query time, with no model calls for indexing.
+</p>
 
-**Original SAG paper reproduction: [sag/README.md](sag/README.md)**. Its installation, upload, retrieval, QA and evaluation instructions remain in the independent `sag/` subproject.
+<p align="center"><strong>Question → Passages → Terms → New passages</strong></p>
+
+<p align="center">
+  <a href="https://github.com/Zleap-AI/SAG-Wiki">SAG2 application: SAG-Wiki</a> · <a href="sag/README.md">Original SAG reproduction</a>
+</p>
 
 https://github.com/user-attachments/assets/bcdf9dbf-7535-41d6-bd22-bde0ea824525
 

@@ -1,19 +1,29 @@
-<p align="center"><img src="assets/logo.svg" alt="Zleap AI" width="220" /></p>
+<p align="center">
+  <img src="assets/logo.svg" alt="Zleap AI" width="180" />
+</p>
 
-# SAG2
+<h1 align="center">SAG2</h1>
 
-> SAG2 论文的配套 Benchmark 复现仓库，提供论文实验的代码、数据与运行说明。实际应用请查看 [SAG-Wiki](https://github.com/Zleap-AI/SAG-Wiki)。
+<p align="center">
+  <a href="README.md">English</a> · <strong>简体中文</strong> · <a href="../README-CN.md">项目首页</a>
+</p>
 
-[English](README.md) | **简体中文** | [项目首页](../README-CN.md)
+<p align="center">
+  <a href="https://arxiv.org/abs/2610.22588"><img alt="论文: arXiv:2610.22588" src="https://img.shields.io/badge/paper-arXiv%3A2610.22588-18181b" /></a>
+  <a href="LICENSE"><img alt="许可: MIT" src="https://img.shields.io/badge/license-MIT-18181b" /></a>
+</p>
 
-**论文：** [SAG2: Embedding-Free Multi-Hop Retrieval with BM25 and JEV (arXiv:2610.22588)](https://arxiv.org/abs/2610.22588)
+<p align="center"><strong>无需嵌入模型的多跳证据检索。</strong></p>
 
-**SAG2：无需嵌入模型的多跳证据检索。** 使用 SQLite FTS5、BM25 和 JEV，在查询时沿“问题 → 段落 → 词项 → 新段落”寻找证据。导入阶段只构建本地词法索引；Agentic SAG2 和本地 Rerank 是可选扩展。
+<p align="center">
+  SAG2 论文的配套 Benchmark 复现仓库。使用 SQLite FTS5、BM25 与 JEV，在查询时关联原文证据；建库无需模型调用。
+</p>
 
-| 你要复现的方法 | 文档与代码位置 |
-|---|---|
-| **SAG2**：BM25、JEV 与词项扩展 | 当前文档；独立的 `sag2/` 子项目 |
-| **原 SAG 论文**：事件、实体与图检索 | **[原 SAG 中文复现指南](../sag/README-CN.md)**；独立的 `sag/` 子项目 |
+<p align="center"><strong>问题 → 段落 → 词项 → 新段落</strong></p>
+
+<p align="center">
+  <a href="https://github.com/Zleap-AI/SAG-Wiki">SAG2 应用：SAG-Wiki</a> · <a href="../sag/README-CN.md">原 SAG 复现指南</a>
+</p>
 
 https://github.com/user-attachments/assets/439bbb1c-3fd8-41e1-a77b-865e8dce4d48
 
